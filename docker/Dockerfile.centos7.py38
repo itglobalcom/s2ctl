@@ -1,0 +1,32 @@
+FROM centos:7
+
+LABEL maintainer="vladislav.orlov"
+LABEL email="vladislav.orlov@itglobal.com"
+
+ENV LD_LIBRARY_PATH=/opt/python38
+
+WORKDIR /opt
+
+RUN yum -y update
+RUN yum -y groupinstall "Development Tools"
+RUN yum -y install openssl-devel bzip2-devel libffi-devel
+RUN yum -y install wget
+RUN wget https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz
+
+RUN tar xvf Python-3.8.3.tgz
+
+RUN mv Python-3.8.3 python38
+
+WORKDIR /opt/python38
+
+RUN ./configure --enable-optimizations --enable-shared
+RUN make altinstall
+
+ENV POETRY_VERSION="1.0.*"
+ENV PYINSTALLER_VERSION="3.4"
+
+RUN pip3.8 install --upgrade certifi 
+RUN pip3.8 install "poetry==$POETRY_VERSION"
+RUN pip3.8 install pyinstaller
+
+CMD [ "python3.8" ]

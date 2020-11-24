@@ -1,0 +1,4 @@
+include:
+  - project: b2c/ci
+    file: s2ctl/pipeline.yml
+    ref: v0.1.0
