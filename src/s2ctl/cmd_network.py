@@ -5,7 +5,7 @@ import click
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
-from ssclient.network import NetworkService
+from ssclient.network.network import NetworkService
 
 
 def _get_net_serivce(ctx) -> NetworkService:
@@ -103,4 +103,32 @@ def delete(ctx, network_id: str):
     """Delete a network."""
     net_service = _get_net_serivce(ctx)
     service_resp = asyncio.run(net_service.delete(network_id=network_id))
+    echo(service_resp)
+
+
+@network.command(cls=S2CTLCommand)
+@output_option
+@click.argument('network-id', required=True)
+@click.option('--name', required=True, help='Name of tag.')
+@click.pass_context
+def add_tag(ctx, network_id: str, name: str):
+    """Add tag to network."""
+    net_service = _get_net_serivce(ctx)
+    tag_service = net_service.tags(network_id=network_id)
+    service_resp = asyncio.run(tag_service.create(name=name))
+    echo(service_resp)
+
+
+@network.command(cls=S2CTLCommand)
+@output_option
+@click.argument('network-id', required=True)
+@click.option('--name', type=str, required=True, help='Name of tag.')
+@click.pass_context
+def delete_tag(ctx, network_id: str, name: str):
+    """Remove tag from network."""
+    net_service = _get_net_serivce(ctx)
+    tag_service = net_service.tags(network_id=network_id)
+    service_resp = asyncio.run(
+        tag_service.delete(name=name),
+    )
     echo(service_resp)

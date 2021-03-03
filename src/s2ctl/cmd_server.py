@@ -466,3 +466,31 @@ def delete_snapshot(ctx, server_id: str, snapshot_id: int):
         snapshot_service.delete(snapshot_id=snapshot_id),
     )
     echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.option('--name', required=True, help='Name of tag.')
+@click.pass_context
+def add_tag(ctx, server_id: str, name: str):
+    """Add tag to server."""
+    server_service = _get_server_serivce(ctx)
+    tag_service = server_service.tags(server_id=server_id)
+    service_resp = asyncio.run(tag_service.create(name=name))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.option('--name', type=str, required=True, help='Name of tag.')
+@click.pass_context
+def delete_tag(ctx, server_id: str, name: str):
+    """Remove tag from server."""
+    server_service = _get_server_serivce(ctx)
+    tag_service = server_service.tags(server_id=server_id)
+    service_resp = asyncio.run(
+        tag_service.delete(name=name),
+    )
+    echo(service_resp)
