@@ -8,4 +8,4 @@ test-tox:
 
 .PHONY: test
 test:
-	pytest -f  ==cov=src --color=yes tests
+	pytest -f  --cov=src --color=yes tests
