@@ -71,8 +71,7 @@ class BaseNetworkService(BaseService):
 
     async def delete(self, network_id: str) -> None:
         path = self._make_path(network_id)
-        task_wrap: TaskIDWrap = await self._http_client.delete(path)
-        await self._wait_task_completion(task_wrap['task_id'])
+        await self._http_client.delete(path)
 
 
 class NetworkService(BaseNetworkService):
