@@ -1,5 +1,5 @@
 from ssclient.metainfo import ImagesService, LocationsService
-from ssclient.network import NetworkService
+from ssclient.network.network import NetworkService
 from ssclient.ports import HttpClientPort
 from ssclient.project import ProjectService
 from ssclient.server.server import ServerService

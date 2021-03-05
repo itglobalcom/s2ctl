@@ -5,6 +5,7 @@ from ssclient.base import BaseService, TaskIDWrap
 from ssclient.server.nic import NicService
 from ssclient.server.power import ServerPowerService
 from ssclient.server.snapshot import SnapshotService
+from ssclient.server.tag import TagService
 from ssclient.server.volume import VolumeService
 
 
@@ -22,6 +23,7 @@ class ServerEntity(TypedDict):
     ssh_key_ids: List[int]
     state: str
     created: str
+    tags: List[str]
 
 
 @dataclass
@@ -107,3 +109,6 @@ class ServerService(BaseServerService):
 
     def nics(self, server_id: str) -> NicService:
         return NicService(self._http_client, server_id)
+
+    def tags(self, server_id: str) -> TagService:
+        return TagService(self._http_client, server_id)

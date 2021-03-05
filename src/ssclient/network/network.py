@@ -1,6 +1,7 @@
 from typing import ClassVar, List, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
+from ssclient.network.tag import TagService
 
 
 class NetworkEntity(TypedDict):
@@ -15,7 +16,7 @@ class NetworkEntity(TypedDict):
     created: str
 
 
-class NetworkService(BaseService):
+class BaseNetworkService(BaseService):
     _path: ClassVar[str] = 'api/v1/networks/isolated'
 
     async def create(  # noqa: WPS211
@@ -70,5 +71,9 @@ class NetworkService(BaseService):
 
     async def delete(self, network_id: str) -> None:
         path = self._make_path(network_id)
-        task_wrap: TaskIDWrap = await self._http_client.delete(path)
-        await self._wait_task_completion(task_wrap['task_id'])
+        await self._http_client.delete(path)
+
+
+class NetworkService(BaseNetworkService):
+    def tags(self, network_id: str) -> TagService:
+        return TagService(self._http_client, network_id)
