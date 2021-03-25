@@ -1,7 +1,16 @@
 import asyncio
 import sys
 
-from s2ctl import cmd_context, cmd_metainfo, cmd_network, cmd_project, cmd_server, cmd_sshkey, cmd_task  # noqa: F401
+from s2ctl import (  # noqa: F401
+    cmd_context,
+    cmd_domain,
+    cmd_metainfo,
+    cmd_network,
+    cmd_project,
+    cmd_server,
+    cmd_sshkey,
+    cmd_task,
+)
 
 # Fix for RuntimeError: Event loop is closed
 # https://github.com/encode/httpx/issues/914

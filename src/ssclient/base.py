@@ -29,6 +29,8 @@ class TaskEntity(BaseTaskEntity, total=False):
     volume_id: int
     nic_id: int
     snapshot_id: int
+    domain_id: str
+    record_id: int
 
 
 class BaseService(object):

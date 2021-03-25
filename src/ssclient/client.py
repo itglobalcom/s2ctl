@@ -1,3 +1,4 @@
+from ssclient.domain.domain import DomainService
 from ssclient.metainfo import ImagesService, LocationsService
 from ssclient.network.network import NetworkService
 from ssclient.ports import HttpClientPort
@@ -31,3 +32,6 @@ class SSClient(object):  # noqa: WPS214
 
     def networks(self) -> NetworkService:
         return NetworkService(self._http_client)
+
+    def domains(self) -> DomainService:
+        return DomainService(self._http_client)

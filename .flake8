@@ -8,8 +8,10 @@ per-file-ignores =
     src/s2ctl/cmd_*.py: D205, D400, DAR101, WPS216, WPS211
     src/s2ctl/cmd_server.py: D205, D400, DAR101, WPS216, WPS211, WPS202, WPS204, WPS226
     src/s2ctl/cmd_network.py: D205, D400, DAR101, WPS216, WPS211, WPS202, WPS226
+    src/s2ctl/cmd_domain.py: D205, D400, DAR101, DAR401, WPS216, WPS211, WPS202, WPS204, WPS226
     src/ssclient/ports.py: WPS428
     src/s2ctl/click.py: WPS202
+    src/ssclient/domain/record_entities.py: WPS202, D105
 
 exclude =
     .git,
