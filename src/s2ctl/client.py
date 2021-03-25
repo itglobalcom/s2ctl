@@ -24,8 +24,8 @@ def client_factory(ctx: Context) -> Optional[SSClient]:
     apikey_arg: str = ctx.obj['apikey_arg']
     try:
         apikey = apikey_arg or context_manager.get_current_apikey()
-    except Exception as exc:
-        raise KeyMissingError from exc
+    except Exception:  # noqa: WPS329
+        raise KeyMissingError
 
     if not apikey:
         raise KeyMissingError
