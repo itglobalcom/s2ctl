@@ -4,15 +4,84 @@
 
 ## Installation
 
-`s2ctl` is available for Linux and Windows as single binary. Just download it from Github and run.
-You may also add the folder where you've put s2ctl binary to the PATH environment variable to access it from any place of your system.
+`s2ctl` is available for Linux and Windows as single binary. Just download it from [Github](https://github.com/itglobalcom/s2ctl/releases) and extract.
+
+### To install on Linux
+
+1. Download file from Github:
+
+```
+wget https://github.com/itglobalcom/s2ctl/releases/download/vX.X.X/s2ctl-vX.X.X-linux.tar.gz
+```
+Here X.X.X is the number of latest release
+
+2. Extract the downloaded archive:
+
+```
+tar -xzf s2ctl-vX.X.X-linux.tar.gz
+```
+You may also add the folder where you've put `s2ctl` binary to the PATH environment variable to access it from any place of your system. To see what's in your `$PATH` right now, type this into a terminal:
+
+```
+echo $PATH
+```
+To add a new directory to the list use the command:
+
+```
+export PATH=$PATH:"<download directory>"
+```
+The variable `$PATH` is set by your shell every time it launches, but you can set it so that it always includes your new path with every new shell you open. The exact way to do this depends on which shell you're running.
+
+For example for Bash you need to add a line at the top about the appropriate file to be read when the shell starts:
+
+```
+echo 'export PATH=$PATH:"<download directory>"' >> .bashrc
+```
+To apply changes to current session type:
+
+```
+source ~/.bashrc
+```
+
+### To install on Windows
+
+1. Download file **s2ctl-vX.X.X-windows.zip** from [Github](https://github.com/itglobalcom/s2ctl/releases) and extract it
+
+2. Run the command line:
+
+- Press `Win+R` or Start → text `run` → OK
+
+- Enter the command `cmd` → OK
+
+3. By default, the command line shows the directory of the current user. Navigate to the directory with the extracted file:
+
+```
+cd <extracted file directory>
+```
+
+4. After navigating to the required directory, run the command:
+
+```
+s2ctl
+```
+
+Set the PATH on Windows 10:
+
+- In Search, search for and then select: System (Control Panel)
+
+- Click the **Advanced system settings** link
+
+- Click **Environment Variables**. In the section **System Variables** find the PATH environment variable and select it. Click **Edit**. If the PATH environment variable does not exist, click **New**
+
+- In the **Edit System Variable** (or **New System Variable**) window, specify the value of the PATH environment variable. Click **OK**. Close all remaining windows by clicking **OK**.
+
 
 ## Before start
 
 CLI uses the same mechanism as the Serverspace API therefore you should obtain API Key from settings of your project out of the control panel first. Then create a new context with this key and a name of you choice:
 
 ```
-> s2ctl context create --name MyServers --key 04d1f...4ea4
+>s2ctl context create --name MyServers --key 04d1f...4ea4
 ```
 
 Now you are ready to control your infrastructure:
@@ -42,7 +111,7 @@ is_power_on: true
 
 Or getting a volume of that server:
 ```
-s>s2ctl server get-volume l1s12345 --volume-id 20210
+>s2ctl server get-volume l1s12345 --volume-id 20210
 id: 20210
 name: boot
 server_id: l1s12345
