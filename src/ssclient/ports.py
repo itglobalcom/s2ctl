@@ -19,5 +19,9 @@ class HttpClientPort(Protocol):
         ...
 
     @abstractmethod
+    async def patch(self, path: str, payload: Any) -> Any:
+        ...
+
+    @abstractmethod
     async def delete(self, path: str) -> Any:
         ...

@@ -1,6 +1,6 @@
 import asyncio
 import string
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import click
 from click import Context
@@ -159,15 +159,15 @@ def create(
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True)
-@click.option('--cpu', required=True, help='CPU cores count.')
+@click.option('--cpu', help='CPU cores count.')
 @click.option(
     '--ram',
     type=SizeType(),
-    required=True,
     help='RAM size (e.g. 1024, 1024M or 1G for 1Gb of RAM).',
 )
 @click.pass_context
-def edit(ctx, server_id: str, cpu: int, ram: int, wait: bool):
+def edit(ctx, server_id: str, cpu: Optional[int], ram: Optional[int], wait: bool):
+    """Change server configuration."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
         server_service.update(server_id=server_id, cpu=cpu, ram_mb=ram, wait=wait),

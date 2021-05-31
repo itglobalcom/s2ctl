@@ -38,6 +38,9 @@ class HttpClient(object):  # noqa: WPS214
     async def put(self, path: str, payload: Any) -> Any:
         return await self.make_request(hdrs.METH_PUT, path, payload)
 
+    async def patch(self, path: str, payload: Any) -> Any:
+        return await self.make_request(hdrs.METH_PATCH, path, payload)
+
     async def delete(self, path: str) -> Any:
         return await self.make_request(hdrs.METH_DELETE, path)
 

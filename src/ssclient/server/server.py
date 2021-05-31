@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import Iterable, List, TypedDict, Union
+from typing import Iterable, List, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.server.nic import NicService
@@ -77,15 +77,25 @@ class BaseServerService(BaseService):
         return servers_resp['servers']
 
     async def update(
-        self, server_id: str, *, cpu: int, ram_mb: int, wait: bool = True,
+        self,
+        server_id: str,
+        *,
+        cpu: Optional[int] = None,
+        ram_mb: Optional[int] = None,
+        wait: bool = True,
     ) -> Union[TaskIDWrap, ServerEntity]:
         path = self._make_path(server_id)
-        task_wrap: TaskIDWrap = await self._http_client.put(
+
+        payload = {}
+        if cpu is not None:
+            payload['cpu'] = cpu
+
+        if ram_mb is not None:
+            payload['ram_mb'] = ram_mb
+
+        task_wrap: TaskIDWrap = await self._http_client.patch(
             path=path,
-            payload={
-                'cpu': cpu,
-                'ram_mb': ram_mb,
-            },
+            payload=payload,
         )
         if wait:
             task = await self._wait_task_completion(task_wrap['task_id'])
