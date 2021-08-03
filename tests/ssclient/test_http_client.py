@@ -81,7 +81,13 @@ async def test_request_error(http_client):
 
 @pytest.mark.parametrize(
     'api_key,headers',
-    [('test_api_key', {'X-API-KEY': 'test_api_key'}), (None, {})],
+    [
+        ('test_api_key', {
+            'X-API-KEY': 'test_api_key',
+            'User-Agent': 's2ctl',
+        }),
+        (None, {'User-Agent': 's2ctl'}),
+    ],
 )
 def test_request_headers(api_key, headers):
     client = HttpClient(host='', apikey=api_key)

@@ -13,6 +13,7 @@ class HttpClient(object):  # noqa: WPS214
     def __init__(self, host: str, apikey: Optional[str]) -> None:
         self.host = host
         self.apikey = apikey
+        self.user_agent = 's2ctl'
         self._sslcontext = ssl.create_default_context(cafile=certifi.where())
 
     async def make_request(
@@ -46,9 +47,13 @@ class HttpClient(object):  # noqa: WPS214
 
     @property
     def headers(self) -> Dict[str, str]:
+        headers = {
+            'User-Agent': self.user_agent,
+        }
         if self.apikey:
-            return {'X-API-KEY': self.apikey}
-        return {}
+            headers.update({'X-API-KEY': self.apikey})
+
+        return headers
 
     async def _process_response(self, resp: aiohttp.ClientResponse) -> Any:
         msg = await resp.json(content_type=None)
