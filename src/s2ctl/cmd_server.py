@@ -299,14 +299,33 @@ def delete_volume(ctx, server_id: str, volume_id: int):
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True)
-@click.option('--network-id', type=str, required=True, help='Network identifier (see "network" command).')
+@click.option('--network-id', type=str, required=False, help='Network identifier (see "network" command).')
+@click.option(
+    '--bandwidth',
+    type=int,
+    required=False,
+    help='Public network interface bandwidth. '
+    + 'Interface bandwidth in Mbps, the bandwidth value must be a multiple of 10 Mbps.',
+)
 @click.pass_context
-def add_nic(ctx, server_id: str, network_id: str, wait: bool):
-    """Add new network interface to a server."""
+def add_nic(
+    ctx, server_id: str, network_id: Optional[str], bandwidth: Optional[int], wait: bool,
+):
+    """
+    Add new network interface to a server.
+
+    Only one of the following parameters can be specified: `network_id` and `bandwidth`!
+    If you pass both the parameters you get an error.
+    Pass `network_id` if you need to connect to isolated network. If you need to connect
+    to public network pass `bandwidth`.
+    """
+    if network_id and bandwidth:
+        raise ExclusiveOptionsError(['network-id', 'bandwidth'])
+
     server_service = _get_server_serivce(ctx)
     nic_service = server_service.nics(server_id=server_id)
     service_resp = asyncio.run(
-        nic_service.create(network_id=network_id, wait=wait),
+        nic_service.create(network_id=network_id, bandwidth=bandwidth, wait=wait),
     )
     echo(service_resp)
 
@@ -494,3 +513,14 @@ def delete_tag(ctx, server_id: str, name: str):
         tag_service.delete(name=name),
     )
     echo(service_resp)
+
+
+class ExclusiveOptionsError(click.UsageError):
+    def __init__(
+        self,
+        exclusive_fields: List[str],
+    ) -> None:
+        msg = 'Only one exclusive field can be set at a time: {exclusive_fields}'.format(
+            exclusive_fields=exclusive_fields,
+        )
+        super().__init__(msg)
