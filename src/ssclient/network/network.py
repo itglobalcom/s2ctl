@@ -14,6 +14,7 @@ class NetworkEntity(TypedDict):
     server_ids: List[str]
     state: str
     created: str
+    tags: List[str]
 
 
 class BaseNetworkService(BaseService):

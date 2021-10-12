@@ -3,7 +3,7 @@ from typing import Any, Optional, Protocol
 
 
 class HttpClientPort(Protocol):
-    def __init__(self, host: str, api_key: Optional[str]) -> None:
+    def __init__(self, host: str, apikey: Optional[str]) -> None:
         ...
 
     @abstractmethod

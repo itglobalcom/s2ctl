@@ -2,6 +2,7 @@ import asyncio
 import sys
 
 from s2ctl import (  # noqa: F401
+    cmd_ansible,
     cmd_context,
     cmd_domain,
     cmd_metainfo,

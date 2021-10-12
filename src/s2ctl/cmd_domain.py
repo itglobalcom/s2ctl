@@ -501,7 +501,7 @@ class WrongFieldSetGetted(click.UsageError):
         necessary_fields: Iterable[str],
         extra_fields: Iterable[str],
     ) -> None:
-        msg = 'Wrong set of field for {record_type}.'.format(record_type=record_type)
+        msg = 'Wrong set of fields for {record_type}.'.format(record_type=record_type)
         if necessary_fields:
             msg += ' Necessary fields {nec_field}'.format(nec_field=', '.join(necessary_fields))
         if extra_fields:

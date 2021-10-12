@@ -9,15 +9,32 @@ from ssclient.server.tag import TagService
 from ssclient.server.volume import VolumeService
 
 
+class ServerVolumeEntity(TypedDict):
+    id: int  # noqa: WPS125
+    name: str
+    size_mb: int
+    created: str
+
+
+class ServerNicEntity(TypedDict):
+    id: int  # noqa: WPS125
+    network_id: str
+    mac: str
+    ip_address: str
+    mask: int
+    bandwidth_mbps: int
+
+
 class ServerEntity(TypedDict):
     id: str  # noqa: WPS125
     location_id: str
     cpu: int
     ram_mb: int
+    volumes: List[ServerVolumeEntity]
+    nics: List[ServerNicEntity]
     image_id: str
     is_power_on: bool
     name: str
-    ip: str
     login: str
     password: str
     ssh_key_ids: List[int]

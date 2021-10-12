@@ -50,7 +50,7 @@ def server_root(http_server: TestServer):
 
 @pytest.fixture
 def http_client(server_root):
-    def factory(api_key):
-        return HttpClient(host=server_root, apikey=api_key)
+    def factory(apikey):
+        return HttpClient(host=server_root, apikey=apikey)
 
     return factory

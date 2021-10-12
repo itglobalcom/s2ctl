@@ -7,7 +7,7 @@ ignore =
     W503,
 
 per-file-ignores =
-    src/s2ctl/__init__.py: WPS412
+    src/s2ctl/__init__.py: WPS235, WPS412
     src/s2ctl/cmd_*.py: D205, D400, DAR101, WPS216, WPS211
     src/s2ctl/cmd_server.py: D205, D400, DAR101, DAR401, WPS202, WPS204, WPS211, WPS216, WPS226
     src/s2ctl/cmd_network.py: D205, D400, DAR101, WPS216, WPS211, WPS202, WPS226

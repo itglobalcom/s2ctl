@@ -19,7 +19,7 @@ HOSTS_MAP = types.MappingProxyType({
 })
 
 
-def client_factory(ctx: Context) -> Optional[SSClient]:
+def client_factory(ctx: Context) -> SSClient:
     context_manager: ContextManager = ctx.obj['context_manager']
     apikey_arg: str = ctx.obj['apikey_arg']
     try:

@@ -1,7 +1,7 @@
 import types
 from functools import wraps
 from http import HTTPStatus
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, cast
 
 import click
 import click_completion
@@ -27,10 +27,16 @@ click_completion.init()
 
 
 def echo(
-    raw_obj: Any, sorter: Optional[SorterType] = general_fields_sort, *args, **kwargs,
+    raw_obj: Any,
+    sorter: Optional[SorterType] = general_fields_sort,
+    formatter: Optional[FormatterPort] = None,
+    *args,
+    **kwargs,
 ) -> None:
     ctx = click.get_current_context()
-    formatter: FormatterPort = ctx.obj.get('formatter')
+    if not formatter:
+        formatter = cast(FormatterPort, ctx.obj['formatter'])
+
     if 'err' in kwargs:
         raise BaseFailException('\n{err_message}'.format(err_message=formatter.format(raw_obj)))
     elif raw_obj:
