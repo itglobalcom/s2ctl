@@ -16,6 +16,8 @@ HOSTS_MAP = types.MappingProxyType({
     '08': 'https://api.serverspace.us',
     '09': 'https://api.serverspace.com.tr',
     '0a': 'https://api.serverspace.in',
+    '0f': 'https://api.itglobal.com',
+    '14': 'https://api.serverspace.kz',
 })
 
 
