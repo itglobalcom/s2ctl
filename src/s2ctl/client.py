@@ -25,6 +25,7 @@ HOSTS_MAP = types.MappingProxyType({
     '25': 'https://api.vc.miran.ru',
     '26': 'https://api.ekacod.ru',
     '28': 'https://api.glos.online',
+    '29': 'https://api.vcloud-test.uzum.io',
 })
 
 
