@@ -20,6 +20,7 @@ EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
     'server',
     'ssh-key',
     'task',
+    'vmware',
 })
 
 EXPECTED_AFFINITY_GROUP_COMMANDS = frozenset({
@@ -80,6 +81,39 @@ EXPECTED_SERVER_COMMANDS = frozenset({
 })
 
 
+EXPECTED_VMWARE_COMMANDS = frozenset({
+    'edge',
+    'gpu-models',
+    'images',
+    'locations',
+    'network',
+})
+
+EXPECTED_VMWARE_NETWORK_COMMANDS = frozenset({
+    'connect-servers',
+    'create-isolated',
+    'create-public',
+    'create-routed',
+    'delete',
+    'get',
+    'list',
+    'rename',
+    'set-bandwidth',
+})
+
+EXPECTED_VMWARE_EDGE_COMMANDS = frozenset({
+    'delete-nat-rule',
+    'delete-vpn-tunnel',
+    'get-firewall',
+    'get-nat',
+    'get-vpn',
+    'set-bandwidth',
+    'update-firewall',
+    'upsert-nat-rule',
+    'upsert-vpn-tunnel',
+})
+
+
 def test_top_level_commands_registered():
     assert set(entry_point.commands) == EXPECTED_TOP_LEVEL_COMMANDS
 
@@ -90,6 +124,22 @@ def test_server_group_commands_registered():
 
 def test_gateway_group_commands_registered():
     assert set(entry_point.commands['gateway'].commands) == EXPECTED_GATEWAY_COMMANDS
+
+
+def test_vmware_group_commands_registered():
+    assert set(entry_point.commands['vmware'].commands) == EXPECTED_VMWARE_COMMANDS
+
+
+def test_vmware_network_group_commands_registered():
+    vmware_group = entry_point.commands['vmware']
+
+    assert set(vmware_group.commands['network'].commands) == EXPECTED_VMWARE_NETWORK_COMMANDS
+
+
+def test_vmware_edge_group_commands_registered():
+    vmware_group = entry_point.commands['vmware']
+
+    assert set(vmware_group.commands['edge'].commands) == EXPECTED_VMWARE_EDGE_COMMANDS
 
 
 def test_affinity_group_commands_registered():
