@@ -411,7 +411,8 @@ def get_nat(ctx, network_id: VmwareNetworkId):
 @click.option(
     '--enabled/--disabled',
     default=None,
-    help='Whether the rule carries traffic. A new rule is created enabled.',
+    help='Whether the rule carries traffic. Omitted, the rule ends up enabled — on a change '
+    + 'of an existing rule as well, so pass "--disabled" to keep a disabled rule off.',
 )
 @click.pass_context
 def upsert_nat_rule(
@@ -501,13 +502,16 @@ def get_vpn(ctx, network_id: VmwareNetworkId):
 @click.option(
     '--enabled/--disabled',
     default=None,
-    help='Whether the tunnel carries traffic. A new tunnel is created enabled.',
+    help='Whether the tunnel carries traffic. Omitted, the tunnel ends up enabled — on a '
+    + 'change of an existing tunnel as well, so pass "--disabled" to keep a disabled '
+    + 'tunnel off.',
 )
 @click.option(
     '--pfs/--no-pfs',
     'perfect_forward_secrecy',
     default=None,
-    help='Whether Perfect Forward Secrecy is on. A new tunnel is created with it on.',
+    help='Whether Perfect Forward Secrecy is on. Omitted, it ends up on — on a change of an '
+    + 'existing tunnel as well, so pass "--no-pfs" to keep it off.',
 )
 @click.pass_context
 def upsert_vpn_tunnel(
