@@ -1,5 +1,6 @@
 from ssclient.affinity_group import AffinityGroupService
 from ssclient.domain.domain import DomainService
+from ssclient.gateway.gateway import GatewayService
 from ssclient.metainfo import ApplicationsService, ImagesService, LocationsService
 from ssclient.network.network import NetworkService
 from ssclient.ports import HttpClientPort
@@ -42,3 +43,6 @@ class SSClient(object):  # noqa: WPS214
 
     def affinity_groups(self) -> AffinityGroupService:
         return AffinityGroupService(self._http_client)
+
+    def gateways(self) -> GatewayService:
+        return GatewayService(self._http_client)
