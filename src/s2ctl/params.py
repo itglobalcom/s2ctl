@@ -11,7 +11,10 @@ from ssclient.task_id import TaskId, supported_formats_hint
 RULES_FILE_HELP = (
     'Path to the file with the whole rule set in JSON, as printed by the matching '
     + '"get-*" command with "--output json" — either the array of rules itself or the '
-    + 'object carrying it in "rules". Pass "-" to read the set from stdin.'
+    + 'object carrying it in "rules". Pass "-" to read the set from stdin. '
+    + 'For "vmware edge update-firewall" the round trip is lossy: the request of the API '
+    + 'has no per-rule "enabled" and "description", so these two fields of a rule printed '
+    + 'by "get-firewall" are dropped.'
 )
 
 _NETWORK_ID_HINT = 'network id format: {template}'.format(template=NETWORK_ID_TEMPLATE)

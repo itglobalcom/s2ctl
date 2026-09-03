@@ -396,7 +396,13 @@ file and pass it back with `--rules-file` (`-` reads the set from stdin). The
 same holds for the firewall of a VMware server and of a VMware edge gateway.
 `vmware edge get-firewall` prints the rules inside an object, together with the
 state of the firewall itself; `--rules-file` accepts that object as it is and
-takes the rules out of it, so the round trip holds for all four pairs.
+takes the rules out of it.
+
+The round trip is lossy in one pair of the four: `vmware edge update-firewall`.
+The request of the API declares neither `enabled` nor `description` of a rule,
+while `get-firewall` prints both, so these two fields of the file are dropped —
+CLI has nowhere to send them. In the other three pairs the set comes back as it
+was printed.
 
 ### Waiting for a task
 
