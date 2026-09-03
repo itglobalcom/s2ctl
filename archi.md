@@ -24,8 +24,7 @@ Owner проставлен допущением при заведении фай
   для Linux и Windows.
 - Out of scope: доменные правила и валидация услуг (владелец — `cloudmng`);
   остальные внешние API монолита (`partner-api`, `referral-api`, Admin API v3);
-  генерация клиентского слоя из OpenAPI — слой рукописный; раздел Kubernetes
-  контракта (выведен из объёма TSK0003840).
+  генерация клиентского слоя из OpenAPI — слой рукописный.
 - Primary L1 context: `ctx_cli_s2ctl`; Affected L1 contexts: нет.
 
 ## 3) Layering constraints
