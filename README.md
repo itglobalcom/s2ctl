@@ -109,7 +109,7 @@ Contexts, the keyring holding your API keys and the address of the API live in
 | Key | Meaning |
 | --- | --- |
 | `contexts`, `current_context` | contexts created by `s2ctl context create` and the one currently selected |
-| `keyring`, `keyring_key` | the file keyring where the API keys of the contexts are kept, and its password |
+| `keyring`, `keyring_key` | the file keyring where the API keys of the contexts are kept, and its password. Both are created next to the configuration file itself, so every configuration file has a keyring of its own |
 | `host` | base URL of the API. Optional |
 
 Without `host` the API address is chosen by the two leading characters of the

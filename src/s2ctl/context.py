@@ -2,6 +2,7 @@ from typing import List, Optional, TypedDict
 
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
 
+from s2ctl.click import BaseFailException
 from s2ctl.config import ConfigManager
 
 SERVICE_NAME = 'serverspace'
@@ -65,6 +66,16 @@ class BaseContextManager(object):
         return contexts
 
 
+class KeyringUnlockError(BaseFailException):
+    def __init__(self, keyring_path: str) -> None:
+        super().__init__(
+            "Can't unlock the keyring '{path}': it was created with another key than the "
+            "'keyring_key' of this configuration file (or S2CTL_CONTEXT_KEY).".format(
+                path=keyring_path,
+            ),
+        )
+
+
 class ContextManager(BaseContextManager):
     def __init__(
         self, config_manager: ConfigManager, keyring_key: str, keyring_path: str,
@@ -72,7 +83,11 @@ class ContextManager(BaseContextManager):
         super().__init__(config_manager)
         self.keyring = CryptFileKeyring()
         self.keyring.file_path = keyring_path  # type: ignore
-        self.keyring.keyring_key = keyring_key  # type: ignore
+        try:
+            # Ключ проверяется расшифровкой файла прямо здесь, в конструкторе.
+            self.keyring.keyring_key = keyring_key  # type: ignore
+        except ValueError as exc:
+            raise KeyringUnlockError(keyring_path) from exc
 
     def add_context(self, context_name: str, apikey: str) -> None:
         self.keyring.set_password(SERVICE_NAME, context_name, apikey)
