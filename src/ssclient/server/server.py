@@ -4,6 +4,7 @@ from typing import Iterable, List, Optional, TypedDict, Union
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.server.nic import NicService
 from ssclient.server.power import ServerPowerService
+from ssclient.server.price import ServerPriceService
 from ssclient.server.snapshot import SnapshotService
 from ssclient.server.tag import TagService
 from ssclient.server.volume import VolumeService
@@ -121,12 +122,53 @@ class BaseServerService(BaseService):
             return await self.get(task_resource_id(task, TaskResourceType.server))
         return task_wrap
 
+    async def set_configuration(
+        self,
+        server_id: str,
+        *,
+        cpu: int,
+        ram_mb: int,
+        wait: bool = False,
+    ) -> Union[TaskIDWrap, ServerEntity]:
+        path = self._make_path(server_id)
+
+        task_wrap: TaskIDWrap = await self._http_client.put(
+            path=path,
+            payload={
+                'cpu': cpu,
+                'ram_mb': ram_mb,
+            },
+        )
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return await self.get(server_id)
+        return task_wrap
+
+    async def rename(
+        self, server_id: str, *, name: str, wait: bool = False,
+    ) -> Union[TaskIDWrap, ServerEntity]:
+        path = '{server_path}/name'.format(server_path=self._make_path(server_id))
+
+        task_wrap: TaskIDWrap = await self._http_client.put(
+            path=path,
+            payload={
+                'name': name,
+            },
+        )
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return await self.get(server_id)
+        return task_wrap
+
     async def delete(self, server_id: str) -> None:
         path = self._make_path(server_id)
         await self._http_client.delete(path)
 
 
 class ServerService(BaseServerService):
+    def prices(self) -> ServerPriceService:
+        return ServerPriceService(self._http_client)
+
     def power(self, server_id: str) -> ServerPowerService:
         return ServerPowerService(self._http_client, server_id)
 

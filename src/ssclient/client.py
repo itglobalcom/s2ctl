@@ -1,5 +1,6 @@
+from ssclient.affinity_group import AffinityGroupService
 from ssclient.domain.domain import DomainService
-from ssclient.metainfo import ImagesService, LocationsService
+from ssclient.metainfo import ApplicationsService, ImagesService, LocationsService
 from ssclient.network.network import NetworkService
 from ssclient.ports import HttpClientPort
 from ssclient.project import ProjectService
@@ -18,6 +19,9 @@ class SSClient(object):  # noqa: WPS214
     def images(self) -> ImagesService:
         return ImagesService(self._http_client)
 
+    def applications(self) -> ApplicationsService:
+        return ApplicationsService(self._http_client)
+
     def project(self) -> ProjectService:
         return ProjectService(self._http_client)
 
@@ -35,3 +39,6 @@ class SSClient(object):  # noqa: WPS214
 
     def domains(self) -> DomainService:
         return DomainService(self._http_client)
+
+    def affinity_groups(self) -> AffinityGroupService:
+        return AffinityGroupService(self._http_client)

@@ -15,6 +15,7 @@ TASKS_PATH = 'api/v1/tasks'
 DEFAULT_TASK_TIMEOUT = 60
 _POLL_INTERVAL_SECS = 1
 _FAILURE_STATES = frozenset((TaskState.failed, TaskState.canceled))
+_RETURN_TASK_QUERY = 'return_task=true'
 
 
 class TaskIDWrap(TypedDict):
@@ -23,6 +24,11 @@ class TaskIDWrap(TypedDict):
 
 def task_path(task_id: TaskId) -> str:
     return '{tasks_path}/{task_id}'.format(tasks_path=TASKS_PATH, task_id=task_id.value)
+
+
+def with_return_task(path: str) -> str:
+    """Путь удаления, по которому publisher отдаёт ссылку на задачу: без параметра ответ пуст."""
+    return '{path}?{query}'.format(path=path, query=_RETURN_TASK_QUERY)
 
 
 class BaseService(object):
@@ -40,6 +46,9 @@ class BaseService(object):
     @property
     def path(self) -> str:
         return self._path.format_map(self._url_fields)
+
+    def _task_id(self, task_wrap: TaskIDWrap) -> TaskId:
+        return TaskId.parse(task_wrap['task_id'])
 
     def _make_path(self, fragment: str) -> str:
         path = self.path

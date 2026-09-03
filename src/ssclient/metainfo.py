@@ -24,6 +24,12 @@ class ImageEntity(TypedDict):
     allow_ssh_keys: bool
 
 
+class ApplicationEntity(TypedDict):
+    id: str  # noqa: WPS125
+    location_id: str
+    images: List[str]
+
+
 class LocationsService(BaseService):
     _path = 'api/v1/locations'
 
@@ -38,3 +44,11 @@ class ImagesService(BaseService):
     async def get(self) -> List[ImageEntity]:
         images_resp = await self._http_client.get(self.path)
         return images_resp['images']
+
+
+class ApplicationsService(BaseService):
+    _path = 'api/v1/applications'
+
+    async def get(self) -> List[ApplicationEntity]:
+        applications_resp = await self._http_client.get(self.path)
+        return applications_resp['applications']

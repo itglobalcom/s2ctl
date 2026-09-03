@@ -46,6 +46,21 @@ class NicService(BaseService):
         nics_resp = await self._http_client.get(self.path)
         return nics_resp['nics']
 
+    async def update(
+        self, nic_id: int, *, bandwidth_mbps: int, wait: bool = False,
+    ) -> Union[TaskIDWrap, NicEntity]:
+        path = self._make_path(str(nic_id))
+        task_wrap: TaskIDWrap = await self._http_client.put(
+            path=path,
+            payload={
+                'bandwidth_mbps': bandwidth_mbps,
+            },
+        )
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return await self.get(nic_id)
+        return task_wrap
+
     async def delete(self, nic_id: int, wait: bool = False) -> None:
         path = self._make_path(str(nic_id))
         await self._http_client.delete(path)

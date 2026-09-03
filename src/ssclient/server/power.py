@@ -2,7 +2,6 @@ from typing import ClassVar, Optional
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
-from ssclient.task_id import TaskId
 
 
 class ServerPowerService(BaseService):
@@ -65,6 +64,3 @@ class ServerPowerService(BaseService):
             await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
-
-    def _task_id(self, task_wrap: TaskIDWrap) -> TaskId:
-        return TaskId.parse(task_wrap['task_id'])
