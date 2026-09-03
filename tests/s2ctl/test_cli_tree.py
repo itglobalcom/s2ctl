@@ -87,6 +87,7 @@ EXPECTED_VMWARE_COMMANDS = frozenset({
     'images',
     'locations',
     'network',
+    'server',
 })
 
 EXPECTED_VMWARE_NETWORK_COMMANDS = frozenset({
@@ -99,6 +100,28 @@ EXPECTED_VMWARE_NETWORK_COMMANDS = frozenset({
     'list',
     'rename',
     'set-bandwidth',
+})
+
+EXPECTED_VMWARE_SERVER_COMMANDS = frozenset({
+    'copy',
+    'create',
+    'delete',
+    'disable-nested-hypervisor',
+    'enable-nested-hypervisor',
+    'get',
+    'get-firewall',
+    'list',
+    'power-off',
+    'power-on',
+    'reboot',
+    'rebuild',
+    'rename',
+    'reset',
+    'set-computer-name',
+    'set-configuration',
+    'shutdown',
+    'update-firewall',
+    'verify',
 })
 
 EXPECTED_VMWARE_EDGE_COMMANDS = frozenset({
@@ -134,6 +157,12 @@ def test_vmware_network_group_commands_registered():
     vmware_group = entry_point.commands['vmware']
 
     assert set(vmware_group.commands['network'].commands) == EXPECTED_VMWARE_NETWORK_COMMANDS
+
+
+def test_vmware_server_group_commands_registered():
+    vmware_group = entry_point.commands['vmware']
+
+    assert set(vmware_group.commands['server'].commands) == EXPECTED_VMWARE_SERVER_COMMANDS
 
 
 def test_vmware_edge_group_commands_registered():

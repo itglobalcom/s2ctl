@@ -23,6 +23,7 @@ per-file-ignores =
     src/s2ctl/cmd_server.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/s2ctl/cmd_sshkey.py: WPS216
     src/s2ctl/cmd_vmware.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
+    src/s2ctl/cmd_vmware_server.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/ssclient/domain/record_entities.py: WPS202
 
 exclude =
