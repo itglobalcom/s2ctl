@@ -7,6 +7,7 @@ from s2ctl import (  # noqa: F401
     cmd_autocomplete,
     cmd_context,
     cmd_domain,
+    cmd_gateway,
     cmd_metainfo,
     cmd_network,
     cmd_project,
