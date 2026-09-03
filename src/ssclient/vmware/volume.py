@@ -2,6 +2,7 @@ from typing import ClassVar, List, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.vmware.ids import VmwareServerId, VmwareVolumeId
 
 
 class VmwareServerVolumeEntity(TypedDict):
@@ -16,14 +17,14 @@ class VmwareServerVolumeService(BaseService):
 
     _path: ClassVar[str] = 'api/v1/vmware/servers/{server_id}/volumes'
 
-    def __init__(self, http_client: HttpClientPort, server_id: int) -> None:
+    def __init__(self, http_client: HttpClientPort, server_id: VmwareServerId) -> None:
         super().__init__(http_client, {'server_id': server_id})
 
     async def list(self) -> List[VmwareServerVolumeEntity]:  # noqa: WPS125
         volumes_resp = await self._http_client.get(self.path)
         return volumes_resp['volumes']
 
-    async def get(self, volume_id: int) -> VmwareServerVolumeEntity:
+    async def get(self, volume_id: VmwareVolumeId) -> VmwareServerVolumeEntity:
         volume_resp = await self._http_client.get(self._volume_path(volume_id))
         return volume_resp['volume']
 
@@ -46,7 +47,12 @@ class VmwareServerVolumeService(BaseService):
         return await self.list()
 
     async def edit(
-        self, volume_id: int, *, size_mb: int, name: Optional[str] = None, wait: bool = False,
+        self,
+        volume_id: VmwareVolumeId,
+        *,
+        size_mb: int,
+        name: Optional[str] = None,
+        wait: bool = False,
     ) -> Union[TaskIDWrap, VmwareServerVolumeEntity]:
         # Имя не передано — publisher оставляет диску текущее.
         task_wrap: TaskIDWrap = await self._http_client.put(
@@ -61,7 +67,7 @@ class VmwareServerVolumeService(BaseService):
         await self._wait_task_completion(self._task_id(task_wrap))
         return await self.get(volume_id)
 
-    async def delete(self, volume_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def delete(self, volume_id: VmwareVolumeId, wait: bool = False) -> Optional[TaskIDWrap]:
         # Удаление диска VMware отдаёт ссылку на задачу само, без `return_task=true`.
         task_wrap: TaskIDWrap = await self._http_client.delete(self._volume_path(volume_id))
         if wait:
@@ -69,5 +75,5 @@ class VmwareServerVolumeService(BaseService):
             return None
         return task_wrap
 
-    def _volume_path(self, volume_id: int) -> str:
+    def _volume_path(self, volume_id: VmwareVolumeId) -> str:
         return self._make_path(str(volume_id))

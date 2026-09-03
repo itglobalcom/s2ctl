@@ -8,6 +8,15 @@ from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.cmd_vmware import vmware, vmware_service
 from s2ctl.params import rules_file_option
 from ssclient.vmware import firewall, nic, power, snapshot, volume
+from ssclient.vmware.ids import (
+    VmwareGpuModelId,
+    VmwareImageId,
+    VmwareLocationId,
+    VmwareNetworkId,
+    VmwareNicId,
+    VmwareServerId,
+    VmwareVolumeId,
+)
 from ssclient.vmware.server import VmwareServerService
 from ssclient.vmware.server_entities import VmwareServerGpu, VmwareServerOrder
 
@@ -32,7 +41,9 @@ def _parse_gpu(_ctx, _click_param, raw_gpu: Optional[str]) -> Optional[VmwareSer
     if not is_triple or not all(part.isdigit() for part in parts):
         raise click.BadParameter(_GPU_HINT)
     model_id, vram_mb, card_count = [int(part) for part in parts]
-    return VmwareServerGpu(gpu_model_id=model_id, vram_mb=vram_mb, card_count=card_count)
+    return VmwareServerGpu(
+        gpu_model_id=VmwareGpuModelId(model_id), vram_mb=vram_mb, card_count=card_count,
+    )
 
 
 _ORDER_OPTIONS = (
@@ -94,23 +105,23 @@ def _server_service(ctx: Context) -> VmwareServerService:
     return vmware_service(ctx).servers()
 
 
-def _power_service(ctx: Context, server_id: int) -> power.VmwareServerPowerService:
+def _power_service(ctx: Context, server_id: VmwareServerId) -> power.VmwareServerPowerService:
     return _server_service(ctx).power(server_id)
 
 
-def _firewall_service(ctx: Context, server_id: int) -> firewall.VmwareServerFirewallService:
+def _firewall_service(ctx: Context, server_id: VmwareServerId) -> firewall.VmwareServerFirewallService:
     return _server_service(ctx).firewall(server_id)
 
 
-def _volume_service(ctx: Context, server_id: int) -> volume.VmwareServerVolumeService:
+def _volume_service(ctx: Context, server_id: VmwareServerId) -> volume.VmwareServerVolumeService:
     return _server_service(ctx).volumes(server_id)
 
 
-def _nic_service(ctx: Context, server_id: int) -> nic.VmwareServerNicService:
+def _nic_service(ctx: Context, server_id: VmwareServerId) -> nic.VmwareServerNicService:
     return _server_service(ctx).nics(server_id)
 
 
-def _snapshot_service(ctx: Context, server_id: int) -> snapshot.VmwareServerSnapshotService:
+def _snapshot_service(ctx: Context, server_id: VmwareServerId) -> snapshot.VmwareServerSnapshotService:
     return _server_service(ctx).snapshot(server_id)
 
 
@@ -144,15 +155,15 @@ def _order_options(command):
 # WPS211: состав заказа задан формой запроса контракта — разбирается он целиком.
 def _order(  # noqa: WPS211
     *,
-    location: int,
+    location: VmwareLocationId,
     name: str,
     computer_name: Optional[str],
-    image: int,
+    image: VmwareImageId,
     cpu: int,
     ram: int,
     system_disk_size: int,
     system_disk_type: Optional[str],
-    public_network: Optional[int],
+    public_network: Optional[VmwareNetworkId],
     bandwidth: Optional[int],
     backup_enabled: bool,
     backup_period: Optional[int],
@@ -190,7 +201,7 @@ def server():
 @output_option
 @click.option('--location', type=int, help='Show only servers of the location.')
 @click.pass_context
-def servers_list(ctx, location: Optional[int]):
+def servers_list(ctx, location: Optional[VmwareLocationId]):
     """Display all VMware servers in the project."""
     service_resp = asyncio.run(_server_service(ctx).list(location_id=location))
     echo(service_resp)
@@ -200,7 +211,7 @@ def servers_list(ctx, location: Optional[int]):
 @output_option
 @_server_id_argument
 @click.pass_context
-def get(ctx, server_id: int):
+def get(ctx, server_id: VmwareServerId):
     """Get information about a VMware server."""
     service_resp = asyncio.run(_server_service(ctx).get(server_id))
     echo(service_resp)
@@ -236,7 +247,7 @@ def verify(ctx, **order_fields):
 @click.option('--ram', type=int, required=True, help='Amount of RAM in MB.')
 @click.option('--system-disk-size', type=int, required=True, help='Size of the system disk in MB.')
 @click.pass_context
-def set_configuration(ctx, server_id: int, cpu: int, ram: int, system_disk_size: int, wait: bool):
+def set_configuration(ctx, server_id: VmwareServerId, cpu: int, ram: int, system_disk_size: int, wait: bool):
     """Change the cores, the memory and the system disk of a VMware server."""
     service_resp = asyncio.run(_server_service(ctx).set_configuration(
         server_id,
@@ -253,7 +264,7 @@ def set_configuration(ctx, server_id: int, cpu: int, ram: int, system_disk_size:
 @_server_id_argument
 @click.option('--name', required=True, help='New display name of the server.')
 @click.pass_context
-def rename(ctx, server_id: int, name: str):
+def rename(ctx, server_id: VmwareServerId, name: str):
     """Change the display name of a VMware server."""
     service_resp = asyncio.run(_server_service(ctx).rename(server_id, name=name))
     echo(service_resp)
@@ -270,7 +281,7 @@ def rename(ctx, server_id: int, name: str):
     help='Force guest customization of the server.',
 )
 @click.pass_context
-def set_computer_name(ctx, server_id: int, computer_name: str, force_customization: bool, wait: bool):
+def set_computer_name(ctx, server_id: VmwareServerId, computer_name: str, force_customization: bool, wait: bool):
     """Change the guest OS hostname of a VMware server."""
     service_resp = asyncio.run(_server_service(ctx).set_computer_name(
         server_id,
@@ -288,7 +299,7 @@ def set_computer_name(ctx, server_id: int, computer_name: str, force_customizati
 @click.option('--name', required=True, help='Name of the copy.')
 @click.option('--client-network', type=int, help='Client network to connect the copy to.')
 @click.pass_context
-def copy(ctx, server_id: int, name: str, client_network: Optional[int], wait: bool):
+def copy(ctx, server_id: VmwareServerId, name: str, client_network: Optional[VmwareNetworkId], wait: bool):
     """Create a copy of a VMware server."""
     service_resp = asyncio.run(_server_service(ctx).copy(
         server_id,
@@ -306,7 +317,7 @@ def copy(ctx, server_id: int, name: str, client_network: Optional[int], wait: bo
 @click.option('--image', type=int, required=True, help=_IMAGE_HELP)
 @click.option('--sysprep', 'need_sysprep', is_flag=True, help='Run sysprep for a Windows image.')
 @click.pass_context
-def rebuild(ctx, server_id: int, image: int, need_sysprep: bool, wait: bool):
+def rebuild(ctx, server_id: VmwareServerId, image: VmwareImageId, need_sysprep: bool, wait: bool):
     """Recreate a VMware server from an OS template as a new server with a new identifier."""
     service_resp = asyncio.run(_server_service(ctx).rebuild(
         server_id,
@@ -322,7 +333,7 @@ def rebuild(ctx, server_id: int, image: int, need_sysprep: bool, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def delete(ctx, server_id: int, wait: bool):
+def delete(ctx, server_id: VmwareServerId, wait: bool):
     """Delete a VMware server."""
     service_resp = asyncio.run(_server_service(ctx).delete(server_id, wait=wait))
     echo(service_resp)
@@ -333,7 +344,7 @@ def delete(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def enable_nested_hypervisor(ctx, server_id: int, wait: bool):
+def enable_nested_hypervisor(ctx, server_id: VmwareServerId, wait: bool):
     """Turn nested virtualization on for a VMware server."""
     server_service = _server_service(ctx)
     service_resp = asyncio.run(server_service.enable_nested_hypervisor(server_id, wait=wait))
@@ -345,7 +356,7 @@ def enable_nested_hypervisor(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def disable_nested_hypervisor(ctx, server_id: int, wait: bool):
+def disable_nested_hypervisor(ctx, server_id: VmwareServerId, wait: bool):
     """Turn nested virtualization off for a VMware server."""
     server_service = _server_service(ctx)
     service_resp = asyncio.run(server_service.disable_nested_hypervisor(server_id, wait=wait))
@@ -357,7 +368,7 @@ def disable_nested_hypervisor(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def power_on(ctx, server_id: int, wait: bool):
+def power_on(ctx, server_id: VmwareServerId, wait: bool):
     """Power a VMware server on."""
     service_resp = asyncio.run(_power_service(ctx, server_id).power_on(wait=wait))
     echo(service_resp)
@@ -368,7 +379,7 @@ def power_on(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def power_off(ctx, server_id: int, wait: bool):
+def power_off(ctx, server_id: VmwareServerId, wait: bool):
     """Cut the power of a VMware server without shutting the guest OS down."""
     service_resp = asyncio.run(_power_service(ctx, server_id).power_off(wait=wait))
     echo(service_resp)
@@ -379,7 +390,7 @@ def power_off(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def shutdown(ctx, server_id: int, wait: bool):
+def shutdown(ctx, server_id: VmwareServerId, wait: bool):
     """Shut the guest OS of a VMware server down through VMware Tools."""
     service_resp = asyncio.run(_power_service(ctx, server_id).shutdown(wait=wait))
     echo(service_resp)
@@ -390,7 +401,7 @@ def shutdown(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def reboot(ctx, server_id: int, wait: bool):
+def reboot(ctx, server_id: VmwareServerId, wait: bool):
     """Reboot the guest OS of a VMware server through VMware Tools."""
     service_resp = asyncio.run(_power_service(ctx, server_id).reboot(wait=wait))
     echo(service_resp)
@@ -401,7 +412,7 @@ def reboot(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def reset(ctx, server_id: int, wait: bool):
+def reset(ctx, server_id: VmwareServerId, wait: bool):
     """Restart a VMware server without shutting the guest OS down."""
     service_resp = asyncio.run(_power_service(ctx, server_id).reset(wait=wait))
     echo(service_resp)
@@ -411,7 +422,7 @@ def reset(ctx, server_id: int, wait: bool):
 @output_option
 @_server_id_argument
 @click.pass_context
-def get_firewall(ctx, server_id: int):
+def get_firewall(ctx, server_id: VmwareServerId):
     """Display the firewall rules of a VMware server."""
     service_resp = asyncio.run(_firewall_service(ctx, server_id).get())
     echo(service_resp)
@@ -423,7 +434,7 @@ def get_firewall(ctx, server_id: int):
 @rules_file_option
 @_server_id_argument
 @click.pass_context
-def update_firewall(ctx, server_id: int, rules: Sequence[Any], wait: bool):
+def update_firewall(ctx, server_id: VmwareServerId, rules: Sequence[Any], wait: bool):
     """Replace the whole firewall rule set of a VMware server."""
     firewall_service = _firewall_service(ctx, server_id)
     service_resp = asyncio.run(firewall_service.update(rules=rules, wait=wait))
@@ -434,7 +445,7 @@ def update_firewall(ctx, server_id: int, rules: Sequence[Any], wait: bool):
 @output_option
 @_server_id_argument
 @click.pass_context
-def list_volume(ctx, server_id: int):
+def list_volume(ctx, server_id: VmwareServerId):
     """Display all additional volumes of a VMware server."""
     service_resp = asyncio.run(_volume_service(ctx, server_id).list())
     echo(service_resp)
@@ -445,7 +456,7 @@ def list_volume(ctx, server_id: int):
 @_server_id_argument
 @_volume_id_option
 @click.pass_context
-def get_volume(ctx, server_id: int, volume_id: int):
+def get_volume(ctx, server_id: VmwareServerId, volume_id: VmwareVolumeId):
     """Get information about a volume of a VMware server."""
     service_resp = asyncio.run(_volume_service(ctx, server_id).get(volume_id))
     echo(service_resp)
@@ -459,7 +470,7 @@ def get_volume(ctx, server_id: int, volume_id: int):
 @click.option('--disk-type', required=True, help=_DISK_TYPE_HELP)
 @click.option('--size', type=int, required=True, help='Size of the volume in MB.')
 @click.pass_context
-def add_volume(ctx, server_id: int, name: str, disk_type: str, size: int, wait: bool):
+def add_volume(ctx, server_id: VmwareServerId, name: str, disk_type: str, size: int, wait: bool):
     """Add an additional volume to a VMware server.
 
     With --wait the command prints the whole set of volumes of the server, not the new
@@ -484,7 +495,7 @@ def add_volume(ctx, server_id: int, name: str, disk_type: str, size: int, wait: 
 @click.option('--size', type=int, required=True, help='New size of the volume in MB.')
 @click.option('--name', help='New name of the volume. Omitted, the name is kept.')
 @click.pass_context
-def edit_volume(ctx, server_id: int, volume_id: int, size: int, name: Optional[str], wait: bool):
+def edit_volume(ctx, server_id: VmwareServerId, volume_id: VmwareVolumeId, size: int, name: Optional[str], wait: bool):
     """Change the size and the name of a volume of a VMware server."""
     volume_service = _volume_service(ctx, server_id)
     service_resp = asyncio.run(volume_service.edit(
@@ -502,7 +513,7 @@ def edit_volume(ctx, server_id: int, volume_id: int, size: int, name: Optional[s
 @_server_id_argument
 @_volume_id_option
 @click.pass_context
-def delete_volume(ctx, server_id: int, volume_id: int, wait: bool):
+def delete_volume(ctx, server_id: VmwareServerId, volume_id: VmwareVolumeId, wait: bool):
     """Delete an additional volume of a VMware server."""
     service_resp = asyncio.run(_volume_service(ctx, server_id).delete(volume_id, wait=wait))
     echo(service_resp)
@@ -512,7 +523,7 @@ def delete_volume(ctx, server_id: int, volume_id: int, wait: bool):
 @output_option
 @_server_id_argument
 @click.pass_context
-def list_nic(ctx, server_id: int):
+def list_nic(ctx, server_id: VmwareServerId):
     """Display all network interfaces of a VMware server."""
     service_resp = asyncio.run(_nic_service(ctx, server_id).list())
     echo(service_resp)
@@ -527,7 +538,7 @@ def list_nic(ctx, server_id: int):
 @_force_customization_option
 @click.pass_context
 def connect_client_network(
-    ctx, server_id: int, network: int, ip: Optional[str], force_customization: bool, wait: bool,
+    ctx, server_id: VmwareServerId, network: VmwareNetworkId, ip: Optional[str], force_customization: bool, wait: bool,
 ):
     """Connect a VMware server to a client network with a new network interface.
 
@@ -552,7 +563,7 @@ def connect_client_network(
 @click.option('--bandwidth', type=int, required=True, help='Bandwidth of the new interface in Mbps.')
 @_force_customization_option
 @click.pass_context
-def connect_shared_network(ctx, server_id: int, bandwidth: int, force_customization: bool, wait: bool):
+def connect_shared_network(ctx, server_id: VmwareServerId, bandwidth: int, force_customization: bool, wait: bool):
     """Connect a VMware server to the shared network with a new network interface.
 
     With --wait the command prints the whole set of network interfaces of the server, not
@@ -580,9 +591,9 @@ def connect_shared_network(ctx, server_id: int, bandwidth: int, force_customizat
 @click.pass_context
 def edit_nic(
     ctx,
-    server_id: int,
-    nic_id: int,
-    network: int,
+    server_id: VmwareServerId,
+    nic_id: VmwareNicId,
+    network: VmwareNetworkId,
     bandwidth: Optional[int],
     ip: Optional[str],
     force_customization: bool,
@@ -611,7 +622,7 @@ def edit_nic(
 @_server_id_argument
 @_nic_id_option
 @click.pass_context
-def disconnect_nic(ctx, server_id: int, nic_id: int, wait: bool):
+def disconnect_nic(ctx, server_id: VmwareServerId, nic_id: VmwareNicId, wait: bool):
     """Disconnect a VMware server from a network and remove its network interface."""
     service_resp = asyncio.run(_nic_service(ctx, server_id).disconnect(nic_id, wait=wait))
     echo(service_resp)
@@ -621,7 +632,7 @@ def disconnect_nic(ctx, server_id: int, nic_id: int, wait: bool):
 @output_option
 @_server_id_argument
 @click.pass_context
-def get_snapshot(ctx, server_id: int):
+def get_snapshot(ctx, server_id: VmwareServerId):
     """Get the snapshot of a VMware server."""
     service_resp = asyncio.run(_snapshot_service(ctx, server_id).get())
     echo(service_resp)
@@ -633,7 +644,7 @@ def get_snapshot(ctx, server_id: int):
 @_server_id_argument
 @click.option('--name', required=True, help='Name of the snapshot.')
 @click.pass_context
-def create_snapshot(ctx, server_id: int, name: str, wait: bool):
+def create_snapshot(ctx, server_id: VmwareServerId, name: str, wait: bool):
     """Take the snapshot of a VMware server."""
     snapshot_service = _snapshot_service(ctx, server_id)
     service_resp = asyncio.run(snapshot_service.create(name=name, wait=wait))
@@ -645,7 +656,7 @@ def create_snapshot(ctx, server_id: int, name: str, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def restore_snapshot(ctx, server_id: int, wait: bool):
+def restore_snapshot(ctx, server_id: VmwareServerId, wait: bool):
     """Revert a VMware server to the state of its snapshot."""
     service_resp = asyncio.run(_snapshot_service(ctx, server_id).restore(wait=wait))
     echo(service_resp)
@@ -656,7 +667,7 @@ def restore_snapshot(ctx, server_id: int, wait: bool):
 @wait_option
 @_server_id_argument
 @click.pass_context
-def delete_snapshot(ctx, server_id: int, wait: bool):
+def delete_snapshot(ctx, server_id: VmwareServerId, wait: bool):
     """Delete the snapshot of a VMware server."""
     service_resp = asyncio.run(_snapshot_service(ctx, server_id).delete(wait=wait))
     echo(service_resp)

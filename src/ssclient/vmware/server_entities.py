@@ -1,6 +1,13 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, TypedDict
 
+from ssclient.vmware.ids import (
+    VmwareGpuModelId,
+    VmwareImageId,
+    VmwareLocationId,
+    VmwareNetworkId,
+)
+
 
 class VmwareServerGpuEntity(TypedDict):
     model_id: int
@@ -51,7 +58,7 @@ class VmwareServerOrderRef(TypedDict):
 class VmwareServerGpu(object):
     """Профиль GPU заказываемого сервера: platform выбирает нарезку по всей тройке сразу."""
 
-    gpu_model_id: int
+    gpu_model_id: VmwareGpuModelId
     vram_mb: int
     card_count: int
 
@@ -60,18 +67,20 @@ class VmwareServerGpu(object):
 class VmwareServerOrder(object):  # noqa: WPS230
     """Заказ VMware-сервера — одно тело запроса и на создание, и на его предпроверку."""
 
-    location_id: int
+    location_id: VmwareLocationId
     name: str
-    image_id: int
+    image_id: VmwareImageId
     cpu_count: int
     ram_mb: int
     system_disk_size_mb: int
     computer_name: Optional[str] = None
     system_disk_type: Optional[str] = None
-    public_network_id: Optional[int] = None
+    public_network_id: Optional[VmwareNetworkId] = None
     network_bandwidth_mbps: Optional[int] = None
     backup_enabled: bool = False
     backup_period: Optional[int] = None
+    # `ssh_keys` — примитив намеренно: ключ принадлежит проекту, а не разделу VMware,
+    # и в сигнатурах раздела рядом с другими id не встречается (см. archi.md).
     ssh_keys: Sequence[int] = field(default_factory=tuple)
     need_sysprep: bool = False
     nested_hypervisor: bool = False

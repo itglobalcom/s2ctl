@@ -9,6 +9,13 @@ from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.params import rules_file_option
 from ssclient.vmware.edge import VmwareEdgeService
+from ssclient.vmware.ids import (
+    VmwareLocationId,
+    VmwareNatRuleId,
+    VmwareNetworkId,
+    VmwareServerId,
+    VmwareVpnTunnelId,
+)
 from ssclient.vmware.network import VmwareNetworkService, VmwareServerNic
 from ssclient.vmware.vmware import VmwareService
 
@@ -39,7 +46,7 @@ def _network_service(ctx: Context) -> VmwareNetworkService:
     return vmware_service(ctx).networks()
 
 
-def _edge_service(ctx: Context, network_id: int) -> VmwareEdgeService:
+def _edge_service(ctx: Context, network_id: VmwareNetworkId) -> VmwareEdgeService:
     return vmware_service(ctx).networks().edge(network_id)
 
 
@@ -51,7 +58,7 @@ def _parse_server_nic(raw_nic: str) -> VmwareServerNic:
     raw_server_id, _, ip_address = raw_nic.partition(':')
     if not raw_server_id.isdigit():
         raise click.BadParameter(_SERVER_NIC_HINT)
-    return VmwareServerNic(server_id=int(raw_server_id), ip=ip_address or None)
+    return VmwareServerNic(server_id=VmwareServerId(int(raw_server_id)), ip=ip_address or None)
 
 
 def _network_id_argument(func):
@@ -84,7 +91,7 @@ def locations(ctx):
     help='Show only images that require a GPU ("required") or cannot use one ("unsupported").',
 )
 @click.pass_context
-def images(ctx, location: Optional[int], gpu: Optional[str]):
+def images(ctx, location: Optional[VmwareLocationId], gpu: Optional[str]):
     """List of OS templates which you can use for your VMware server."""
     images_service = vmware_service(ctx).images()
     service_resp = asyncio.run(images_service.list(location_id=location, gpu=gpu))
@@ -95,7 +102,7 @@ def images(ctx, location: Optional[int], gpu: Optional[str]):
 @output_option
 @click.option('--location', type=int, help='Show only GPU models offered in the location.')
 @click.pass_context
-def gpu_models(ctx, location: Optional[int]):
+def gpu_models(ctx, location: Optional[VmwareLocationId]):
     """List of GPU models which you can attach to your VMware server."""
     service_resp = asyncio.run(vmware_service(ctx).gpu_models().list(location_id=location))
     echo(service_resp)
@@ -116,7 +123,7 @@ def network():
     help='Show only networks of the type.',
 )
 @click.pass_context
-def networks_list(ctx, location: Optional[int], network_type: Optional[str]):
+def networks_list(ctx, location: Optional[VmwareLocationId], network_type: Optional[str]):
     """Display all VMware networks in the project."""
     service_resp = asyncio.run(_network_service(ctx).list(location_id=location, network_type=network_type))
     echo(service_resp)
@@ -126,7 +133,7 @@ def networks_list(ctx, location: Optional[int], network_type: Optional[str]):
 @output_option
 @_network_id_argument
 @click.pass_context
-def get(ctx, network_id: int):
+def get(ctx, network_id: VmwareNetworkId):
     """Get information about a VMware network."""
     service_resp = asyncio.run(_network_service(ctx).get(network_id))
     echo(service_resp)
@@ -148,7 +155,7 @@ def get(ctx, network_id: int):
 @click.pass_context
 def create_isolated(
     ctx,
-    location: int,
+    location: VmwareLocationId,
     name: str,
     address: str,
     mask: Optional[int],
@@ -184,7 +191,7 @@ def create_isolated(
 @click.pass_context
 def create_routed(
     ctx,
-    location: int,
+    location: VmwareLocationId,
     name: str,
     address: str,
     mask: Optional[int],
@@ -218,7 +225,7 @@ def create_routed(
 )
 @click.option('--bandwidth', type=int, help='Bandwidth of the network in Mbps.')
 @click.pass_context
-def create_public(ctx, location: int, name: str, capacity: str, bandwidth: Optional[int], wait: bool):
+def create_public(ctx, location: VmwareLocationId, name: str, capacity: str, bandwidth: Optional[int], wait: bool):
     """Create new public network with a block of public addresses."""
     service_resp = asyncio.run(_network_service(ctx).create_public(
         location_id=location,
@@ -236,7 +243,7 @@ def create_public(ctx, location: int, name: str, capacity: str, bandwidth: Optio
 @_network_id_argument
 @click.option('--name', required=True, help='New name of the network.')
 @click.pass_context
-def rename(ctx, network_id: int, name: str, wait: bool):
+def rename(ctx, network_id: VmwareNetworkId, name: str, wait: bool):
     """Change the name of a VMware network."""
     network_service = _network_service(ctx)
     service_resp = asyncio.run(network_service.rename(network_id, name=name, wait=wait))
@@ -249,7 +256,7 @@ def rename(ctx, network_id: int, name: str, wait: bool):
 @_network_id_argument
 @click.option('--bandwidth', type=int, required=True, help='Bandwidth of the network in Mbps.')
 @click.pass_context
-def set_bandwidth(ctx, network_id: int, bandwidth: int, wait: bool):
+def set_bandwidth(ctx, network_id: VmwareNetworkId, bandwidth: int, wait: bool):
     """Set the bandwidth of a routed or public VMware network."""
     service_resp = asyncio.run(_network_service(ctx).set_bandwidth(
         network_id, bandwidth_mbps=bandwidth, wait=wait,
@@ -262,7 +269,7 @@ def set_bandwidth(ctx, network_id: int, bandwidth: int, wait: bool):
 @wait_option
 @_network_id_argument
 @click.pass_context
-def delete(ctx, network_id: int, wait: bool):
+def delete(ctx, network_id: VmwareNetworkId, wait: bool):
     """Delete a VMware network."""
     service_resp = asyncio.run(_network_service(ctx).delete(network_id, wait=wait))
     echo(service_resp)
@@ -290,7 +297,7 @@ def delete(ctx, network_id: int, wait: bool):
 @click.pass_context
 def connect_servers(
     ctx,
-    network_id: int,
+    network_id: VmwareNetworkId,
     nics: Sequence[VmwareServerNic],
     force_customization: bool,
     wait: bool,
@@ -316,7 +323,7 @@ def edge():
 @_network_id_argument
 @click.option('--bandwidth', type=int, required=True, help='Uplink bandwidth of the edge gateway in Mbps.')
 @click.pass_context
-def edge_set_bandwidth(ctx, network_id: int, bandwidth: int, wait: bool):
+def edge_set_bandwidth(ctx, network_id: VmwareNetworkId, bandwidth: int, wait: bool):
     """Set the uplink bandwidth of the edge gateway of a network."""
     service_resp = asyncio.run(_edge_service(ctx, network_id).set_bandwidth(
         bandwidth_mbps=bandwidth, wait=wait,
@@ -328,7 +335,7 @@ def edge_set_bandwidth(ctx, network_id: int, bandwidth: int, wait: bool):
 @output_option
 @_network_id_argument
 @click.pass_context
-def get_firewall(ctx, network_id: int):
+def get_firewall(ctx, network_id: VmwareNetworkId):
     """Display the firewall of the edge gateway of a network."""
     service_resp = asyncio.run(_edge_service(ctx, network_id).firewall().get())
     echo(service_resp)
@@ -352,7 +359,7 @@ def get_firewall(ctx, network_id: int):
 @click.pass_context
 def update_firewall(
     ctx,
-    network_id: int,
+    network_id: VmwareNetworkId,
     rules: Sequence[Any],
     enabled: Optional[bool],
     default_action: Optional[str],
@@ -372,7 +379,7 @@ def update_firewall(
 @output_option
 @_network_id_argument
 @click.pass_context
-def get_nat(ctx, network_id: int):
+def get_nat(ctx, network_id: VmwareNetworkId):
     """Display the NAT rules of the edge gateway of a network."""
     service_resp = asyncio.run(_edge_service(ctx, network_id).nat().get())
     echo(service_resp)
@@ -409,8 +416,8 @@ def get_nat(ctx, network_id: int):
 @click.pass_context
 def upsert_nat_rule(
     ctx,
-    network_id: int,
-    rule_id: Optional[int],
+    network_id: VmwareNetworkId,
+    rule_id: Optional[VmwareNatRuleId],
     rule_type: str,
     protocol: str,
     original_ip: str,
@@ -443,7 +450,7 @@ def upsert_nat_rule(
 @_network_id_argument
 @click.option('--rule-id', type=int, required=True, help='NAT rule identifier.')
 @click.pass_context
-def delete_nat_rule(ctx, network_id: int, rule_id: int, wait: bool):
+def delete_nat_rule(ctx, network_id: VmwareNetworkId, rule_id: VmwareNatRuleId, wait: bool):
     """Delete a NAT rule of the edge gateway of a network."""
     nat_service = _edge_service(ctx, network_id).nat()
     service_resp = asyncio.run(nat_service.delete_rule(rule_id, wait=wait))
@@ -454,7 +461,7 @@ def delete_nat_rule(ctx, network_id: int, rule_id: int, wait: bool):
 @output_option
 @_network_id_argument
 @click.pass_context
-def get_vpn(ctx, network_id: int):
+def get_vpn(ctx, network_id: VmwareNetworkId):
     """Display the IPsec VPN tunnels of the edge gateway of a network."""
     service_resp = asyncio.run(_edge_service(ctx, network_id).vpn().get())
     echo(service_resp)
@@ -497,8 +504,8 @@ def get_vpn(ctx, network_id: int):
 @click.pass_context
 def upsert_vpn_tunnel(
     ctx,
-    network_id: int,
-    tunnel_id: Optional[int],
+    network_id: VmwareNetworkId,
+    tunnel_id: Optional[VmwareVpnTunnelId],
     name: str,
     shared_key: str,
     peer_network: str,
@@ -535,7 +542,7 @@ def upsert_vpn_tunnel(
 @_network_id_argument
 @click.option('--tunnel-id', type=int, required=True, help='VPN tunnel identifier.')
 @click.pass_context
-def delete_vpn_tunnel(ctx, network_id: int, tunnel_id: int, wait: bool):
+def delete_vpn_tunnel(ctx, network_id: VmwareNetworkId, tunnel_id: VmwareVpnTunnelId, wait: bool):
     """Delete an IPsec VPN tunnel of the edge gateway of a network."""
     vpn_service = _edge_service(ctx, network_id).vpn()
     service_resp = asyncio.run(vpn_service.delete_tunnel(tunnel_id, wait=wait))

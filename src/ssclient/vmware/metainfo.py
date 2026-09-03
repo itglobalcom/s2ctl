@@ -1,6 +1,7 @@
 from typing import ClassVar, List, Optional, TypedDict
 
 from ssclient.base import BaseService, with_filters
+from ssclient.vmware.ids import VmwareLocationId
 
 
 class VmwareLocationDiskTypeEntity(TypedDict):
@@ -60,7 +61,7 @@ class VmwareImagesService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/images'
 
     async def list(  # noqa: WPS125
-        self, location_id: Optional[int] = None, gpu: Optional[str] = None,
+        self, location_id: Optional[VmwareLocationId] = None, gpu: Optional[str] = None,
     ) -> List[VmwareImageEntity]:
         path = with_filters(self.path, {'location_id': location_id, 'gpu': gpu})
         images_resp = await self._http_client.get(path)
@@ -70,7 +71,9 @@ class VmwareImagesService(BaseService):
 class VmwareGpuModelsService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/gpu-models'
 
-    async def list(self, location_id: Optional[int] = None) -> List[VmwareGpuModelEntity]:  # noqa: WPS125
+    async def list(  # noqa: WPS125
+        self, location_id: Optional[VmwareLocationId] = None,
+    ) -> List[VmwareGpuModelEntity]:
         path = with_filters(self.path, {'location_id': location_id})
         gpu_models_resp = await self._http_client.get(path)
         return gpu_models_resp['gpu_models']

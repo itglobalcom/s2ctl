@@ -4,6 +4,12 @@ from typing import Any, ClassVar, Dict, List, Optional, TypedDict, Union
 from ssclient.base import BaseService, Payload, TaskIDWrap, with_filters
 from ssclient.task_id import TaskId
 from ssclient.vmware.firewall import VmwareServerFirewallService
+from ssclient.vmware.ids import (
+    VmwareImageId,
+    VmwareLocationId,
+    VmwareNetworkId,
+    VmwareServerId,
+)
 from ssclient.vmware.nic import VmwareServerNicService
 from ssclient.vmware.power import VmwareServerPowerService
 from ssclient.vmware.server_entities import (
@@ -28,12 +34,14 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
     _path: ClassVar[str] = 'api/v1/vmware/servers'
 
-    async def list(self, location_id: Optional[int] = None) -> List[VmwareServerEntity]:  # noqa: WPS125
+    async def list(  # noqa: WPS125
+        self, location_id: Optional[VmwareLocationId] = None,
+    ) -> List[VmwareServerEntity]:
         path = with_filters(self.path, {'location_id': location_id})
         servers_resp = await self._http_client.get(path)
         return servers_resp['servers']
 
-    async def get(self, server_id: int) -> VmwareServerEntity:
+    async def get(self, server_id: VmwareServerId) -> VmwareServerEntity:
         server_resp = await self._http_client.get(self._server_path(server_id))
         return server_resp['server']
 
@@ -51,7 +59,7 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
     async def set_configuration(
         self,
-        server_id: int,
+        server_id: VmwareServerId,
         *,
         cpu: int,
         ram_mb: int,
@@ -68,7 +76,7 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
         )
         return await self._task_result(task_wrap, server_id, wait=wait)
 
-    async def rename(self, server_id: int, *, name: str) -> None:
+    async def rename(self, server_id: VmwareServerId, *, name: str) -> None:
         """Переименование применяется синхронно: publisher не заводит задачу и не отдаёт тела."""
         await self._http_client.put(
             path=self._server_path(server_id, 'name'),
@@ -77,7 +85,7 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
     async def set_computer_name(
         self,
-        server_id: int,
+        server_id: VmwareServerId,
         *,
         computer_name: str,
         force_customization: bool = False,
@@ -94,10 +102,10 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
     async def copy(
         self,
-        server_id: int,
+        server_id: VmwareServerId,
         *,
         name: str,
-        client_network_id: Optional[int] = None,
+        client_network_id: Optional[VmwareNetworkId] = None,
         wait: bool = False,
     ) -> Union[VmwareServerOrderRef, VmwareServerEntity]:
         return await self._order(
@@ -108,9 +116,9 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
     async def rebuild(
         self,
-        server_id: int,
+        server_id: VmwareServerId,
         *,
-        image_id: int,
+        image_id: VmwareImageId,
         need_sysprep: Optional[bool] = None,
         wait: bool = False,
     ) -> Union[VmwareServerOrderRef, VmwareServerEntity]:
@@ -121,7 +129,7 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
             wait=wait,
         )
 
-    async def delete(self, server_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def delete(self, server_id: VmwareServerId, wait: bool = False) -> Optional[TaskIDWrap]:
         # Удаление VMware-сервера отдаёт ссылку на задачу само, без `return_task=true`.
         task_wrap: TaskIDWrap = await self._http_client.delete(self._server_path(server_id))
         if wait:
@@ -130,17 +138,17 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
         return task_wrap
 
     async def enable_nested_hypervisor(
-        self, server_id: int, wait: bool = False,
+        self, server_id: VmwareServerId, wait: bool = False,
     ) -> Union[VmwareNestedHypervisorRef, VmwareServerEntity]:
         return await self._switch_nested_hypervisor(server_id, 'enable', wait=wait)
 
     async def disable_nested_hypervisor(
-        self, server_id: int, wait: bool = False,
+        self, server_id: VmwareServerId, wait: bool = False,
     ) -> Union[VmwareNestedHypervisorRef, VmwareServerEntity]:
         return await self._switch_nested_hypervisor(server_id, 'disable', wait=wait)
 
     async def _switch_nested_hypervisor(
-        self, server_id: int, transition: str, *, wait: bool,
+        self, server_id: VmwareServerId, transition: str, *, wait: bool,
     ) -> Union[VmwareNestedHypervisorRef, VmwareServerEntity]:
         task_ref: VmwareNestedHypervisorRef = await self._http_client.post(
             path=self._server_path(
@@ -166,17 +174,17 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
         if not wait:
             return order_ref
         await self._wait_task_completion(TaskId.parse(order_ref['task_id']))
-        return await self.get(order_ref['server_id'])
+        return await self.get(VmwareServerId(order_ref['server_id']))
 
     async def _task_result(
-        self, task_wrap: TaskIDWrap, server_id: int, *, wait: bool,
+        self, task_wrap: TaskIDWrap, server_id: VmwareServerId, *, wait: bool,
     ) -> Union[TaskIDWrap, VmwareServerEntity]:
         if not wait:
             return task_wrap
         await self._wait_task_completion(self._task_id(task_wrap))
         return await self.get(server_id)
 
-    def _server_path(self, server_id: int, fragment: str = '') -> str:
+    def _server_path(self, server_id: VmwareServerId, fragment: str = '') -> str:
         path = self._make_path(str(server_id))
         if not fragment:
             return path
@@ -184,19 +192,19 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
 
 class VmwareServerService(BaseVmwareServerService):
-    def power(self, server_id: int) -> VmwareServerPowerService:
+    def power(self, server_id: VmwareServerId) -> VmwareServerPowerService:
         return VmwareServerPowerService(self._http_client, server_id)
 
-    def firewall(self, server_id: int) -> VmwareServerFirewallService:
+    def firewall(self, server_id: VmwareServerId) -> VmwareServerFirewallService:
         return VmwareServerFirewallService(self._http_client, server_id)
 
-    def volumes(self, server_id: int) -> VmwareServerVolumeService:
+    def volumes(self, server_id: VmwareServerId) -> VmwareServerVolumeService:
         return VmwareServerVolumeService(self._http_client, server_id)
 
-    def nics(self, server_id: int) -> VmwareServerNicService:
+    def nics(self, server_id: VmwareServerId) -> VmwareServerNicService:
         return VmwareServerNicService(self._http_client, server_id)
 
-    def snapshot(self, server_id: int) -> VmwareServerSnapshotService:
+    def snapshot(self, server_id: VmwareServerId) -> VmwareServerSnapshotService:
         return VmwareServerSnapshotService(self._http_client, server_id)
 
 

@@ -2,6 +2,7 @@ from typing import ClassVar, List, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, Payload, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.vmware.ids import VmwareNetworkId, VmwareNicId, VmwareServerId
 
 _SHARED_FRAGMENT = 'shared'
 
@@ -25,7 +26,7 @@ class VmwareServerNicService(BaseService):
 
     _path: ClassVar[str] = 'api/v1/vmware/servers/{server_id}/nics'
 
-    def __init__(self, http_client: HttpClientPort, server_id: int) -> None:
+    def __init__(self, http_client: HttpClientPort, server_id: VmwareServerId) -> None:
         super().__init__(http_client, {'server_id': server_id})
 
     async def list(self) -> List[VmwareServerNicEntity]:  # noqa: WPS125
@@ -35,7 +36,7 @@ class VmwareServerNicService(BaseService):
     async def connect_client_network(
         self,
         *,
-        network_id: int,
+        network_id: VmwareNetworkId,
         ip: Optional[str] = None,
         force_customization: bool = False,
         wait: bool = False,
@@ -66,9 +67,9 @@ class VmwareServerNicService(BaseService):
     # WPS211: набор параметров интерфейса задан формой запроса контракта — он передаётся целиком.
     async def update(  # noqa: WPS211
         self,
-        nic_id: int,
+        nic_id: VmwareNicId,
         *,
-        network_id: int,
+        network_id: VmwareNetworkId,
         bandwidth_mbps: Optional[int] = None,
         ip: Optional[str] = None,
         force_customization: bool = False,
@@ -89,7 +90,7 @@ class VmwareServerNicService(BaseService):
         # Чтения одного интерфейса в контракте нет — только набор интерфейсов сервера.
         return await self.list()
 
-    async def disconnect(self, nic_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def disconnect(self, nic_id: VmwareNicId, wait: bool = False) -> Optional[TaskIDWrap]:
         # Отключение интерфейса VMware отдаёт ссылку на задачу само, без `return_task=true`.
         task_wrap: TaskIDWrap = await self._http_client.delete(self._make_path(str(nic_id)))
         if wait:

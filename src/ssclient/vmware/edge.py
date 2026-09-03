@@ -2,6 +2,7 @@ from typing import ClassVar, List, Optional, Sequence, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.vmware.ids import VmwareNatRuleId, VmwareNetworkId, VmwareVpnTunnelId
 from ssclient.vmware.edge_entities import (
     VmwareEdgeFirewallEntity,
     VmwareEdgeFirewallRuleEntity,
@@ -15,7 +16,7 @@ _NETWORK_ID_FIELD = 'network_id'
 
 
 class BaseEdgeService(BaseService):
-    def __init__(self, http_client: HttpClientPort, network_id: int) -> None:
+    def __init__(self, http_client: HttpClientPort, network_id: VmwareNetworkId) -> None:
         super().__init__(http_client, {_NETWORK_ID_FIELD: network_id})
         self._network_id = network_id
 
@@ -67,7 +68,7 @@ class VmwareEdgeNatService(BaseEdgeService):
         protocol: str,
         original_ip: str,
         translated_ip: str,
-        rule_id: Optional[int] = None,
+        rule_id: Optional[VmwareNatRuleId] = None,
         original_port: Optional[str] = None,
         translated_port: Optional[str] = None,
         description: Optional[str] = None,
@@ -95,7 +96,7 @@ class VmwareEdgeNatService(BaseEdgeService):
         await self._wait_task_completion(self._task_id(task_wrap))
         return await self.get()
 
-    async def delete_rule(self, rule_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def delete_rule(self, rule_id: VmwareNatRuleId, wait: bool = False) -> Optional[TaskIDWrap]:
         task_wrap: TaskIDWrap = await self._http_client.delete(self._make_path(str(rule_id)))
         if wait:
             await self._wait_task_completion(self._task_id(task_wrap))
@@ -122,7 +123,7 @@ class VmwareEdgeVpnService(BaseEdgeService):
         mtu: int,
         encryption_type: str,
         diffie_hellman_group: str,
-        tunnel_id: Optional[int] = None,
+        tunnel_id: Optional[VmwareVpnTunnelId] = None,
         enabled: Optional[bool] = None,
         perfect_forward_secrecy: Optional[bool] = None,
         wait: bool = False,
@@ -150,7 +151,7 @@ class VmwareEdgeVpnService(BaseEdgeService):
         await self._wait_task_completion(self._task_id(task_wrap))
         return await self.get()
 
-    async def delete_tunnel(self, tunnel_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def delete_tunnel(self, tunnel_id: VmwareVpnTunnelId, wait: bool = False) -> Optional[TaskIDWrap]:
         task_wrap: TaskIDWrap = await self._http_client.delete(self._make_path(str(tunnel_id)))
         if wait:
             await self._wait_task_completion(self._task_id(task_wrap))

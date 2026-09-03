@@ -5,6 +5,7 @@ from ssclient.base import BaseService, Payload, TaskIDWrap, with_filters
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
 from ssclient.vmware.edge import VmwareEdgeService
+from ssclient.vmware.ids import VmwareLocationId, VmwareNetworkId, VmwareServerId
 
 
 class VmwareNetworkEntity(TypedDict):
@@ -29,11 +30,11 @@ class TaskIDsWrap(TypedDict):
 class VmwareServerNic(NamedTuple):
     """Сервер, подключаемый к сети, и адрес, который получит его интерфейс."""
 
-    server_id: int
+    server_id: VmwareServerId
     ip: Optional[str] = None
 
 
-def _create_payload(location_id: int, name: str) -> Payload:
+def _create_payload(location_id: VmwareLocationId, name: str) -> Payload:
     """Общая часть запроса создания: локацию и имя требует любой из трёх типов сети."""
     return {'location_id': location_id, 'name': name}
 
@@ -42,27 +43,29 @@ class BaseVmwareNetworkService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/networks'
 
     async def list(  # noqa: WPS125
-        self, location_id: Optional[int] = None, network_type: Optional[str] = None,
+        self,
+        location_id: Optional[VmwareLocationId] = None,
+        network_type: Optional[str] = None,
     ) -> List[VmwareNetworkEntity]:
         path = with_filters(self.path, {'location_id': location_id, 'type': network_type})
         networks_resp = await self._http_client.get(path)
         return networks_resp['networks']
 
-    async def get(self, network_id: int) -> VmwareNetworkEntity:
+    async def get(self, network_id: VmwareNetworkId) -> VmwareNetworkEntity:
         network_resp = await self._http_client.get(self._network_path(network_id))
         return network_resp['network']
 
     async def rename(
-        self, network_id: int, *, name: str, wait: bool = False,
+        self, network_id: VmwareNetworkId, *, name: str, wait: bool = False,
     ) -> Union[TaskIDWrap, VmwareNetworkEntity, None]:
         return await self._edit(network_id, {'name': name}, wait=wait)
 
     async def set_bandwidth(
-        self, network_id: int, *, bandwidth_mbps: int, wait: bool = False,
+        self, network_id: VmwareNetworkId, *, bandwidth_mbps: int, wait: bool = False,
     ) -> Union[TaskIDWrap, VmwareNetworkEntity, None]:
         return await self._edit(network_id, {'bandwidth_mbps': bandwidth_mbps}, wait=wait)
 
-    async def delete(self, network_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def delete(self, network_id: VmwareNetworkId, wait: bool = False) -> Optional[TaskIDWrap]:
         # Удаление VMware-сети отдаёт ссылку на задачу само, без `return_task=true`.
         task_wrap: TaskIDWrap = await self._http_client.delete(self._network_path(network_id))
         if wait:
@@ -71,7 +74,7 @@ class BaseVmwareNetworkService(BaseService):
         return task_wrap
 
     async def _edit(
-        self, network_id: int, payload: Payload, *, wait: bool,
+        self, network_id: VmwareNetworkId, payload: Payload, *, wait: bool,
     ) -> Union[TaskIDWrap, VmwareNetworkEntity, None]:
         # Правку изолированной сети publisher применяет синхронно и отвечает 204 без задачи.
         task_wrap: Optional[TaskIDWrap] = await self._http_client.put(
@@ -84,7 +87,7 @@ class BaseVmwareNetworkService(BaseService):
             await self._wait_task_completion(self._task_id(task_wrap))
         return await self.get(network_id)
 
-    def _network_path(self, network_id: int, fragment: str = '') -> str:
+    def _network_path(self, network_id: VmwareNetworkId, fragment: str = '') -> str:
         path = self._make_path(str(network_id))
         if not fragment:
             return path
@@ -96,7 +99,7 @@ class VmwareNetworkService(BaseVmwareNetworkService):
     async def create_isolated(  # noqa: WPS211
         self,
         *,
-        location_id: int,
+        location_id: VmwareLocationId,
         name: str,
         address: str,
         mask: Optional[int] = None,
@@ -111,7 +114,7 @@ class VmwareNetworkService(BaseVmwareNetworkService):
     async def create_routed(  # noqa: WPS211
         self,
         *,
-        location_id: int,
+        location_id: VmwareLocationId,
         name: str,
         address: str,
         mask: Optional[int] = None,
@@ -131,7 +134,7 @@ class VmwareNetworkService(BaseVmwareNetworkService):
     async def create_public(
         self,
         *,
-        location_id: int,
+        location_id: VmwareLocationId,
         name: str,
         capacity: str,
         bandwidth_mbps: Optional[int] = None,
@@ -143,7 +146,7 @@ class VmwareNetworkService(BaseVmwareNetworkService):
 
     async def connect_servers(
         self,
-        network_id: int,
+        network_id: VmwareNetworkId,
         *,
         nics: Sequence[VmwareServerNic],
         force_customization: bool = False,
@@ -166,7 +169,7 @@ class VmwareNetworkService(BaseVmwareNetworkService):
         ])
         return await self.get(network_id)
 
-    def edge(self, network_id: int) -> VmwareEdgeService:
+    def edge(self, network_id: VmwareNetworkId) -> VmwareEdgeService:
         return VmwareEdgeService(self._http_client, network_id)
 
     async def _create(
@@ -180,4 +183,4 @@ class VmwareNetworkService(BaseVmwareNetworkService):
             return task_wrap
 
         task = await self._wait_task_completion(self._task_id(task_wrap))
-        return await self.get(int(task_resource_id(task, TaskResourceType.network)))
+        return await self.get(VmwareNetworkId(int(task_resource_id(task, TaskResourceType.network))))

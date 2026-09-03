@@ -2,6 +2,7 @@ from typing import ClassVar, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.vmware.ids import VmwareServerId
 
 _RESTORE_FRAGMENT = 'restore'
 
@@ -16,7 +17,7 @@ class VmwareServerSnapshotService(BaseService):
 
     _path: ClassVar[str] = 'api/v1/vmware/servers/{server_id}/snapshot'
 
-    def __init__(self, http_client: HttpClientPort, server_id: int) -> None:
+    def __init__(self, http_client: HttpClientPort, server_id: VmwareServerId) -> None:
         super().__init__(http_client, {'server_id': server_id})
 
     async def get(self) -> Optional[VmwareServerSnapshotEntity]:

@@ -2,6 +2,7 @@ from typing import ClassVar, Optional
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.vmware.ids import VmwareServerId
 
 
 class VmwareServerPowerService(BaseService):
@@ -9,7 +10,7 @@ class VmwareServerPowerService(BaseService):
 
     _path: ClassVar[str] = 'api/v1/vmware/servers/{server_id}/power'
 
-    def __init__(self, http_client: HttpClientPort, server_id: int) -> None:
+    def __init__(self, http_client: HttpClientPort, server_id: VmwareServerId) -> None:
         super().__init__(http_client, {'server_id': server_id})
 
     async def power_on(self, wait: bool = False) -> Optional[TaskIDWrap]:
