@@ -4,12 +4,15 @@ from typing import Any, ClassVar, Dict, List, Optional, TypedDict, Union
 from ssclient.base import BaseService, Payload, TaskIDWrap, with_filters
 from ssclient.task_id import TaskId
 from ssclient.vmware.firewall import VmwareServerFirewallService
+from ssclient.vmware.nic import VmwareServerNicService
 from ssclient.vmware.power import VmwareServerPowerService
 from ssclient.vmware.server_entities import (
     VmwareServerEntity,
     VmwareServerOrder,
     VmwareServerOrderRef,
 )
+from ssclient.vmware.snapshot import VmwareServerSnapshotService
+from ssclient.vmware.volume import VmwareServerVolumeService
 
 _NESTED_HYPERVISOR_PATH = 'nested-hypervisor/{transition}'
 
@@ -186,6 +189,15 @@ class VmwareServerService(BaseVmwareServerService):
 
     def firewall(self, server_id: int) -> VmwareServerFirewallService:
         return VmwareServerFirewallService(self._http_client, server_id)
+
+    def volumes(self, server_id: int) -> VmwareServerVolumeService:
+        return VmwareServerVolumeService(self._http_client, server_id)
+
+    def nics(self, server_id: int) -> VmwareServerNicService:
+        return VmwareServerNicService(self._http_client, server_id)
+
+    def snapshot(self, server_id: int) -> VmwareServerSnapshotService:
+        return VmwareServerSnapshotService(self._http_client, server_id)
 
 
 def _order_payload(order: VmwareServerOrder) -> Dict[str, Any]:
