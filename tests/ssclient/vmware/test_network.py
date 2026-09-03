@@ -12,6 +12,10 @@ from tests.ssclient.vmware.conftest import (
 
 SERVERS_PATH = '{network_path}/servers'.format(network_path=NETWORK_PATH)
 
+# Обязательные поля тела `PUT /api/v1/vmware/networks/{network_id}`: имя сети
+# publisher требует при любой правке и своё текущее в запрос не подставляет.
+EDIT_NETWORK_REQUIRED_FIELDS = frozenset(('name',))
+
 # Три типа сети — три маршрута создания с разной формой запроса, а не один маршрут
 # с признаком типа: у publisher'а это три отдельные операции.
 CREATE_CASES = (
@@ -112,21 +116,37 @@ async def test_create_with_wait_reads_network_addressed_by_task_resources(fake_h
     assert network == NETWORK_ENTITY
 
 
-@pytest.mark.parametrize('method_name,kwargs,expected_payload', (
-    ('rename', {'name': 'renamed'}, {'name': 'renamed'}),
-    ('set_bandwidth', {'bandwidth_mbps': 200}, {'bandwidth_mbps': 200}),
-))
-async def test_edit_sends_only_own_field_to_shared_route(
-    fake_http_client, method_name, kwargs, expected_payload,
+async def test_rename_sends_name_alone_because_bandwidth_is_optional_in_contract(
+    fake_http_client,
 ):
     fake_http_client.on('PUT', NETWORK_PATH, {'task_id': 'vmw902'})
 
-    edit = getattr(VmwareNetworkService(fake_http_client), method_name)
-    task_wrap = await edit(NETWORK_ID, **kwargs)
+    task_wrap = await VmwareNetworkService(fake_http_client).rename(NETWORK_ID, name='renamed')
 
-    # Один маршрут правки на две команды, но каждая шлёт только своё поле:
-    # частичный запрос publisher применяет как изменение одного свойства.
-    assert fake_http_client.requests == [FakeRequest('PUT', NETWORK_PATH, expected_payload)]
+    # Опущенная `bandwidth_mbps` в запросе правки означает «оставить как есть»,
+    # поэтому смена имени обходится без чтения сети.
+    assert fake_http_client.requests == [FakeRequest('PUT', NETWORK_PATH, {'name': 'renamed'})]
+    assert task_wrap == {'task_id': 'vmw902'}
+
+
+async def test_set_bandwidth_carries_required_name_of_current_network(fake_http_client):
+    fake_http_client.on('GET', NETWORK_PATH, {'network': NETWORK_ENTITY})
+    fake_http_client.on('PUT', NETWORK_PATH, {'task_id': 'vmw902'})
+
+    task_wrap = await VmwareNetworkService(fake_http_client).set_bandwidth(
+        NETWORK_ID, bandwidth_mbps=200,
+    )
+
+    edit_request = fake_http_client.requests[-1]
+    # Тело правки сети обязано нести каждое обязательное поле запроса контракта,
+    # иначе publisher отвечает 400 и полосу сменить нельзя.
+    assert EDIT_NETWORK_REQUIRED_FIELDS <= set(edit_request.payload)
+    # Обязательное имя команда не спрашивает у пользователя и не выдумывает —
+    # берёт текущее из прочитанной сети.
+    assert edit_request == FakeRequest('PUT', NETWORK_PATH, {
+        'name': NETWORK_ENTITY['name'],
+        'bandwidth_mbps': 200,
+    })
     assert task_wrap == {'task_id': 'vmw902'}
 
 

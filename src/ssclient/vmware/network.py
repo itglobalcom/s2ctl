@@ -34,9 +34,12 @@ class VmwareServerNic(NamedTuple):
     ip: Optional[str] = None
 
 
+_NAME_FIELD = 'name'
+
+
 def _create_payload(location_id: VmwareLocationId, name: str) -> Payload:
     """Общая часть запроса создания: локацию и имя требует любой из трёх типов сети."""
-    return {'location_id': location_id, 'name': name}
+    return {'location_id': location_id, _NAME_FIELD: name}
 
 
 class BaseVmwareNetworkService(BaseService):
@@ -58,12 +61,19 @@ class BaseVmwareNetworkService(BaseService):
     async def rename(
         self, network_id: VmwareNetworkId, *, name: str, wait: bool = False,
     ) -> Union[TaskIDWrap, VmwareNetworkEntity, None]:
-        return await self._edit(network_id, {'name': name}, wait=wait)
+        return await self._edit(network_id, {_NAME_FIELD: name}, wait=wait)
 
     async def set_bandwidth(
         self, network_id: VmwareNetworkId, *, bandwidth_mbps: int, wait: bool = False,
     ) -> Union[TaskIDWrap, VmwareNetworkEntity, None]:
-        return await self._edit(network_id, {'bandwidth_mbps': bandwidth_mbps}, wait=wait)
+        # Имя в запросе правки обязательно, и своё текущее publisher не подставляет:
+        # чтобы сменить одну полосу, актуальное имя сети приходится донести самому.
+        network = await self.get(network_id)
+        return await self._edit(
+            network_id,
+            {_NAME_FIELD: network[_NAME_FIELD], 'bandwidth_mbps': bandwidth_mbps},
+            wait=wait,
+        )
 
     async def delete(self, network_id: VmwareNetworkId, wait: bool = False) -> Optional[TaskIDWrap]:
         # Удаление VMware-сети отдаёт ссылку на задачу само, без `return_task=true`.
