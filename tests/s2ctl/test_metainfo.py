@@ -7,7 +7,8 @@ from ssclient.http_client import HttpClient
 from ssclient.metainfo import LocationEntity
 
 
-def test_get_locations():
+# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
+def test_get_locations(cli_config):
     with patch.object(HttpClient, 'make_request') as make_request:
         id_ = 'test_id'
         make_request.return_value = {
