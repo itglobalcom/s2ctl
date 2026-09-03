@@ -404,6 +404,12 @@ while `get-firewall` prints both, so these two fields of the file are dropped �
 CLI has nowhere to send them. In the other three pairs the set comes back as it
 was printed.
 
+In a rule of `gateway replace-firewall` and `gateway replace-nat` every field
+has to be written out. A field left out is not "keep it as it is": the API reads
+a missing `action`, `direction`, `protocol` or `type` as the first value of its
+dictionary — `Allow`, `In`, `ICMP` and `SNAT` — and accepts such a rule without
+a word. The file goes to the API as it is, `s2ctl` fills nothing in.
+
 ### Waiting for a task
 
 Operations that change something are performed by the platform asynchronously:

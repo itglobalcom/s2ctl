@@ -14,7 +14,11 @@ RULES_FILE_HELP = (
     + 'object carrying it in "rules". Pass "-" to read the set from stdin. '
     + 'For "vmware edge update-firewall" the round trip is lossy: the request of the API '
     + 'has no per-rule "enabled" and "description", so these two fields of a rule printed '
-    + 'by "get-firewall" are dropped.'
+    + 'by "get-firewall" are dropped. '
+    + 'For "gateway replace-firewall" and "gateway replace-nat" a field left out of a rule '
+    + 'does not mean "keep it as it is": the API reads a missing "action", "direction", '
+    + '"protocol" or "type" as the first value of its dictionary — "Allow", "In", "ICMP" '
+    + 'and "SNAT" — so every field of every rule belongs in the file.'
 )
 
 _NETWORK_ID_HINT = 'network id format: {template}'.format(template=NETWORK_ID_TEMPLATE)
