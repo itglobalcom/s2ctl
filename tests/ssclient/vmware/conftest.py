@@ -6,6 +6,10 @@ NETWORKS_PATH = 'api/v1/vmware/networks'
 NETWORK_PATH = '{path}/{network_id}'.format(path=NETWORKS_PATH, network_id=NETWORK_ID)
 EDGE_PATH = '{network_path}/edge'.format(network_path=NETWORK_PATH)
 
+# Обязательные поля тела `PUT /api/v1/vmware/networks/{network_id}`: имя сети
+# publisher требует при любой правке и своё текущее в запрос не подставляет.
+EDIT_NETWORK_REQUIRED_FIELDS = frozenset(('name',))
+
 NETWORK_ENTITY = {
     'id': NETWORK_ID,
     'location_id': 1,

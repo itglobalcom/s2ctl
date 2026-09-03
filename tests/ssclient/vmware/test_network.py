@@ -4,6 +4,7 @@ from ssclient.task_entities import TaskState
 from ssclient.vmware.network import VmwareNetworkService, VmwareServerNic
 from tests.conftest import FakeRequest, task_response
 from tests.ssclient.vmware.conftest import (
+    EDIT_NETWORK_REQUIRED_FIELDS,
     NETWORK_ENTITY,
     NETWORK_ID,
     NETWORK_PATH,
@@ -11,10 +12,6 @@ from tests.ssclient.vmware.conftest import (
 )
 
 SERVERS_PATH = '{network_path}/servers'.format(network_path=NETWORK_PATH)
-
-# Обязательные поля тела `PUT /api/v1/vmware/networks/{network_id}`: имя сети
-# publisher требует при любой правке и своё текущее в запрос не подставляет.
-EDIT_NETWORK_REQUIRED_FIELDS = frozenset(('name',))
 
 # Три типа сети — три маршрута создания с разной формой запроса, а не один маршрут
 # с признаком типа: у publisher'а это три отдельные операции.
