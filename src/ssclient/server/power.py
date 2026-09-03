@@ -2,6 +2,7 @@ from typing import ClassVar, Optional
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.task_id import TaskId
 
 
 class ServerPowerService(BaseService):
@@ -17,8 +18,7 @@ class ServerPowerService(BaseService):
             payload={},
         )
         if wait:
-            task_id = self._extrac_task_id(task_wrap)
-            await self._wait_task_completion(task_id)
+            await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
 
@@ -29,8 +29,7 @@ class ServerPowerService(BaseService):
             payload={},
         )
         if wait:
-            task_id = self._extrac_task_id(task_wrap)
-            await self._wait_task_completion(task_id)
+            await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
 
@@ -41,8 +40,7 @@ class ServerPowerService(BaseService):
             payload={},
         )
         if wait:
-            task_id = self._extrac_task_id(task_wrap)
-            await self._wait_task_completion(task_id)
+            await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
 
@@ -53,8 +51,7 @@ class ServerPowerService(BaseService):
             payload={},
         )
         if wait:
-            task_id = self._extrac_task_id(task_wrap)
-            await self._wait_task_completion(task_id)
+            await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
 
@@ -65,9 +62,9 @@ class ServerPowerService(BaseService):
             payload={},
         )
         if wait:
-            await self._wait_task_completion(task_wrap['task_id'])
+            await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
 
-    def _extrac_task_id(self, task_wrap: TaskIDWrap) -> str:
-        return task_wrap['task_id']
+    def _task_id(self, task_wrap: TaskIDWrap) -> TaskId:
+        return TaskId.parse(task_wrap['task_id'])

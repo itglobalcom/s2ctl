@@ -2,6 +2,8 @@ from typing import ClassVar, List, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.task_entities import TaskResourceType, task_resource_id
+from ssclient.task_id import TaskId
 
 
 class NicEntity(TypedDict):
@@ -30,8 +32,8 @@ class NicService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['nic_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(int(task_resource_id(task, TaskResourceType.nic)))
 
         return task_wrap
 

@@ -2,6 +2,8 @@ from typing import ClassVar, List, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.network.tag import TagService
+from ssclient.task_entities import TaskResourceType, task_resource_id
+from ssclient.task_id import TaskId
 
 
 class NetworkEntity(TypedDict):
@@ -41,8 +43,8 @@ class BaseNetworkService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['network_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(task_resource_id(task, TaskResourceType.network))
         return task_wrap
 
     async def get(self, network_id: str) -> NetworkEntity:

@@ -6,31 +6,23 @@ from async_timeout import timeout
 
 from ssclient import errors
 from ssclient.ports import HttpClientPort
+from ssclient.task_entities import TaskEntity, TaskState, completed_task, task_state
+from ssclient.task_id import TaskId
 
 URLFields = Dict[str, Any]
+
+TASKS_PATH = 'api/v1/tasks'
+DEFAULT_TASK_TIMEOUT = 60
+_POLL_INTERVAL_SECS = 1
+_FAILURE_STATES = frozenset((TaskState.failed, TaskState.canceled))
 
 
 class TaskIDWrap(TypedDict):
     task_id: str
 
 
-class BaseTaskEntity(TypedDict):
-    id: str  # noqa: WPS125
-    server_id: str
-    created: str
-    completed: str
-    is_completed: str
-
-
-class TaskEntity(BaseTaskEntity, total=False):
-    server_id: str
-    location_id: str
-    network_id: str
-    volume_id: int
-    nic_id: int
-    snapshot_id: int
-    domain_id: str
-    record_id: int
+def task_path(task_id: TaskId) -> str:
+    return '{tasks_path}/{task_id}'.format(tasks_path=TASKS_PATH, task_id=task_id.value)
 
 
 class BaseService(object):
@@ -55,15 +47,25 @@ class BaseService(object):
             path = '{path}/'.format(path=path)
         return urljoin(path, fragment)
 
-    async def _wait_task_completion(self, task_id: str, timeout_secs: int = 60) -> TaskEntity:
-        async with timeout(timeout_secs):
-            while True:
-                path = urljoin('api/v1/tasks/', task_id)
-                task_resp = await self._http_client.get(path)
-                task_data = task_resp['task']
-                status = task_data['is_completed']
-                if status == 'Completed':
-                    return task_data
-                elif status == 'Failed':
-                    raise errors.TaskFailedError(task_id)
-                await asyncio.sleep(1)
+    async def _wait_task_completion(
+        self, task_id: TaskId, timeout_secs: int = DEFAULT_TASK_TIMEOUT,
+    ) -> TaskEntity:
+        if task_id.is_always_completed:
+            return completed_task(task_id.value)
+
+        try:
+            async with timeout(timeout_secs):
+                return await self._poll_task(task_id)
+        except asyncio.TimeoutError as exc:
+            raise errors.TaskWaitTimeoutError(task_id.value, timeout_secs) from exc
+
+    async def _poll_task(self, task_id: TaskId) -> TaskEntity:
+        while True:
+            task_resp = await self._http_client.get(task_path(task_id))
+            task_data = task_resp['task']
+            state = task_state(task_data)
+            if state == TaskState.completed:
+                return task_data
+            elif state in _FAILURE_STATES:
+                raise errors.TaskFailedError(task_id.value, state.value)
+            await asyncio.sleep(_POLL_INTERVAL_SECS)

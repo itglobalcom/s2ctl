@@ -3,6 +3,8 @@ from typing import ClassVar, List, Optional, Union  # noqa: WPS226
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.domain import record_entities as entities
 from ssclient.ports import HttpClientPort
+from ssclient.task_entities import TaskResourceType, task_resource_id
+from ssclient.task_id import TaskId
 
 
 class RecordService(BaseService):  # noqa: WPS214
@@ -197,8 +199,8 @@ class RecordService(BaseService):  # noqa: WPS214
             payload=payload,
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['record_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(int(task_resource_id(task, TaskResourceType.record)))
         return task_wrap
 
     async def delete(self, record_id: int) -> None:
@@ -223,6 +225,6 @@ class RecordService(BaseService):  # noqa: WPS214
             },
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['record_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(int(task_resource_id(task, TaskResourceType.record)))
         return task_wrap

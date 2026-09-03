@@ -2,6 +2,8 @@ from typing import ClassVar, List, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.task_entities import TaskResourceType, task_resource_id
+from ssclient.task_id import TaskId
 
 
 class VolumeEntity(TypedDict):
@@ -33,8 +35,8 @@ class VolumeService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['volume_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(int(task_resource_id(task, TaskResourceType.volume)))
         return task_wrap
 
     async def get(self, volume_id: int) -> VolumeEntity:
@@ -57,8 +59,8 @@ class VolumeService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['volume_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(int(task_resource_id(task, TaskResourceType.volume)))
         return task_wrap
 
     async def delete(self, volume_id: int) -> None:

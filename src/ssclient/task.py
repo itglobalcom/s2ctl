@@ -1,13 +1,13 @@
-from ssclient.base import BaseService, TaskEntity
+from typing import ClassVar
+
+from ssclient.base import TASKS_PATH, BaseService, task_path
+from ssclient.task_entities import TaskEntity
+from ssclient.task_id import TaskId
 
 
 class TaskService(BaseService):
-    path = 'api/v1/tasks'
+    _path: ClassVar[str] = TASKS_PATH
 
-    async def get(self, task_id: str) -> TaskEntity:
-        path = self._task_path(task_id)
-        task_resp = await self._http_client.get(path)
+    async def get(self, task_id: TaskId) -> TaskEntity:
+        task_resp = await self._http_client.get(task_path(task_id))
         return task_resp['task']
-
-    def _task_path(self, task_id: str):
-        return '{path}/{task_id}'.format(path=self.path, task_id=task_id)

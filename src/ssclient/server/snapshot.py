@@ -2,6 +2,7 @@ from typing import ClassVar, List, Optional, TypedDict
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
+from ssclient.task_id import TaskId
 
 
 class SnapshotEntity(TypedDict):
@@ -26,7 +27,7 @@ class SnapshotService(BaseService):
             },
         )
         if wait:
-            await self._wait_task_completion(task_wrap['task_id'])
+            await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
             return None
         return task_wrap
 
@@ -48,6 +49,6 @@ class SnapshotService(BaseService):
         path = self._make_path(fragment)
         task_wrap: TaskIDWrap = await self._http_client.post(path, {})
         if wait:
-            await self._wait_task_completion(task_wrap['task_id'])
+            await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
             return None
         return task_wrap

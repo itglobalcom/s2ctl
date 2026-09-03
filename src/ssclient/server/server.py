@@ -7,6 +7,8 @@ from ssclient.server.power import ServerPowerService
 from ssclient.server.snapshot import SnapshotService
 from ssclient.server.tag import TagService
 from ssclient.server.volume import VolumeService
+from ssclient.task_entities import TaskResourceType, task_resource_id
+from ssclient.task_id import TaskId
 
 
 class ServerVolumeEntity(TypedDict):
@@ -79,8 +81,8 @@ class BaseServerService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['server_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(task_resource_id(task, TaskResourceType.server))
         return task_wrap
 
     async def get(self, server_id: str) -> ServerEntity:
@@ -115,8 +117,8 @@ class BaseServerService(BaseService):
             payload=payload,
         )
         if wait:
-            task = await self._wait_task_completion(task_wrap['task_id'])
-            return await self.get(task['server_id'])
+            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return await self.get(task_resource_id(task, TaskResourceType.server))
         return task_wrap
 
     async def delete(self, server_id: str) -> None:
