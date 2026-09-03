@@ -1,3 +1,4 @@
+import types
 from typing import List, Optional, TypedDict
 
 from keyrings.cryptfile.cryptfile import CryptFileKeyring
@@ -66,14 +67,40 @@ class BaseContextManager(object):
         return contexts
 
 
+_KEY_IS_BLANK = (
+    "The keyring key is empty: set 'keyring_key' in this configuration file "
+    'or the S2CTL_CONTEXT_KEY environment variable.'
+)
+_KEY_DOES_NOT_FIT = (
+    "Can't unlock the keyring '{path}': it was created with another key than the "
+    "'keyring_key' of this configuration file (or S2CTL_CONTEXT_KEY)."
+)
+_FILE_IS_ALIEN = (
+    "Can't read the keyring '{path}': the file was written by another tool or another "
+    "version of it ({reason}). Point the 'keyring' configuration value to another file."
+)
+_UNKNOWN_FAILURE = "Can't unlock the keyring '{path}': {reason}."
+
+# `keyrings.cryptfile` не различает отказы типом — только текстом ValueError.
+_FAILURE_MESSAGES = types.MappingProxyType({
+    'blank password': _KEY_IS_BLANK,
+    'incorrect password': _KEY_DOES_NOT_FIT,
+    'encryption scheme': _FILE_IS_ALIEN,
+})
+
+
 class KeyringUnlockError(BaseFailException):
-    def __init__(self, keyring_path: str) -> None:
-        super().__init__(
-            "Can't unlock the keyring '{path}': it was created with another key than the "
-            "'keyring_key' of this configuration file (or S2CTL_CONTEXT_KEY).".format(
-                path=keyring_path,
-            ),
-        )
+    def __init__(self, keyring_path: str, failure: ValueError) -> None:
+        super().__init__(_unlock_failure_message(keyring_path, failure))
+
+
+def _unlock_failure_message(keyring_path: str, failure: ValueError) -> str:
+    reason = str(failure)
+    lowered = reason.lower()
+    for marker, message in _FAILURE_MESSAGES.items():
+        if marker in lowered:
+            return message.format(path=keyring_path, reason=reason)
+    return _UNKNOWN_FAILURE.format(path=keyring_path, reason=reason)
 
 
 class ContextManager(BaseContextManager):
@@ -87,7 +114,7 @@ class ContextManager(BaseContextManager):
             # Ключ проверяется расшифровкой файла прямо здесь, в конструкторе.
             self.keyring.keyring_key = keyring_key  # type: ignore
         except ValueError as exc:
-            raise KeyringUnlockError(keyring_path) from exc
+            raise KeyringUnlockError(keyring_path, exc) from exc
 
     def add_context(self, context_name: str, apikey: str) -> None:
         self.keyring.set_password(SERVICE_NAME, context_name, apikey)

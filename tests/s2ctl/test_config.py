@@ -55,3 +55,44 @@ def test_keyring_locked_with_another_key_is_reported_without_traceback(tmp_path,
     assert result.exit_code != 0
     assert "Can't unlock the keyring" in result.output
     assert 'Traceback' not in result.output
+
+
+def test_blank_keyring_key_is_named_as_the_thing_to_fix(tmp_path, cli_config):
+    config_path = _stand_config(tmp_path)
+    config_path.write_text(_STAND_CONFIG + "keyring_key: ''\n")
+
+    result = CliRunner().invoke(
+        entry_point, ('-c', str(config_path), '-k', 'apikey', 'context', 'list'),
+    )
+
+    assert result.exit_code != 0
+    # Файла keyring на диске ещё нет — про «создан другим ключом» говорить нечего.
+    assert 'The keyring key is empty' in result.output
+    assert 'another key' not in result.output
+
+
+def test_keyring_key_without_value_is_reported_without_traceback(tmp_path, cli_config):
+    config_path = _stand_config(tmp_path)
+    config_path.write_text(_STAND_CONFIG + 'keyring_key:\n')
+
+    result = CliRunner().invoke(
+        entry_point, ('-c', str(config_path), '-k', 'apikey', 'context', 'list'),
+    )
+
+    assert result.exit_code != 0
+    assert 'The keyring key is empty' in result.output
+    assert not isinstance(result.exception, AttributeError)
+
+
+def test_keyring_file_of_another_scheme_is_named_as_alien(tmp_path, cli_config):
+    config_path = _stand_config(tmp_path)
+    runner = CliRunner()
+    assert runner.invoke(entry_point, ('-c', str(config_path), 'context', 'list')).exit_code == 0
+    keyring_path = tmp_path / 'stands' / KEYRING_FILE_NAME
+    keyring_path.write_text(keyring_path.read_text().replace('AES128.GCM', 'AES256.CFB'))
+
+    result = runner.invoke(entry_point, ('-c', str(config_path), 'context', 'list'))
+
+    assert result.exit_code != 0
+    assert 'another tool or another version' in result.output
+    assert 'CFB' in result.output
