@@ -13,24 +13,20 @@ class TaskIdFormat(NamedTuple):
     is_always_completed: bool = False
 
 
-VSTACK_TASK_ID = TaskIdFormat('vstack', 'l<location>t<id>', re.compile(r'^l\d*t\d+$'))
-DNS_TASK_ID = TaskIdFormat('dns', 'dns<id>', re.compile(r'^dns\d+$'))
-VMWARE_TASK_ID = TaskIdFormat('vmware', 'vmw<id>', re.compile(r'^vmw\d+$'))
-# Синтетическая задача: её id отдают синхронные операции удаления (affinity-группы, теги),
-# где реальной задачи не создаётся, а клиент опрашивает задачу так же, как в асинхронном случае.
-ALREADY_COMPLETED_TASK_ID = TaskIdFormat(
-    'vstack',
-    'already_completed_task',
-    re.compile(r'^already_completed_task$'),
-    is_always_completed=True,
-)
-
-# Реестр форматов: услуга добавляется одной записью, остальной код о префиксах не знает.
+# Единственное место, где известны префиксы id: услуга добавляется одной записью.
+# Последняя запись — синтетическая всегда-завершённая задача: её id отдают синхронные
+# операции удаления (affinity-группы, теги), где реальной задачи не создаётся, а клиент
+# опрашивает задачу так же, как в асинхронном случае.
 TASK_ID_FORMATS: Tuple[TaskIdFormat, ...] = (
-    VSTACK_TASK_ID,
-    DNS_TASK_ID,
-    VMWARE_TASK_ID,
-    ALREADY_COMPLETED_TASK_ID,
+    TaskIdFormat('vstack', 'l<location>t<id>', re.compile(r'^l\d*t\d+$')),
+    TaskIdFormat('dns', 'dns<id>', re.compile(r'^dns\d+$')),
+    TaskIdFormat('vmware', 'vmw<id>', re.compile(r'^vmw\d+$')),
+    TaskIdFormat(
+        'vstack',
+        'already_completed_task',
+        re.compile(r'^already_completed_task$'),
+        is_always_completed=True,
+    ),
 )
 
 
