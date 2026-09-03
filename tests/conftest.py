@@ -21,9 +21,8 @@ def cli_config(tmp_path, monkeypatch):
     """Конфиг и keyring CLI в tmp_path вместо домашнего каталога того, кто запускает тесты.
 
     Подменяется default самого объекта параметра click, а не константа модуля config:
-    default зашит в параметр в момент импорта entry_point. Передать путь аргументом
-    --config нельзя — опция объявлена как click.types.Path() без path_type, отдаёт str,
-    а ConfigManager ждёт Path и падает AttributeError (дефект src, не тестов).
+    default зашит в параметр в момент импорта entry_point, а команды в тестах
+    вызываются без --config.
     Переменные S2CTL_* снимаются: их значение в окружении разработчика меняет исход команд.
     """
     config_path = tmp_path / 'config.yaml'

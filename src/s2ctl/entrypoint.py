@@ -24,7 +24,7 @@ def _get_config_manager(_ctx, _format, value: Path) -> ConfigManager:  # noqa: W
     '--config',
     '-c',
     'config_manager',
-    type=click.types.Path(),
+    type=click.types.Path(path_type=Path),
     default=DEFAULT_CONFIG_PATH,
     show_default=True,
     callback=_get_config_manager,
