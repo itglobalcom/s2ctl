@@ -1,11 +1,11 @@
 .PHONY: test-watch
 test-watch:
-	pytest -f --color=yes tests
+	poetry run pytest -f --color=yes tests
 
 .PHONY: test-tox
 test-tox:
-	tox
+	poetry run tox
 
 .PHONY: test
 test:
-	pytest -f  --cov=src --color=yes tests
+	poetry run pytest --cov=src --color=yes tests

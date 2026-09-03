@@ -14,7 +14,7 @@ async def _server_handelr(request: Request):
             'headers': dict(request.headers),
             'method': request.method,
             'path': request.path,
-            'payload': await (request.json() if request.has_body else request.text()),
+            'payload': await (request.json() if request.can_read_body else request.text()),
         }
     )
 
@@ -25,7 +25,7 @@ async def _server_error_handelr(request: Request):
             'headers': dict(request.headers),
             'method': request.method,
             'path': request.path,
-            'payload': await (request.json() if request.has_body else request.text()),
+            'payload': await (request.json() if request.can_read_body else request.text()),
         },
         status=int(request.match_info['status']),
     )
@@ -45,7 +45,7 @@ async def http_server(aiohttp_server):
 
 @pytest.fixture
 def server_root(http_server: TestServer):
-    return str(http_server._root)
+    return str(http_server.make_url('/'))
 
 
 @pytest.fixture
