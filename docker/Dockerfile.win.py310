@@ -1,4 +1,4 @@
-FROM python:3.8-windowsservercore-1809
+FROM python:3.10-windowsservercore-1809
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \
@@ -7,12 +7,13 @@ ENV PYTHONFAULTHANDLER=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
 
+# poetry 1.8 читает формат poetry.lock репозитория
+ENV POETRY_VERSION="1.8.*"
 
 WORKDIR /code
 
-RUN pip install poetry
+RUN pip install "poetry==$POETRY_VERSION"
 RUN poetry config virtualenvs.create false
-RUN pip install pyinstaller
 
 COPY . .
 
