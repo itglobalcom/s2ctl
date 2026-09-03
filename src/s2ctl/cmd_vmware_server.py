@@ -7,8 +7,7 @@ from click.core import Context
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.cmd_vmware import vmware, vmware_service
 from s2ctl.params import rules_file_option
-from ssclient.vmware.firewall import VmwareServerFirewallService
-from ssclient.vmware.power import VmwareServerPowerService
+from ssclient.vmware import firewall, nic, power, snapshot, volume
 from ssclient.vmware.server import VmwareServerService
 from ssclient.vmware.server_entities import VmwareServerGpu, VmwareServerOrder
 
@@ -18,6 +17,11 @@ _LOCATION_HELP = 'Location identifier (see "vmware locations" command).'
 _IMAGE_HELP = 'OS template identifier (see "vmware images" command).'
 _GPU_HINT = 'gpu format: MODEL_ID:VRAM_MB:CARD_COUNT, e.g. "3:8192:1"'
 _GPU_PARTS_COUNT = 3
+_DISK_TYPE_HELP = (
+    'Type of the volume, by title, as offered by the location '
+    + '(see "disk_types" in "vmware locations").'
+)
+_FORCE_CUSTOMIZATION_HELP = 'Force guest customization of the server.'
 
 
 def _parse_gpu(_ctx, _click_param, raw_gpu: Optional[str]) -> Optional[VmwareServerGpu]:
@@ -90,16 +94,44 @@ def _server_service(ctx: Context) -> VmwareServerService:
     return vmware_service(ctx).servers()
 
 
-def _power_service(ctx: Context, server_id: int) -> VmwareServerPowerService:
+def _power_service(ctx: Context, server_id: int) -> power.VmwareServerPowerService:
     return _server_service(ctx).power(server_id)
 
 
-def _firewall_service(ctx: Context, server_id: int) -> VmwareServerFirewallService:
+def _firewall_service(ctx: Context, server_id: int) -> firewall.VmwareServerFirewallService:
     return _server_service(ctx).firewall(server_id)
+
+
+def _volume_service(ctx: Context, server_id: int) -> volume.VmwareServerVolumeService:
+    return _server_service(ctx).volumes(server_id)
+
+
+def _nic_service(ctx: Context, server_id: int) -> nic.VmwareServerNicService:
+    return _server_service(ctx).nics(server_id)
+
+
+def _snapshot_service(ctx: Context, server_id: int) -> snapshot.VmwareServerSnapshotService:
+    return _server_service(ctx).snapshot(server_id)
 
 
 def _server_id_argument(func):
     return click.argument(SERVER_ID_ARG, required=True, type=int)(func)
+
+
+def _volume_id_option(func):
+    return click.option('--volume-id', type=int, required=True, help='Volume identifier.')(func)
+
+
+def _nic_id_option(func):
+    return click.option('--nic-id', type=int, required=True, help='Network interface identifier.')(func)
+
+
+def _force_customization_option(func):
+    return click.option(
+        '--force-customization',
+        is_flag=True,
+        help=_FORCE_CUSTOMIZATION_HELP,
+    )(func)
 
 
 def _order_options(command):
@@ -395,4 +427,217 @@ def update_firewall(ctx, server_id: int, rules: Sequence[Any], wait: bool):
     """Replace the whole firewall rule set of a VMware server."""
     firewall_service = _firewall_service(ctx, server_id)
     service_resp = asyncio.run(firewall_service.update(rules=rules, wait=wait))
+    echo(service_resp)
+
+
+@server.command('list-volume', cls=S2CTLCommand)
+@output_option
+@_server_id_argument
+@click.pass_context
+def list_volume(ctx, server_id: int):
+    """Display all additional volumes of a VMware server."""
+    service_resp = asyncio.run(_volume_service(ctx, server_id).list())
+    echo(service_resp)
+
+
+@server.command('get-volume', cls=S2CTLCommand)
+@output_option
+@_server_id_argument
+@_volume_id_option
+@click.pass_context
+def get_volume(ctx, server_id: int, volume_id: int):
+    """Get information about a volume of a VMware server."""
+    service_resp = asyncio.run(_volume_service(ctx, server_id).get(volume_id))
+    echo(service_resp)
+
+
+@server.command('add-volume', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@click.option('--name', required=True, help='Name of the volume.')
+@click.option('--disk-type', required=True, help=_DISK_TYPE_HELP)
+@click.option('--size', type=int, required=True, help='Size of the volume in MB.')
+@click.pass_context
+def add_volume(ctx, server_id: int, name: str, disk_type: str, size: int, wait: bool):
+    """Add an additional volume to a VMware server."""
+    volume_service = _volume_service(ctx, server_id)
+    service_resp = asyncio.run(volume_service.create(
+        name=name,
+        disk_type=disk_type,
+        size_mb=size,
+        wait=wait,
+    ))
+    echo(service_resp)
+
+
+@server.command('edit-volume', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@_volume_id_option
+@click.option('--size', type=int, required=True, help='New size of the volume in MB.')
+@click.option('--name', help='New name of the volume. Omitted, the name is kept.')
+@click.pass_context
+def edit_volume(ctx, server_id: int, volume_id: int, size: int, name: Optional[str], wait: bool):
+    """Change the size and the name of a volume of a VMware server."""
+    volume_service = _volume_service(ctx, server_id)
+    service_resp = asyncio.run(volume_service.edit(
+        volume_id,
+        size_mb=size,
+        name=name,
+        wait=wait,
+    ))
+    echo(service_resp)
+
+
+@server.command('delete-volume', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@_volume_id_option
+@click.pass_context
+def delete_volume(ctx, server_id: int, volume_id: int, wait: bool):
+    """Delete an additional volume of a VMware server."""
+    service_resp = asyncio.run(_volume_service(ctx, server_id).delete(volume_id, wait=wait))
+    echo(service_resp)
+
+
+@server.command('list-nic', cls=S2CTLCommand)
+@output_option
+@_server_id_argument
+@click.pass_context
+def list_nic(ctx, server_id: int):
+    """Display all network interfaces of a VMware server."""
+    service_resp = asyncio.run(_nic_service(ctx, server_id).list())
+    echo(service_resp)
+
+
+@server.command('connect-client-network', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@click.option('--network', type=int, required=True, help='Client network to connect the server to.')
+@click.option('--ip', help='Address of the new interface. Omitted, the platform assigns one.')
+@_force_customization_option
+@click.pass_context
+def connect_client_network(
+    ctx, server_id: int, network: int, ip: Optional[str], force_customization: bool, wait: bool,
+):
+    """Connect a VMware server to a client network with a new network interface."""
+    nic_service = _nic_service(ctx, server_id)
+    service_resp = asyncio.run(nic_service.connect_client_network(
+        network_id=network,
+        ip=ip,
+        force_customization=force_customization,
+        wait=wait,
+    ))
+    echo(service_resp)
+
+
+@server.command('connect-shared-network', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@click.option('--bandwidth', type=int, required=True, help='Bandwidth of the new interface in Mbps.')
+@_force_customization_option
+@click.pass_context
+def connect_shared_network(ctx, server_id: int, bandwidth: int, force_customization: bool, wait: bool):
+    """Connect a VMware server to the shared network with a new network interface."""
+    nic_service = _nic_service(ctx, server_id)
+    service_resp = asyncio.run(nic_service.connect_shared_network(
+        bandwidth_mbps=bandwidth,
+        force_customization=force_customization,
+        wait=wait,
+    ))
+    echo(service_resp)
+
+
+@server.command('edit-nic', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@_nic_id_option
+@click.option('--network', type=int, required=True, help='Network the interface is connected to.')
+@click.option('--bandwidth', type=int, help='New bandwidth of the interface in Mbps.')
+@click.option('--ip', help='New address of the interface.')
+@_force_customization_option
+@click.pass_context
+def edit_nic(
+    ctx,
+    server_id: int,
+    nic_id: int,
+    network: int,
+    bandwidth: Optional[int],
+    ip: Optional[str],
+    force_customization: bool,
+    wait: bool,
+):
+    """Change the network, the address and the bandwidth of a network interface of a VMware server."""
+    nic_service = _nic_service(ctx, server_id)
+    service_resp = asyncio.run(nic_service.update(
+        nic_id,
+        network_id=network,
+        bandwidth_mbps=bandwidth,
+        ip=ip,
+        force_customization=force_customization,
+        wait=wait,
+    ))
+    echo(service_resp)
+
+
+@server.command('disconnect-nic', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@_nic_id_option
+@click.pass_context
+def disconnect_nic(ctx, server_id: int, nic_id: int, wait: bool):
+    """Disconnect a VMware server from a network and remove its network interface."""
+    service_resp = asyncio.run(_nic_service(ctx, server_id).disconnect(nic_id, wait=wait))
+    echo(service_resp)
+
+
+@server.command('get-snapshot', cls=S2CTLCommand)
+@output_option
+@_server_id_argument
+@click.pass_context
+def get_snapshot(ctx, server_id: int):
+    """Get the snapshot of a VMware server."""
+    service_resp = asyncio.run(_snapshot_service(ctx, server_id).get())
+    echo(service_resp)
+
+
+@server.command('create-snapshot', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@click.option('--name', required=True, help='Name of the snapshot.')
+@click.pass_context
+def create_snapshot(ctx, server_id: int, name: str, wait: bool):
+    """Take the snapshot of a VMware server."""
+    snapshot_service = _snapshot_service(ctx, server_id)
+    service_resp = asyncio.run(snapshot_service.create(name=name, wait=wait))
+    echo(service_resp)
+
+
+@server.command('restore-snapshot', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@click.pass_context
+def restore_snapshot(ctx, server_id: int, wait: bool):
+    """Revert a VMware server to the state of its snapshot."""
+    service_resp = asyncio.run(_snapshot_service(ctx, server_id).restore(wait=wait))
+    echo(service_resp)
+
+
+@server.command('delete-snapshot', cls=S2CTLCommand)
+@output_option
+@wait_option
+@_server_id_argument
+@click.pass_context
+def delete_snapshot(ctx, server_id: int, wait: bool):
+    """Delete the snapshot of a VMware server."""
+    service_resp = asyncio.run(_snapshot_service(ctx, server_id).delete(wait=wait))
     echo(service_resp)
