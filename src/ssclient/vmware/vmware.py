@@ -5,10 +5,11 @@ from ssclient.vmware.metainfo import (
     VmwareLocationsService,
 )
 from ssclient.vmware.network import VmwareNetworkService
+from ssclient.vmware.server import VmwareServerService
 
 
 class VmwareService(object):
-    """Разделы услуги VMware: каталог и сети со шлюзом edge."""
+    """Разделы услуги VMware: каталог, сети со шлюзом edge и серверы."""
 
     def __init__(self, http_client: HttpClientPort) -> None:
         self._http_client = http_client
@@ -24,3 +25,6 @@ class VmwareService(object):
 
     def networks(self) -> VmwareNetworkService:
         return VmwareNetworkService(self._http_client)
+
+    def servers(self) -> VmwareServerService:
+        return VmwareServerService(self._http_client)
