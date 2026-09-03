@@ -1,3 +1,6 @@
+import pytest
+
+from ssclient.network.network_id import NetworkId
 from ssclient.server.nic import NicService
 from ssclient.server.server import ServerService, VolumeCreationData
 from ssclient.task_entities import TaskState
@@ -89,3 +92,22 @@ async def test_nic_update_puts_bandwidth_and_reads_known_nic(fake_http_client):
     assert fake_http_client.paths('GET') == [
         'api/v1/tasks/l2t345', 'api/v1/servers/l2s99/nics/7',
     ]
+
+
+@pytest.mark.parametrize('network_id,expected_field', (
+    (NetworkId('l1n3'), 'l1n3'),
+    # Сеть у интерфейса необязательна: без неё publisher подключает публичную,
+    # и на проводе обязан остаться `null`, а не отсутствующее поле.
+    (None, None),
+))
+async def test_add_nic_sends_network_id_as_contract_string(
+    fake_http_client, network_id, expected_field,
+):
+    fake_http_client.on('POST', 'api/v1/servers/l2s99/nics', {'task_id': 'l2t345'})
+
+    await NicService(fake_http_client, 'l2s99').create(network_id=network_id, bandwidth=100)
+
+    assert fake_http_client.requests == [FakeRequest('POST', 'api/v1/servers/l2s99/nics', {
+        'network_id': expected_field,
+        'bandwidth_mbps': 100,
+    })]

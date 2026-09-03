@@ -1,0 +1,14 @@
+import pytest
+
+from ssclient.gateway.gateway_id import GatewayId
+
+RAW_GATEWAY_ID = 'l1e2'
+GATEWAYS_PATH = 'api/v1/gateways'
+GATEWAY_PATH = '{path}/{gateway_id}'.format(path=GATEWAYS_PATH, gateway_id=RAW_GATEWAY_ID)
+
+
+@pytest.fixture
+def gateway_id() -> GatewayId:
+    parsed_id = GatewayId.try_parse(RAW_GATEWAY_ID)
+    assert parsed_id is not None
+    return parsed_id
