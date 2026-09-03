@@ -14,6 +14,7 @@ from s2ctl import (  # noqa: F401
     cmd_server,
     cmd_sshkey,
     cmd_task,
+    cmd_vmware,
 )
 
 # Fix for RuntimeError: Event loop is closed
