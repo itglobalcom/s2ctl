@@ -94,6 +94,27 @@ async def test_nic_update_puts_bandwidth_and_reads_known_nic(fake_http_client):
     ]
 
 
+async def test_add_nic_with_wait_reads_nic_from_task_resources(fake_http_client):
+    fake_http_client.on('POST', 'api/v1/servers/l2s99/nics', {'task_id': 'l2t347'})
+    fake_http_client.on(
+        'GET', 'api/v1/tasks/l2t347',
+        task_response('l2t347', TaskState.completed, resources=[
+            ('server', 'l2s99'), ('nic', '7'),
+        ]),
+    )
+    fake_http_client.on('GET', 'api/v1/servers/l2s99/nics/7', {'nic': {'id': 7}})
+
+    nic = await NicService(fake_http_client, 'l2s99').create(
+        network_id=NetworkId('l1n3'), bandwidth=None, wait=True,
+    )
+
+    # Интерфейс берётся по типу ресурса, а не по первой записи `resources[]`.
+    assert fake_http_client.paths('GET') == [
+        'api/v1/tasks/l2t347', 'api/v1/servers/l2s99/nics/7',
+    ]
+    assert nic == {'id': 7}
+
+
 @pytest.mark.parametrize('network_id,expected_field', (
     (NetworkId('l1n3'), 'l1n3'),
     # Сеть у интерфейса необязательна: без неё publisher подключает публичную,
