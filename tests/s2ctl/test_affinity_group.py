@@ -1,7 +1,7 @@
 from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
-from ssclient.affinity_group import AFFINITY_GROUP_ID_TEMPLATE
+from ssclient.affinity_group_id import AFFINITY_GROUP_ID_TEMPLATE
 
 _USAGE_ERROR_EXIT_CODE = 2
 

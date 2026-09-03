@@ -1,7 +1,6 @@
 from typing import ClassVar, List, Optional, Sequence, TypedDict, Union
-from urllib.parse import urlencode
 
-from ssclient.base import BaseService, TaskIDWrap, with_return_task
+from ssclient.base import BaseService, TaskIDWrap, with_filters, with_return_task
 from ssclient.gateway.firewall import FirewallRuleEntity, FirewallService
 from ssclient.gateway.gateway_id import GatewayId
 from ssclient.gateway.nat import NatRuleEntity, NatService
@@ -56,11 +55,7 @@ class BaseGatewayService(BaseService):
         return await self._read(gateway_id.value)
 
     async def list(self, location_id: Optional[str] = None) -> List[GatewayEntity]:  # noqa: WPS125
-        path = self.path
-        if location_id:
-            path = '{path}?{query}'.format(
-                path=path, query=urlencode({'location_id': location_id}),
-            )
+        path = with_filters(self.path, {'location_id': location_id})
         gateways_resp = await self._http_client.get(path)
         return gateways_resp['gateways']
 

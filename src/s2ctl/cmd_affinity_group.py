@@ -6,26 +6,15 @@ from click.core import Context
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
-from ssclient.affinity_group import (
-    AFFINITY_GROUP_ID_TEMPLATE,
-    AffinityGroupId,
-    AffinityGroupService,
-)
+from s2ctl.params import parse_affinity_group_id
+from ssclient.affinity_group import AffinityGroupService
+from ssclient.affinity_group_id import AffinityGroupId
 
 AFFINITY_GROUP_ID_ARG = 'affinity-group-id'
 
 
 def _get_affinity_group_service(ctx: Context) -> AffinityGroupService:
     return ctx.obj['affinity_group_service']
-
-
-def _parse_group_id(_ctx, _click_param, raw_id: str) -> AffinityGroupId:
-    group_id = AffinityGroupId.try_parse(raw_id)
-    if group_id is None:
-        raise click.BadParameter(
-            'affinity group id format: {template}'.format(template=AFFINITY_GROUP_ID_TEMPLATE),
-        )
-    return group_id
 
 
 @entry_point.group('affinity-group')
@@ -68,7 +57,7 @@ def groups_list(ctx):
 
 @affinity_group.command(cls=S2CTLCommand)
 @output_option
-@click.argument(AFFINITY_GROUP_ID_ARG, required=True, callback=_parse_group_id)
+@click.argument(AFFINITY_GROUP_ID_ARG, required=True, callback=parse_affinity_group_id)
 @click.pass_context
 def get(ctx, affinity_group_id: AffinityGroupId):
     """Get information about a group."""
@@ -80,7 +69,7 @@ def get(ctx, affinity_group_id: AffinityGroupId):
 @affinity_group.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(AFFINITY_GROUP_ID_ARG, required=True, callback=_parse_group_id)
+@click.argument(AFFINITY_GROUP_ID_ARG, required=True, callback=parse_affinity_group_id)
 @click.pass_context
 def delete(ctx, affinity_group_id: AffinityGroupId, wait: bool):
     """Delete a group. Servers of the group are kept."""

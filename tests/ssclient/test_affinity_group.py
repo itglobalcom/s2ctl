@@ -1,6 +1,7 @@
 import pytest
 
-from ssclient.affinity_group import AffinityGroupId, AffinityGroupService
+from ssclient.affinity_group import AffinityGroupService
+from ssclient.affinity_group_id import AffinityGroupId
 from tests.conftest import FakeRequest
 
 GROUPS_PATH = 'api/v1/affinity-groups'

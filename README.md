@@ -152,6 +152,13 @@ eval "$(_S2CTL_COMPLETE=zsh_source s2ctl)"
 _S2CTL_COMPLETE=fish_source s2ctl | source
 ```
 
+Two commands of the previous releases behave differently now: `install-autocomplete`
+writes the line above instead of the completion script it used to generate, and the
+commands taking an identifier of an isolated network (`network get`, `network edit`,
+`network delete`, `network add-tag`, `network delete-tag` and `server add-nic`) reject
+a malformed identifier themselves — with the expected format and the exit code `2`
+of a usage error, instead of asking the API and reporting its refusal.
+
 ## Usage
 
 Serverspace CLI based on 2 common concepts: commands, that denote what to do, and arguments, that provide some data to commands.

@@ -12,6 +12,10 @@ ignore =
 # WPS463: имя колбэка — это имя команды, и команды `get-*` печатают результат, а не возвращают его;
 # переименование сломало бы обратную совместимость CLI.
 # WPS235/WPS412: `s2ctl/__init__.py` регистрирует группы команд импортом — без этого они не попадают в бинарь.
+# WPS202 в `s2ctl/params.py`: модуль границы click держит по колбэку на каждый тип
+# идентификатора контракта — число членов задано числом типов, а не сложностью кода.
+# WPS202 в `ssclient/domain/record_entities.py`: по `TypedDict` на каждый тип записи DNS —
+# число членов задано словарём контракта, а не сложностью кода.
 per-file-ignores =
     src/s2ctl/__init__.py: WPS235, WPS412
     src/s2ctl/click.py: WPS202
@@ -20,6 +24,7 @@ per-file-ignores =
     src/s2ctl/cmd_domain.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/s2ctl/cmd_gateway.py: WPS202, WPS204, WPS216, WPS226, WPS463
     src/s2ctl/cmd_network.py: WPS202, WPS211, WPS216, WPS226
+    src/s2ctl/params.py: WPS202
     src/s2ctl/cmd_server.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/s2ctl/cmd_sshkey.py: WPS216
     src/s2ctl/cmd_vmware.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463

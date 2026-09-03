@@ -7,9 +7,14 @@ from click.core import Context
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
-from s2ctl.params import parse_network_id, parse_network_ids, rules_file_option
+from s2ctl.params import (
+    parse_gateway_id,
+    parse_network_id,
+    parse_network_ids,
+    rules_file_option,
+)
 from ssclient.gateway.gateway import GatewayService
-from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
+from ssclient.gateway.gateway_id import GatewayId
 from ssclient.network.network_id import NetworkId
 
 GATEWAY_ID_ARG = 'gateway-id'
@@ -17,15 +22,6 @@ GATEWAY_ID_ARG = 'gateway-id'
 
 def _get_gateway_service(ctx: Context) -> GatewayService:
     return ctx.obj['gateway_service']
-
-
-def _parse_gateway_id(_ctx, _click_param, raw_id: str) -> GatewayId:
-    gateway_id = GatewayId.try_parse(raw_id)
-    if gateway_id is None:
-        raise click.BadParameter(
-            'gateway id format: {template}'.format(template=GATEWAY_ID_TEMPLATE),
-        )
-    return gateway_id
 
 
 @entry_point.group()
@@ -89,7 +85,7 @@ def gateways_list(ctx, location: Optional[str]):
 
 @gateway.command(cls=S2CTLCommand)
 @output_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def get(ctx, gateway_id: GatewayId):
     """Get information about a gateway."""
@@ -100,7 +96,7 @@ def get(ctx, gateway_id: GatewayId):
 
 @gateway.command(cls=S2CTLCommand)
 @output_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.option('--name', required=True, help='New name of the gateway.')
 @click.pass_context
 def rename(ctx, gateway_id: GatewayId, name: str):
@@ -113,7 +109,7 @@ def rename(ctx, gateway_id: GatewayId, name: str):
 @gateway.command('set-bandwidth', cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.option(
     '--bandwidth',
     type=int,
@@ -133,7 +129,7 @@ def set_bandwidth(ctx, gateway_id: GatewayId, bandwidth: int, wait: bool):
 @gateway.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def delete(ctx, gateway_id: GatewayId, wait: bool):
     """Delete a gateway."""
@@ -144,7 +140,7 @@ def delete(ctx, gateway_id: GatewayId, wait: bool):
 
 @gateway.command('get-firewall', cls=S2CTLCommand)
 @output_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def get_firewall(ctx, gateway_id: GatewayId):
     """Display the firewall rules of a gateway."""
@@ -157,7 +153,7 @@ def get_firewall(ctx, gateway_id: GatewayId):
 @output_option
 @wait_option
 @rules_file_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def replace_firewall(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: bool):
     """Replace the whole firewall rule set of a gateway with the given one."""
@@ -168,7 +164,7 @@ def replace_firewall(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: boo
 
 @gateway.command('get-nat', cls=S2CTLCommand)
 @output_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def get_nat(ctx, gateway_id: GatewayId):
     """Display the NAT rules of a gateway."""
@@ -181,7 +177,7 @@ def get_nat(ctx, gateway_id: GatewayId):
 @output_option
 @wait_option
 @rules_file_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def replace_nat(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: bool):
     """Replace the whole NAT rule set of a gateway with the given one."""
@@ -193,7 +189,7 @@ def replace_nat(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: bool):
 @gateway.command('add-nic', cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.option(
     '--network-id',
     required=True,
@@ -211,7 +207,7 @@ def add_nic(ctx, gateway_id: GatewayId, network_id: NetworkId, wait: bool):
 @gateway.command('delete-nic', cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.option('--nic-id', type=int, required=True, help='Network interface identifier.')
 @click.pass_context
 def delete_nic(ctx, gateway_id: GatewayId, nic_id: int, wait: bool):
@@ -224,7 +220,7 @@ def delete_nic(ctx, gateway_id: GatewayId, nic_id: int, wait: bool):
 @gateway.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def start(ctx, gateway_id: GatewayId, wait: bool):
     """Power on a gateway."""
@@ -236,7 +232,7 @@ def start(ctx, gateway_id: GatewayId, wait: bool):
 @gateway.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def stop(ctx, gateway_id: GatewayId, wait: bool):
     """Power off a gateway."""
@@ -248,7 +244,7 @@ def stop(ctx, gateway_id: GatewayId, wait: bool):
 @gateway.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.pass_context
 def restart(ctx, gateway_id: GatewayId, wait: bool):
     """Restart a gateway."""
@@ -259,7 +255,7 @@ def restart(ctx, gateway_id: GatewayId, wait: bool):
 
 @gateway.command('add-tag', cls=S2CTLCommand)
 @output_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.option('--name', required=True, help='Name of tag.')
 @click.pass_context
 def add_tag(ctx, gateway_id: GatewayId, name: str):
@@ -271,7 +267,7 @@ def add_tag(ctx, gateway_id: GatewayId, name: str):
 
 @gateway.command('delete-tag', cls=S2CTLCommand)
 @output_option
-@click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
+@click.argument(GATEWAY_ID_ARG, required=True, callback=parse_gateway_id)
 @click.option('--name', required=True, help='Name of tag.')
 @click.pass_context
 def delete_tag(ctx, gateway_id: GatewayId, name: str):
