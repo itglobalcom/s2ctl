@@ -8,6 +8,10 @@
 
 ### To install on Linux
 
+The binary is linked against glibc 2.28, so it runs on RHEL / Rocky / AlmaLinux 8
+and newer, Debian 10 and newer, Ubuntu 18.10 and newer. On an older distribution
+install `s2ctl` from sources (Python 3.10 or newer is required).
+
 1. Download file from Github:
 
 ```
@@ -93,6 +97,33 @@ balance: 1462.78
 currency: EUR
 state: Active
 created: '1970-01-01T0:00:00.0000000Z'
+```
+
+## Autocompletion
+
+`s2ctl` uses the completion mechanism built into click: the shell asks `s2ctl`
+itself for completions, so nothing but a single line in the shell startup file
+is needed. The `install-autocomplete` command adds that line for you:
+
+```
+>s2ctl install-autocomplete
+shell: bash
+installed_in: /home/user/.bashrc
+```
+
+The shell (`bash`, `zsh` or `fish`) and the startup file may be passed
+explicitly: `s2ctl install-autocomplete zsh ~/.zshrc`. Restart the shell
+afterwards. To do the same by hand, add the line for your shell:
+
+```
+# ~/.bashrc
+eval "$(_S2CTL_COMPLETE=bash_source s2ctl)"
+
+# ~/.zshrc
+eval "$(_S2CTL_COMPLETE=zsh_source s2ctl)"
+
+# ~/.config/fish/completions/s2ctl.fish
+_S2CTL_COMPLETE=fish_source s2ctl | source
 ```
 
 ## Usage
