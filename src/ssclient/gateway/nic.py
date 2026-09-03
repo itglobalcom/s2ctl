@@ -31,11 +31,10 @@ class GatewayNicService(BaseService):
             return None
         return task_wrap
 
-    async def delete(self, nic_id: int, wait: bool = False) -> None:
-        path = self._make_path(str(nic_id))
-        if not wait:
-            await self._http_client.delete(path)
-            return
-
-        task_wrap: TaskIDWrap = await self._http_client.delete(with_return_task(path))
-        await self._wait_task_completion(self._task_id(task_wrap))
+    async def delete(self, nic_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(str(nic_id)))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap

@@ -88,14 +88,13 @@ class BaseGatewayService(BaseService):
             return await self.get(gateway_id)
         return task_wrap
 
-    async def delete(self, gateway_id: GatewayId, wait: bool = False) -> None:
-        path = self._make_path(gateway_id.value)
-        if not wait:
-            await self._http_client.delete(path)
-            return
-
-        task_wrap: TaskIDWrap = await self._http_client.delete(with_return_task(path))
-        await self._wait_task_completion(self._task_id(task_wrap))
+    async def delete(self, gateway_id: GatewayId, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(gateway_id.value))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap
 
     async def _read(self, raw_gateway_id: str) -> GatewayEntity:
         gateway_resp = await self._http_client.get(self._make_path(raw_gateway_id))

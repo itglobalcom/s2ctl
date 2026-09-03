@@ -79,21 +79,25 @@ async def test_get_reads_group_by_composite_id(fake_http_client):
     assert group == GROUP_ENTITY
 
 
-async def test_delete_without_wait_sends_bare_delete(fake_http_client):
-    fake_http_client.on('DELETE', GROUP_PATH, None)
-
-    await AffinityGroupService(fake_http_client).delete(_group_id('l1g2'))
-
-    assert fake_http_client.requests == [FakeRequest('DELETE', GROUP_PATH)]
-
-
-async def test_delete_with_wait_asks_for_task_and_does_not_poll_synthetic_one(fake_http_client):
+async def test_delete_without_wait_returns_synthetic_completed_task(fake_http_client):
     # Ссылку на задачу publisher отдаёт только по `return_task=true`; удаление группы
-    # синхронное, поэтому задача синтетическая и опрашивать её нечем.
+    # синхронное, поэтому задача синтетическая — но команде она нужна так же,
+    # как настоящая: без неё вывод удаления пуст.
     delete_path = '{path}?return_task=true'.format(path=GROUP_PATH)
     fake_http_client.on('DELETE', delete_path, {'task_id': 'already_completed_task'})
 
-    await AffinityGroupService(fake_http_client).delete(_group_id('l1g2'), wait=True)
+    task_wrap = await AffinityGroupService(fake_http_client).delete(_group_id('l1g2'))
+
+    assert fake_http_client.requests == [FakeRequest('DELETE', delete_path)]
+    assert task_wrap == {'task_id': 'already_completed_task'}
+
+
+async def test_delete_with_wait_does_not_poll_synthetic_task(fake_http_client):
+    delete_path = '{path}?return_task=true'.format(path=GROUP_PATH)
+    fake_http_client.on('DELETE', delete_path, {'task_id': 'already_completed_task'})
+
+    task_wrap = await AffinityGroupService(fake_http_client).delete(_group_id('l1g2'), wait=True)
 
     assert fake_http_client.requests == [FakeRequest('DELETE', delete_path)]
     assert fake_http_client.paths('GET') == []
+    assert task_wrap is None

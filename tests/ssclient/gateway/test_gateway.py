@@ -135,22 +135,25 @@ async def test_set_bandwidth_with_wait_rereads_known_gateway(fake_http_client, g
     assert gateway == GATEWAY_ENTITY
 
 
-async def test_delete_without_wait_sends_bare_delete(fake_http_client, gateway_id):
-    fake_http_client.on('DELETE', GATEWAY_PATH, None)
-
-    await GatewayService(fake_http_client).delete(gateway_id)
-
-    assert fake_http_client.requests == [FakeRequest('DELETE', GATEWAY_PATH)]
-
-
-async def test_delete_with_wait_asks_for_task_and_polls_it(fake_http_client, gateway_id):
+async def test_delete_without_wait_returns_task_of_the_deletion(fake_http_client, gateway_id):
     # Ссылку на задачу publisher отдаёт только по `return_task=true`: без параметра
-    # ответ пуст и ждать удаление нечем.
+    # ответ пуст и печатать команде нечего.
+    delete_path = '{path}?return_task=true'.format(path=GATEWAY_PATH)
+    fake_http_client.on('DELETE', delete_path, {'task_id': 'l1t347'})
+
+    task_wrap = await GatewayService(fake_http_client).delete(gateway_id)
+
+    assert fake_http_client.requests == [FakeRequest('DELETE', delete_path)]
+    assert task_wrap == {'task_id': 'l1t347'}
+
+
+async def test_delete_with_wait_polls_the_same_task(fake_http_client, gateway_id):
     delete_path = '{path}?return_task=true'.format(path=GATEWAY_PATH)
     fake_http_client.on('DELETE', delete_path, {'task_id': 'l1t347'})
     fake_http_client.on('GET', 'api/v1/tasks/l1t347', task_response('l1t347', TaskState.completed))
 
-    await GatewayService(fake_http_client).delete(gateway_id, wait=True)
+    task_wrap = await GatewayService(fake_http_client).delete(gateway_id, wait=True)
 
     assert fake_http_client.requests[0] == FakeRequest('DELETE', delete_path)
     assert fake_http_client.paths('GET') == ['api/v1/tasks/l1t347']
+    assert task_wrap is None

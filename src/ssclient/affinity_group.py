@@ -54,11 +54,12 @@ class AffinityGroupService(BaseService):
         groups_resp = await self._http_client.get(self.path)
         return groups_resp['affinity_groups']
 
-    async def delete(self, group_id: AffinityGroupId, wait: bool = False) -> None:
-        path = self._make_path(group_id.value)
-        if not wait:
-            await self._http_client.delete(path)
-            return
-
-        task_wrap: TaskIDWrap = await self._http_client.delete(with_return_task(path))
-        await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+    async def delete(self, group_id: AffinityGroupId, wait: bool = False) -> Optional[TaskIDWrap]:
+        # Удаление группы синхронное: ссылкой на задачу publisher отдаёт синтетический
+        # `already_completed_task`, и ждать его нечем.
+        path = with_return_task(self._make_path(group_id.value))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            return None
+        return task_wrap
