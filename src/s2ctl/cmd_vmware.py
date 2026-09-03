@@ -354,7 +354,9 @@ def get_firewall(ctx, network_id: VmwareNetworkId):
 @click.option(
     '--default-action',
     type=click.Choice(_FIREWALL_ACTIONS, case_sensitive=False),
-    help='Action applied to the traffic matching no rule. Omitted, it keeps its current value.',
+    help='Action applied to the traffic matching no rule. Omitted, it keeps its current '
+    + 'value — except on the first setup of the firewall, where there is nothing to keep '
+    + 'and the API rejects the request without it.',
 )
 @click.pass_context
 def update_firewall(
