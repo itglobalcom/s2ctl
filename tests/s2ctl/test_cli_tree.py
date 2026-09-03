@@ -6,7 +6,9 @@ from s2ctl.entrypoint import entry_point
 # в s2ctl/__init__.py — незарегистрированный модуль не виден ни в CLI, ни в бинаре
 # (bundle/bundle.py импортирует один s2ctl.entrypoint).
 EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
+    'affinity-group',
     'ansible',
+    'applications',
     'context',
     'domain',
     'images',
@@ -17,6 +19,13 @@ EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
     'server',
     'ssh-key',
     'task',
+})
+
+EXPECTED_AFFINITY_GROUP_COMMANDS = frozenset({
+    'create',
+    'delete',
+    'get',
+    'list',
 })
 
 EXPECTED_SERVER_COMMANDS = frozenset({
@@ -31,6 +40,7 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'delete-tag',
     'delete-volume',
     'edit',
+    'edit-nic',
     'edit-volume',
     'get',
     'get-nic',
@@ -41,8 +51,11 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'list-volume',
     'power-off',
     'power-on',
+    'price',
     'reboot',
+    'rename',
     'rollback-snapshot',
+    'set-configuration',
 })
 
 
@@ -52,6 +65,10 @@ def test_top_level_commands_registered():
 
 def test_server_group_commands_registered():
     assert set(entry_point.commands['server'].commands) == EXPECTED_SERVER_COMMANDS
+
+
+def test_affinity_group_commands_registered():
+    assert set(entry_point.commands['affinity-group'].commands) == EXPECTED_AFFINITY_GROUP_COMMANDS
 
 
 def test_help_lists_every_top_level_command():

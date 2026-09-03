@@ -166,10 +166,94 @@ def create(
 )
 @click.pass_context
 def edit(ctx, server_id: str, cpu: Optional[int], ram: Optional[int], wait: bool):
-    """Change server configuration."""
+    """Change only the specified parameters of a server configuration."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
         server_service.update(server_id=server_id, cpu=cpu, ram_mb=ram, wait=wait),
+    )
+    echo(service_resp)
+
+
+@server.command('set-configuration', cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.option('--cpu', type=int, required=True, help='CPU cores count.')
+@click.option(
+    '--ram',
+    type=SizeType(),
+    required=True,
+    help='RAM size (e.g. 1024, 1024M or 1G for 1Gb of RAM).',
+)
+@click.pass_context
+def set_configuration(ctx, server_id: str, cpu: int, ram: int, wait: bool):
+    """Set the whole server configuration: both CPU cores count and RAM size."""
+    server_service = _get_server_serivce(ctx)
+    service_resp = asyncio.run(
+        server_service.set_configuration(server_id=server_id, cpu=cpu, ram_mb=ram, wait=wait),
+    )
+    echo(service_resp, sorter=sort_server_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.option('--name', required=True, help='New name of the server.')
+@click.pass_context
+def rename(ctx, server_id: str, name: str, wait: bool):
+    """Change the name of a server."""
+    server_service = _get_server_serivce(ctx)
+    service_resp = asyncio.run(
+        server_service.rename(server_id=server_id, name=name, wait=wait),
+    )
+    echo(service_resp, sorter=sort_server_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@click.option('--location', required=True, help='Where the server is priced (see "locations" command).')
+@click.option('--image', required=True, help='OS image which you want to use for the server.')
+@click.option('--cpu', type=int, required=True, help='CPU cores count.')
+@click.option('--ram', type=SizeType(), required=True, help='RAM size (e.g. 1024, 1024M or 1G for 1Gb of RAM).')
+@click.option(
+    '--volume',
+    'volumes',
+    type=SizeType(),
+    required=True,
+    multiple=True,
+    help='Volume size (e.g. 10240, 1024M or 10G for 10Gb volume). May be multiple. '
+    + 'The first specified volume becomes system (boot).',
+)
+@click.option(
+    '--public-network',
+    'public_networks',
+    type=int,
+    multiple=True,
+    help='Bandwidth of the public network interface in Mbps. May be multiple. '
+    + 'If omitted, one interface with the minimal bandwidth of the location is priced.',
+)
+@click.pass_context
+def price(
+    ctx,
+    location: str,
+    image: str,
+    cpu: int,
+    ram: int,
+    volumes: Sequence[int],
+    public_networks: Sequence[int],
+):
+    """Get the monthly price of a server configuration."""
+    price_service = _get_server_serivce(ctx).prices()
+    service_resp = asyncio.run(
+        price_service.calculate(
+            location_id=location,
+            image_id=image,
+            cpu=cpu,
+            ram_mb=ram,
+            volumes=volumes,
+            networks=public_networks,
+        ),
     )
     echo(service_resp)
 
@@ -352,6 +436,28 @@ def get_nic(ctx, server_id: str, nic_id: int):
     nic_service = server_service.nics(server_id=server_id)
     service_resp = asyncio.run(
         nic_service.get(nic_id=nic_id),
+    )
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.option('--nic-id', type=int, required=True, help='Network interface identifier.')
+@click.option(
+    '--bandwidth',
+    type=int,
+    required=True,
+    help='New public network interface bandwidth in Mbps, must be a multiple of 10 Mbps.',
+)
+@click.pass_context
+def edit_nic(ctx, server_id: str, nic_id: int, bandwidth: int, wait: bool):
+    """Change bandwidth of a network interface."""
+    server_service = _get_server_serivce(ctx)
+    nic_service = server_service.nics(server_id=server_id)
+    service_resp = asyncio.run(
+        nic_service.update(nic_id=nic_id, bandwidth_mbps=bandwidth, wait=wait),
     )
     echo(service_resp)
 

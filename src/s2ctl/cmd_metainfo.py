@@ -27,3 +27,14 @@ def images(ctx):
     images_resp = asyncio.run(client.images().get())
 
     echo(list({image['id'] for image in images_resp}))
+
+
+@entry_point.command(cls=S2CTLCommand)
+@output_option
+@click.pass_context
+def applications(ctx):
+    """List of applications which you can install on your server."""
+    client = client_factory(ctx)
+    applications_resp = asyncio.run(client.applications().get())
+
+    echo(applications_resp)
