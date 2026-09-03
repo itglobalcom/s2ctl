@@ -62,6 +62,7 @@ def task_resource_id(task: TaskEntity, resource_type: TaskResourceType) -> str:
 
 
 def completed_task(task_id: str) -> TaskEntity:
+    """Задача, о которой известно, что она завершена: по контракту такой id опрашивать нечем."""
     return TaskEntity(
         id=task_id,
         is_completed=TaskState.completed.value,
