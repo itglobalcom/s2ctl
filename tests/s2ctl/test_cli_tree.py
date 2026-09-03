@@ -11,6 +11,7 @@ EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
     'applications',
     'context',
     'domain',
+    'gateway',
     'images',
     'install-autocomplete',
     'locations',
@@ -26,6 +27,26 @@ EXPECTED_AFFINITY_GROUP_COMMANDS = frozenset({
     'delete',
     'get',
     'list',
+})
+
+EXPECTED_GATEWAY_COMMANDS = frozenset({
+    'add-nic',
+    'add-tag',
+    'create',
+    'delete',
+    'delete-nic',
+    'delete-tag',
+    'get',
+    'get-firewall',
+    'get-nat',
+    'list',
+    'rename',
+    'replace-firewall',
+    'replace-nat',
+    'restart',
+    'set-bandwidth',
+    'start',
+    'stop',
 })
 
 EXPECTED_SERVER_COMMANDS = frozenset({
@@ -65,6 +86,10 @@ def test_top_level_commands_registered():
 
 def test_server_group_commands_registered():
     assert set(entry_point.commands['server'].commands) == EXPECTED_SERVER_COMMANDS
+
+
+def test_gateway_group_commands_registered():
+    assert set(entry_point.commands['gateway'].commands) == EXPECTED_GATEWAY_COMMANDS
 
 
 def test_affinity_group_commands_registered():
