@@ -41,9 +41,8 @@ class VmwareServerVolumeService(BaseService):
         if not wait:
             return task_wrap
         await self._wait_task_completion(self._task_id(task_wrap))
-        # Ни ответ операции, ни `resources[]` VMware-задачи не несут id созданного
-        # диска (задача публикует только ресурсы server и network), поэтому дождавшийся
-        # вызов отдаёт весь набор дисков сервера.
+        # Ни ответ операции, ни `resources[]` VMware-задачи не несут id созданного диска:
+        # задача публикует ресурсы только двух типов, server и network.
         return await self.list()
 
     async def edit(

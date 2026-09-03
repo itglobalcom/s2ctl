@@ -460,7 +460,12 @@ def get_volume(ctx, server_id: int, volume_id: int):
 @click.option('--size', type=int, required=True, help='Size of the volume in MB.')
 @click.pass_context
 def add_volume(ctx, server_id: int, name: str, disk_type: str, size: int, wait: bool):
-    """Add an additional volume to a VMware server."""
+    """Add an additional volume to a VMware server.
+
+    With --wait the command prints the whole set of volumes of the server, not the new
+    volume alone: the contract carries the identifier of the new volume neither in the
+    response of the operation nor in the task.
+    """
     volume_service = _volume_service(ctx, server_id)
     service_resp = asyncio.run(volume_service.create(
         name=name,
@@ -524,7 +529,12 @@ def list_nic(ctx, server_id: int):
 def connect_client_network(
     ctx, server_id: int, network: int, ip: Optional[str], force_customization: bool, wait: bool,
 ):
-    """Connect a VMware server to a client network with a new network interface."""
+    """Connect a VMware server to a client network with a new network interface.
+
+    With --wait the command prints the whole set of network interfaces of the server, not
+    the new interface alone: the contract carries the identifier of the new interface
+    neither in the response of the operation nor in the task.
+    """
     nic_service = _nic_service(ctx, server_id)
     service_resp = asyncio.run(nic_service.connect_client_network(
         network_id=network,
@@ -543,7 +553,12 @@ def connect_client_network(
 @_force_customization_option
 @click.pass_context
 def connect_shared_network(ctx, server_id: int, bandwidth: int, force_customization: bool, wait: bool):
-    """Connect a VMware server to the shared network with a new network interface."""
+    """Connect a VMware server to the shared network with a new network interface.
+
+    With --wait the command prints the whole set of network interfaces of the server, not
+    the new interface alone: the contract carries the identifier of the new interface
+    neither in the response of the operation nor in the task.
+    """
     nic_service = _nic_service(ctx, server_id)
     service_resp = asyncio.run(nic_service.connect_shared_network(
         bandwidth_mbps=bandwidth,
@@ -573,7 +588,11 @@ def edit_nic(
     force_customization: bool,
     wait: bool,
 ):
-    """Change the network, the address and the bandwidth of a network interface of a VMware server."""
+    """Change the network, the address and the bandwidth of a network interface of a VMware server.
+
+    With --wait the command prints the whole set of network interfaces of the server:
+    the contract has no read of a single interface.
+    """
     nic_service = _nic_service(ctx, server_id)
     service_resp = asyncio.run(nic_service.update(
         nic_id,
