@@ -4,7 +4,6 @@ from http import HTTPStatus
 from typing import Any, Callable, Dict, Optional, cast
 
 import click
-import click_completion
 
 from s2ctl.formatters import (
     FormatterPort,
@@ -23,14 +22,11 @@ FORMATTERS = types.MappingProxyType({
 })
 FORMATTER_NAMES = tuple(FORMATTERS.keys())
 
-click_completion.init()
-
 
 def echo(
     raw_obj: Any,
     sorter: Optional[SorterType] = general_fields_sort,
     formatter: Optional[FormatterPort] = None,
-    *args,
     **kwargs,
 ) -> None:
     ctx = click.get_current_context()
@@ -40,7 +36,7 @@ def echo(
     if 'err' in kwargs:
         raise BaseFailException('\n{err_message}'.format(err_message=formatter.format(raw_obj)))
     elif raw_obj:
-        click.echo(formatter.format(raw_obj, sorter), *args, **kwargs)
+        click.echo(formatter.format(raw_obj, sorter), **kwargs)
 
 
 def wait_option(func):
@@ -105,12 +101,11 @@ class S2CTLCommand(click.Command):
         name: str,
         context_settings: Optional[Dict[Any, Any]] = None,
         callback: Optional[Callable[..., Any]] = None,
-        *args,
         **kwargs,
     ) -> None:
         if callback:
             callback = _command_callback_wrap(callback)
-        super().__init__(name, context_settings, callback, *args, **kwargs)
+        super().__init__(name, context_settings, callback, **kwargs)
 
 
 class BaseFailException(click.ClickException):

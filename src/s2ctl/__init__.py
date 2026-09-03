@@ -3,6 +3,7 @@ import sys
 
 from s2ctl import (  # noqa: F401
     cmd_ansible,
+    cmd_autocomplete,
     cmd_context,
     cmd_domain,
     cmd_metainfo,
@@ -15,5 +16,5 @@ from s2ctl import (  # noqa: F401
 
 # Fix for RuntimeError: Event loop is closed
 # https://github.com/encode/httpx/issues/914
-if sys.version_info >= (3, 8) and sys.platform == 'win32':
+if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
