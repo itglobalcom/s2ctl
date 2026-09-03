@@ -1,4 +1,4 @@
-"""Общие координаты маршрутов услуги VMware: сеть и её edge адресуются числовым id."""
+"""Общие координаты маршрутов услуги VMware: сеть с её edge и сервер адресуются числовым id."""
 
 NETWORK_ID = 42
 
@@ -20,3 +20,8 @@ NETWORK_ENTITY = {
     'state': 'Active',
     'nics_count': 0,
 }
+
+SERVER_ID = 100
+
+SERVERS_PATH = 'api/v1/vmware/servers'
+SERVER_PATH = '{path}/{server_id}'.format(path=SERVERS_PATH, server_id=SERVER_ID)
