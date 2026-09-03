@@ -1,6 +1,7 @@
 from typing import ClassVar, List, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
+from ssclient.network.network_id import NetworkId
 from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
@@ -22,12 +23,12 @@ class NicService(BaseService):
         super().__init__(http_client, {'server_id': server_id})
 
     async def create(
-        self, *, network_id: Optional[str], bandwidth: Optional[int], wait: bool = False,
+        self, *, network_id: Optional[NetworkId], bandwidth: Optional[int], wait: bool = False,
     ) -> Union[TaskIDWrap, NicEntity]:
         task_wrap: TaskIDWrap = await self._http_client.post(
             path=self.path,
             payload={
-                'network_id': network_id,
+                'network_id': network_id.value if network_id else None,
                 'bandwidth_mbps': bandwidth,
             },
         )

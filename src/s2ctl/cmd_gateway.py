@@ -8,8 +8,10 @@ from click.core import Context
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
+from s2ctl.params import parse_network_id, parse_network_ids
 from ssclient.gateway.gateway import GatewayService
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
+from ssclient.network.network_id import NetworkId
 
 GATEWAY_ID_ARG = 'gateway-id'
 _RULES_FILE_HELP = (
@@ -76,6 +78,7 @@ def gateway(ctx):
     'network_ids',
     multiple=True,
     required=True,
+    callback=parse_network_ids,
     help='Isolated network to connect to the gateway (see "network" command). '
     + 'May be multiple, up to 3 networks.',
 )
@@ -85,7 +88,7 @@ def create(
     location: str,
     name: str,
     bandwidth: Optional[int],
-    network_ids: Sequence[str],
+    network_ids: Sequence[NetworkId],
     wait: bool,
 ):
     """Create new edge gateway."""
@@ -221,10 +224,11 @@ def replace_nat(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: bool):
 @click.option(
     '--network-id',
     required=True,
+    callback=parse_network_id,
     help='Isolated network to connect to the gateway (see "network" command).',
 )
 @click.pass_context
-def add_nic(ctx, gateway_id: GatewayId, network_id: str, wait: bool):
+def add_nic(ctx, gateway_id: GatewayId, network_id: NetworkId, wait: bool):
     """Connect an isolated network to a gateway."""
     nic_service = _get_gateway_service(ctx).nics(gateway_id=gateway_id)
     service_resp = asyncio.run(nic_service.create(network_id=network_id, wait=wait))

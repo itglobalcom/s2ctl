@@ -5,7 +5,9 @@ import click
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
+from s2ctl.params import parse_network_id
 from ssclient.network.network import NetworkService
+from ssclient.network.network_id import NetworkId
 
 
 def _get_net_serivce(ctx) -> NetworkService:
@@ -69,9 +71,9 @@ def list_network(ctx):
 
 @network.command(cls=S2CTLCommand)
 @output_option
-@click.argument('network-id', required=True)
+@click.argument('network-id', required=True, callback=parse_network_id)
 @click.pass_context
-def get(ctx, network_id: str):
+def get(ctx, network_id: NetworkId):
     """Get information about a network."""
     net_service = _get_net_serivce(ctx)
     service_resp = asyncio.run(net_service.get(network_id=network_id))
@@ -80,11 +82,11 @@ def get(ctx, network_id: str):
 
 @network.command(cls=S2CTLCommand)
 @output_option
-@click.argument('network-id', required=True)
+@click.argument('network-id', required=True, callback=parse_network_id)
 @click.option('--name', required=True)
 @click.option('--description', required=True)
 @click.pass_context
-def edit(ctx, network_id: str, name: str, description: str):
+def edit(ctx, network_id: NetworkId, name: str, description: str):
     """Update network information."""
     net_service = _get_net_serivce(ctx)
     service_resp = asyncio.run(net_service.update(
@@ -97,9 +99,9 @@ def edit(ctx, network_id: str, name: str, description: str):
 
 @network.command(cls=S2CTLCommand)
 @output_option
-@click.argument('network-id', required=True)
+@click.argument('network-id', required=True, callback=parse_network_id)
 @click.pass_context
-def delete(ctx, network_id: str):
+def delete(ctx, network_id: NetworkId):
     """Delete a network."""
     net_service = _get_net_serivce(ctx)
     service_resp = asyncio.run(net_service.delete(network_id=network_id))
@@ -108,10 +110,10 @@ def delete(ctx, network_id: str):
 
 @network.command(cls=S2CTLCommand)
 @output_option
-@click.argument('network-id', required=True)
+@click.argument('network-id', required=True, callback=parse_network_id)
 @click.option('--name', required=True, help='Name of tag.')
 @click.pass_context
-def add_tag(ctx, network_id: str, name: str):
+def add_tag(ctx, network_id: NetworkId, name: str):
     """Add tag to network."""
     net_service = _get_net_serivce(ctx)
     tag_service = net_service.tags(network_id=network_id)
@@ -121,10 +123,10 @@ def add_tag(ctx, network_id: str, name: str):
 
 @network.command(cls=S2CTLCommand)
 @output_option
-@click.argument('network-id', required=True)
+@click.argument('network-id', required=True, callback=parse_network_id)
 @click.option('--name', type=str, required=True, help='Name of tag.')
 @click.pass_context
-def delete_tag(ctx, network_id: str, name: str):
+def delete_tag(ctx, network_id: NetworkId, name: str):
     """Remove tag from network."""
     net_service = _get_net_serivce(ctx)
     tag_service = net_service.tags(network_id=network_id)

@@ -1,6 +1,7 @@
 from typing import ClassVar, List, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
+from ssclient.network.network_id import NetworkId
 from ssclient.network.tag import TagService
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
@@ -44,13 +45,11 @@ class BaseNetworkService(BaseService):
         )
         if wait:
             task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
-            return await self.get(task_resource_id(task, TaskResourceType.network))
+            return await self._read(task_resource_id(task, TaskResourceType.network))
         return task_wrap
 
-    async def get(self, network_id: str) -> NetworkEntity:
-        path = self._make_path(network_id)
-        network_resp = await self._http_client.get(path)
-        return network_resp['isolated_network']
+    async def get(self, network_id: NetworkId) -> NetworkEntity:
+        return await self._read(network_id.value)
 
     async def list(self) -> List[NetworkEntity]:  # noqa: WPS125
         networks_resp = await self._http_client.get(self.path)
@@ -58,12 +57,12 @@ class BaseNetworkService(BaseService):
 
     async def update(
         self,
-        network_id: str,
+        network_id: NetworkId,
         *,
         name: str,
         description: str,
     ) -> Union[TaskIDWrap, NetworkEntity]:
-        path = self._make_path(network_id)
+        path = self._make_path(network_id.value)
         return await self._http_client.put(
             path=path,
             payload={
@@ -72,11 +71,15 @@ class BaseNetworkService(BaseService):
             },
         )
 
-    async def delete(self, network_id: str) -> None:
-        path = self._make_path(network_id)
+    async def delete(self, network_id: NetworkId) -> None:
+        path = self._make_path(network_id.value)
         await self._http_client.delete(path)
+
+    async def _read(self, raw_network_id: str) -> NetworkEntity:
+        network_resp = await self._http_client.get(self._make_path(raw_network_id))
+        return network_resp['isolated_network']
 
 
 class NetworkService(BaseNetworkService):
-    def tags(self, network_id: str) -> TagService:
+    def tags(self, network_id: NetworkId) -> TagService:
         return TagService(self._http_client, network_id)

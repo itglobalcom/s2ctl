@@ -9,6 +9,8 @@ from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.formatters import general_fields_sort
+from s2ctl.params import parse_network_id
+from ssclient.network.network_id import NetworkId
 from ssclient.server.server import ServerService, VolumeCreationData
 
 SERVER_ID_ARG = 'server-id'
@@ -382,7 +384,13 @@ def delete_volume(ctx, server_id: str, volume_id: int):
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True)
-@click.option('--network-id', type=str, required=False, help='Network identifier (see "network" command).')
+@click.option(
+    '--network-id',
+    type=str,
+    required=False,
+    callback=parse_network_id,
+    help='Network identifier (see "network" command).',
+)
 @click.option(
     '--bandwidth',
     type=int,
@@ -392,7 +400,7 @@ def delete_volume(ctx, server_id: str, volume_id: int):
 )
 @click.pass_context
 def add_nic(
-    ctx, server_id: str, network_id: Optional[str], bandwidth: Optional[int], wait: bool,
+    ctx, server_id: str, network_id: Optional[NetworkId], bandwidth: Optional[int], wait: bool,
 ):
     """
     Add new network interface to a server.

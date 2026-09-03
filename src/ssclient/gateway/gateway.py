@@ -8,6 +8,7 @@ from ssclient.gateway.nat import NatRuleEntity, NatService
 from ssclient.gateway.nic import GatewayNicEntity, GatewayNicService
 from ssclient.gateway.power import GatewayPowerService
 from ssclient.gateway.tag import TagService
+from ssclient.network.network_id import NetworkId
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
 
@@ -34,7 +35,7 @@ class BaseGatewayService(BaseService):
         location_id: str,
         name: str,
         bandwidth_mbps: Optional[int],
-        network_ids: Sequence[str],
+        network_ids: Sequence[NetworkId],
         wait: bool = False,
     ) -> Union[TaskIDWrap, GatewayEntity]:
         task_wrap: TaskIDWrap = await self._http_client.post(
@@ -43,7 +44,7 @@ class BaseGatewayService(BaseService):
                 'location_id': location_id,
                 'name': name,
                 'bandwidth_mbps': bandwidth_mbps,
-                'network_ids': list(network_ids),
+                'network_ids': [network_id.value for network_id in network_ids],
             },
         )
         if wait:

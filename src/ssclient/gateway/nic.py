@@ -2,6 +2,7 @@ from typing import ClassVar, Optional, TypedDict
 
 from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.gateway.gateway_id import GatewayId
+from ssclient.network.network_id import NetworkId
 from ssclient.ports import HttpClientPort
 
 
@@ -18,11 +19,11 @@ class GatewayNicService(BaseService):
     def __init__(self, http_client: HttpClientPort, gateway_id: GatewayId) -> None:
         super().__init__(http_client, {'gateway_id': gateway_id.value})
 
-    async def create(self, *, network_id: str, wait: bool = False) -> Optional[TaskIDWrap]:
+    async def create(self, *, network_id: NetworkId, wait: bool = False) -> Optional[TaskIDWrap]:
         task_wrap: TaskIDWrap = await self._http_client.post(
             path=self.path,
             payload={
-                'network_id': network_id,
+                'network_id': network_id.value,
             },
         )
         if wait:

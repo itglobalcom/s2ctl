@@ -1,6 +1,7 @@
 from typing import ClassVar, TypedDict
 
 from ssclient.base import BaseService
+from ssclient.network.network_id import NetworkId
 from ssclient.ports import HttpClientPort
 
 
@@ -11,8 +12,8 @@ class TagEntity(TypedDict):
 class TagService(BaseService):
     _path: ClassVar[str] = 'api/v1/networks/isolated/{network_id}/tags'
 
-    def __init__(self, http_client: HttpClientPort, network_id: str) -> None:
-        super().__init__(http_client, {'network_id': network_id})
+    def __init__(self, http_client: HttpClientPort, network_id: NetworkId) -> None:
+        super().__init__(http_client, {'network_id': network_id.value})
 
     async def create(self, *, name: str) -> TagEntity:
         return await self._http_client.post(
