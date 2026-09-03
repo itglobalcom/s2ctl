@@ -99,6 +99,32 @@ state: Active
 created: '1970-01-01T0:00:00.0000000Z'
 ```
 
+### Configuration file
+
+Contexts, the keyring holding your API keys and the address of the API live in
+`config.yaml`. Its path is printed by `s2ctl --help` as the default of the
+`--config` option; another file may be passed explicitly:
+`s2ctl -c ./stand.yaml server list`.
+
+| Key | Meaning |
+| --- | --- |
+| `contexts`, `current_context` | contexts created by `s2ctl context create` and the one currently selected |
+| `keyring`, `keyring_key` | the file keyring where the API keys of the contexts are kept, and its password |
+| `host` | base URL of the API. Optional |
+
+Without `host` the API address is chosen by the two leading characters of the
+API key — every installation of the platform has its own prefix. Set `host`
+to reach an installation whose prefix `s2ctl` does not know yet, a test stand
+for instance:
+
+```yaml
+# ~/.config/serverspace.s2ctl/config.yaml
+host: https://api.ss4test.com
+```
+
+The key is read for every command, so a stand is usually kept in a separate
+configuration file passed with `-c`.
+
 ## Autocompletion
 
 `s2ctl` uses the completion mechanism built into click: the shell asks `s2ctl`
@@ -156,21 +182,26 @@ At any time you can type `--help` to get list of commands:
 Usage: s2ctl [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  -c, --config PATH  [default: C:\Users\ignat.tolchanov\AppData\Roaming\server
-                     space.s2ctl\config.yaml]
-
+  -c, --config PATH  [default: /home/user/.config/serverspace.s2ctl/config.yaml]
   -k, --apikey TEXT
-  --help             Show this message and exit.
+  -h, --help         Show this message and exit.
 
 Commands:
-  context    Contexts are used for accessing concrete projects.
-  images     List of OS images which you can use for your server.
-  locations  List of places where our data centers are located.
-  network    Manage isolated networks without Internet access.
-  project    Various actions related to projects — containers of anyother...
-  server     Manage virtual servers inside your project.
-  ssh-key    SSH keys management.
-  task       Many actions are long-running (e.g.
+  affinity-group        Manage affinity and anti-affinity groups of servers.
+  ansible               Set of ansible management commands.
+  applications          List of applications which you can install on...
+  context               Contexts are used for accessing concrete projects.
+  domain                Manage dns domains and records.
+  gateway               Manage edge gateways connecting isolated networks...
+  images                List of OS images which you can use for your server.
+  install-autocomplete  Install autocompletion.
+  locations             List of places where our data centers are located.
+  network               Manage isolated networks without Internet access.
+  project               Various actions related to projects — containers...
+  server                Manage virtual servers inside your project.
+  ssh-key               SSH keys management.
+  task                  Many actions are long-running (e.g.
+  vmware                Manage VMware Cloud resources: catalogs, networks...
 ```
 
 Or get list of second-level commands:
@@ -181,20 +212,25 @@ Usage: s2ctl server [OPTIONS] COMMAND [ARGS]...
   Manage virtual servers inside your project.
 
 Options:
-  --help  Show this message and exit.
+  -h, --help  Show this message and exit.
 
 Commands:
   add-nic            Add new network interface to a server.
+  add-tag            Add tag to server.
   add-volume         Add new storage volume to a server.
   create             Create new virtual server.
   create-snapshot    Create snapshot of a server.
   delete             Delete a server.
   delete-nic         Remove a network interface from a server.
   delete-snapshot    Remove a snapshot of a server.
+  delete-tag         Remove tag from server.
   delete-volume      Remove a storage volume from a server.
+  edit               Change only the specified parameters of a server...
+  edit-nic           Change bandwidth of a network interface.
   edit-volume        Resize a storage volume.
   get                Get information about a server.
   get-nic            Get information about a network interface.
+  get-snapshot       Get information about a snapshot of a server.
   get-volume         Get information about a storage volume.
   list               Display all virtual servers in the project.
   list-nic           Display all network interfaces of a server.
@@ -202,8 +238,11 @@ Commands:
   list-volume        Display all storage volumes of a server.
   power-off          Turn a server off.
   power-on           Turn a server on.
+  price              Get the monthly price of a server configuration.
   reboot             Reboot a server.
+  rename             Change the name of a server.
   rollback-snapshot  Rollback a server to a saved snapshot.
+  set-configuration  Set the whole server configuration: both CPU cores...
 ```
 
 Or list of command arguments along with command descirption:
@@ -215,17 +254,15 @@ Usage: s2ctl server create [OPTIONS]
 
 Options:
   -o, --output [yaml|json|table]  [default: yaml]
+  --wait                          wait for task to complete.
   --name TEXT                     Name of new server.  [required]
   --location TEXT                 Where to create a server (see "locations"
                                   command).  [required]
-
   --image TEXT                    OS images which you want to use for new
-                                  server,  [required]
-
+                                  server.  [required]
   --cpu TEXT                      CPU cores count.  [required]
   --ram <INT{M|G}>                RAM size (e.g. 1024, 1024M or 1G for 1Gb of
-                                  RAM)  [required]
-
+                                  RAM).  [required]
   --volume <(NAME:)SIZE{M|G}>     Volume size in form VolumeName:VolumeSize.
                                   May be multiple. The first specified volume
                                   becomes system (boot) and its name is
@@ -234,11 +271,387 @@ Options:
                                   create a server with 10Gb system (boot)
                                   volume and 30Gb volume named "Second".
                                   [required]
-
+  --public-network INTEGER        Bandwidth of the public network interface in
+                                  Mbps. May be multiple to create several
+                                  interfaces with appropriate bandwidths.
+                                  [required]
   --ssh-key INTEGER               Identifier of a SSH key which you want to
                                   use to access a server (see "ssh-key"
                                   command). May be multiple.
-
-  --wait
-  --help                          Show this message and exit.
+  -h, --help                      Show this message and exit.
 ```
+
+### Command groups
+
+| Group | What it manages |
+| --- | --- |
+| `context` | contexts — API keys of your projects, kept on this machine |
+| `project` | the project the current context points to |
+| `locations`, `images`, `applications` | catalogues of the vStack service |
+| `server` | vStack servers with their volumes, network interfaces, snapshots and tags |
+| `network` | vStack isolated networks |
+| `gateway` | vStack edge gateways connecting isolated networks to the Internet |
+| `affinity-group` | vStack affinity and anti-affinity groups of servers |
+| `vmware` | VMware Cloud: catalogues and the `network`, `edge` and `server` subgroups |
+| `domain` | DNS domains and their records |
+| `ssh-key` | SSH keys injected into new Linux servers |
+| `task` | state of a long-running operation |
+| `ansible` | ansible inventory built from the servers of the project |
+
+The `vmware` group is three-level: it follows the structure of the service,
+where servers, networks and the edge gateway of a routed network are managed by
+their own subgroups.
+
+```
+>s2ctl vmware --help
+Usage: s2ctl vmware [OPTIONS] COMMAND [ARGS]...
+
+  Manage VMware Cloud resources: catalogs, networks and their edge gateways.
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  edge        Manage the edge gateway of a routed VMware network.
+  gpu-models  List of GPU models which you can attach to your VMware server.
+  images      List of OS templates which you can use for your VMware server.
+  locations   List of VMware locations available to the project.
+  network     Manage VMware networks.
+  server      Manage VMware servers.
+```
+
+### Edge gateways of isolated networks
+
+An edge gateway gives isolated vStack networks a way to the Internet. It is
+created for a location and up to three isolated networks at once, and carries a
+firewall and a NAT rule set:
+
+```
+>s2ctl gateway create --location am2 --name gw --network-id l1n123 --bandwidth 100 --wait
+>s2ctl gateway add-nic l1e456 --network-id l1n124 --wait
+>s2ctl gateway get-firewall l1e456 --output json > firewall.json
+>s2ctl gateway replace-firewall l1e456 --rules-file firewall.json --wait
+>s2ctl gateway stop l1e456 --wait
+```
+
+The identifier of a gateway has the form `l<location>e<gateway>`, the same shape
+the API uses. A malformed identifier is rejected by `s2ctl` itself, before the
+request is sent.
+
+### Affinity groups
+
+An affinity group keeps its servers on one host of the location, an
+anti-affinity group spreads them over different hosts:
+
+```
+>s2ctl affinity-group create --location am2 --name web --anti-affinity
+>s2ctl affinity-group list
+>s2ctl affinity-group delete l1g789 --wait
+```
+
+### VMware Cloud
+
+The VMware service has its own catalogues, networks and servers, addressed by
+plain numeric identifiers:
+
+```
+>s2ctl vmware locations
+>s2ctl vmware images --location 1 --gpu unsupported
+>s2ctl vmware network create-routed --location 1 --name app --address 10.0.0.0 --mask 24 --bandwidth 100 --wait
+>s2ctl vmware server create --location 1 --name db --image 42 --cpu 4 --ram 8192 \
+    --system-disk-size 51200 --system-disk-type "SSD" --public-network 15 --wait
+>s2ctl vmware server power-off 1234 --wait
+```
+
+Unlike vStack servers, VMware servers have a separate command for every power
+transition: `power-on`, `power-off` (cut the power), `shutdown` (ask the guest
+OS), `reboot` (ask the guest OS) and `reset`.
+
+The edge gateway of a routed network is managed by the `vmware edge` subgroup —
+its firewall, NAT rules and IPsec VPN tunnels:
+
+```
+>s2ctl vmware edge get-nat 77 --output json
+>s2ctl vmware edge upsert-nat-rule 77 --type DNAT --protocol TCP \
+    --original-ip 203.0.113.10 --original-port 443 --translated-ip 10.0.0.5 --translated-port 443 --wait
+>s2ctl vmware edge delete-nat-rule 77 --rule-id 3 --wait
+```
+
+### Rule sets
+
+Firewall and NAT of a vStack gateway are replaced as a whole set, not rule by
+rule: read the current set with the matching `get-*` command in JSON, edit the
+file and pass it back with `--rules-file` (`-` reads the set from stdin). The
+same holds for the firewall of a VMware server and of a VMware edge gateway.
+
+### Waiting for a task
+
+Operations that change something are performed by the platform asynchronously:
+the command returns the identifier of a task, and the task is done when the
+platform has applied the change. Without `--wait` the command prints the
+identifier — machine-readable with `--output json` — and returns immediately:
+
+```
+>s2ctl server create --name web --location am2 --image ubuntu-22 --cpu 2 --ram 4G --volume 20G --public-network 100 --output json
+{"task_id": "l1t9876"}
+```
+
+With `--wait` the command waits for the task to complete and prints the affected
+resource instead. The state of a task can also be read at any time by its
+identifier — of any service, whatever the shape of the identifier:
+
+```
+>s2ctl task get l1t9876
+```
+
+Four VMware commands print the whole set of resources of the server instead of
+the single resource they created: `vmware server add-volume` prints all volumes
+of the server, `vmware server connect-client-network`,
+`vmware server connect-shared-network` and `vmware server edit-nic` print all
+its network interfaces. The contract carries the identifier of the new volume or
+interface neither in the response of the operation nor in the task, so there is
+nothing to single out.
+
+## Public API coverage
+
+`s2ctl` covers **132 of the 148 operations** of the Public API — every section of
+the contract except Kubernetes. The table below maps every covered operation to
+the command that performs it; the 16 operations left out are listed after it.
+
+> How the operations are counted: the denominator is the set of routes declared
+> by the controllers of the Public API, with the paths given by route constants
+> expanded. A count that reads literal paths only misses three of them — the read
+> and the deletion of an affinity group and `GET /api/v1/tasks/already_completed_task`
+> — and gives 143 instead of 146; two more VMware operations
+> (`nested-hypervisor/enable` and `nested-hypervisor/disable`) have been published
+> since, which brings the surface to 148.
+
+The mapping is not one-to-one:
+
+- `task get` reads a task of any service, so a single command covers all four
+  shapes of a task identifier;
+- `server power-off` and `server reboot` cover two operations each, chosen by
+  `--hard`: `power/shutdown` and `power/off`, `power/reboot` and `power/reset`.
+  These two vStack commands are older than the rule of one command per operation
+  and keep their arguments for compatibility; in the VMware section every power
+  transition has its own command;
+- `PUT /api/v1/vmware/networks/{network_id}` changes both the name and the
+  bandwidth of a network, so it is split into `vmware network rename` and
+  `vmware network set-bandwidth`;
+- seven commands map to no operation of the contract at all: the five `context`
+  commands (contexts and their API keys live on this machine),
+  `install-autocomplete` and `ansible get-inventory`, which builds an inventory
+  from the list of servers it has already read.
+
+The table is kept honest by `tests/s2ctl/test_command_coverage.py`: an operation
+left without a command, a command missing from the table and a command for an
+operation out of scope all fail the tests.
+
+### Covered operations
+
+#### Project, catalogues and SSH keys — 8
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/applications` | `s2ctl applications` |
+| `GET /api/v1/images` | `s2ctl images` |
+| `GET /api/v1/locations` | `s2ctl locations` |
+| `GET /api/v1/project` | `s2ctl project show` |
+| `GET /api/v1/ssh-keys` | `s2ctl ssh-key list` |
+| `POST /api/v1/ssh-keys` | `s2ctl ssh-key create` |
+| `GET /api/v1/ssh-keys/{ssh_key_id}` | `s2ctl ssh-key get` |
+| `DELETE /api/v1/ssh-keys/{ssh_key_id}` | `s2ctl ssh-key delete` |
+
+#### Tasks — 4
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/tasks/already_completed_task` | `s2ctl task get` |
+| `GET /api/v1/tasks/dns{task_id}` | `s2ctl task get` |
+| `GET /api/v1/tasks/vmw{task_id}` | `s2ctl task get` |
+| `GET /api/v1/tasks/{task_id}` | `s2ctl task get` |
+
+#### vStack servers — 30
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/servers` | `s2ctl server list` |
+| `POST /api/v1/servers` | `s2ctl server create` |
+| `POST /api/v1/servers/price` | `s2ctl server price` |
+| `GET /api/v1/servers/{server_id}` | `s2ctl server get` |
+| `PUT /api/v1/servers/{server_id}` | `s2ctl server set-configuration` |
+| `PATCH /api/v1/servers/{server_id}` | `s2ctl server edit` |
+| `DELETE /api/v1/servers/{server_id}` | `s2ctl server delete` |
+| `PUT /api/v1/servers/{server_id}/name` | `s2ctl server rename` |
+| `GET /api/v1/servers/{server_id}/nics` | `s2ctl server list-nic` |
+| `POST /api/v1/servers/{server_id}/nics` | `s2ctl server add-nic` |
+| `GET /api/v1/servers/{server_id}/snapshots` | `s2ctl server list-snapshot` |
+| `POST /api/v1/servers/{server_id}/snapshots` | `s2ctl server create-snapshot` |
+| `POST /api/v1/servers/{server_id}/tags` | `s2ctl server add-tag` |
+| `GET /api/v1/servers/{server_id}/volumes` | `s2ctl server list-volume` |
+| `POST /api/v1/servers/{server_id}/volumes` | `s2ctl server add-volume` |
+| `GET /api/v1/servers/{server_id}/nics/{nic_id}` | `s2ctl server get-nic` |
+| `PUT /api/v1/servers/{server_id}/nics/{nic_id}` | `s2ctl server edit-nic` |
+| `DELETE /api/v1/servers/{server_id}/nics/{nic_id}` | `s2ctl server delete-nic` |
+| `POST /api/v1/servers/{server_id}/power/off` | `s2ctl server power-off` |
+| `POST /api/v1/servers/{server_id}/power/on` | `s2ctl server power-on` |
+| `POST /api/v1/servers/{server_id}/power/reboot` | `s2ctl server reboot` |
+| `POST /api/v1/servers/{server_id}/power/reset` | `s2ctl server reboot` |
+| `POST /api/v1/servers/{server_id}/power/shutdown` | `s2ctl server power-off` |
+| `GET /api/v1/servers/{server_id}/snapshots/{snapshot_id}` | `s2ctl server get-snapshot` |
+| `DELETE /api/v1/servers/{server_id}/snapshots/{snapshot_id}` | `s2ctl server delete-snapshot` |
+| `DELETE /api/v1/servers/{server_id}/tags/{tag}` | `s2ctl server delete-tag` |
+| `GET /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server get-volume` |
+| `PUT /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server edit-volume` |
+| `DELETE /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server delete-volume` |
+| `POST /api/v1/servers/{server_id}/snapshots/{snapshot_id}/rollback` | `s2ctl server rollback-snapshot` |
+
+#### vStack isolated networks — 7
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/networks/isolated` | `s2ctl network list` |
+| `POST /api/v1/networks/isolated` | `s2ctl network create` |
+| `GET /api/v1/networks/isolated/{network_id}` | `s2ctl network get` |
+| `PUT /api/v1/networks/isolated/{network_id}` | `s2ctl network edit` |
+| `DELETE /api/v1/networks/isolated/{network_id}` | `s2ctl network delete` |
+| `POST /api/v1/networks/isolated/{network_id}/tags` | `s2ctl network add-tag` |
+| `DELETE /api/v1/networks/isolated/{network_id}/tags/{tag}` | `s2ctl network delete-tag` |
+
+#### vStack affinity groups — 4
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/affinity-groups` | `s2ctl affinity-group list` |
+| `POST /api/v1/affinity-groups` | `s2ctl affinity-group create` |
+| `GET /api/v1/affinity-groups/{affinity_group_id}` | `s2ctl affinity-group get` |
+| `DELETE /api/v1/affinity-groups/{affinity_group_id}` | `s2ctl affinity-group delete` |
+
+#### vStack edge gateways — 17
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/gateways` | `s2ctl gateway list` |
+| `POST /api/v1/gateways` | `s2ctl gateway create` |
+| `GET /api/v1/gateways/l{location_id}e{gateway_id}` | `s2ctl gateway get` |
+| `PUT /api/v1/gateways/l{location_id}e{gateway_id}` | `s2ctl gateway rename` |
+| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}` | `s2ctl gateway delete` |
+| `PUT /api/v1/gateways/l{location_id}e{gateway_id}/bandwidth` | `s2ctl gateway set-bandwidth` |
+| `GET /api/v1/gateways/l{location_id}e{gateway_id}/firewall` | `s2ctl gateway get-firewall` |
+| `PUT /api/v1/gateways/l{location_id}e{gateway_id}/firewall` | `s2ctl gateway replace-firewall` |
+| `GET /api/v1/gateways/l{location_id}e{gateway_id}/nat` | `s2ctl gateway get-nat` |
+| `PUT /api/v1/gateways/l{location_id}e{gateway_id}/nat` | `s2ctl gateway replace-nat` |
+| `POST /api/v1/gateways/l{location_id}e{gateway_id}/nics` | `s2ctl gateway add-nic` |
+| `POST /api/v1/gateways/l{location_id}e{gateway_id}/restart` | `s2ctl gateway restart` |
+| `POST /api/v1/gateways/l{location_id}e{gateway_id}/start` | `s2ctl gateway start` |
+| `POST /api/v1/gateways/l{location_id}e{gateway_id}/stop` | `s2ctl gateway stop` |
+| `POST /api/v1/gateways/l{location_id}e{gateway_id}/tags` | `s2ctl gateway add-tag` |
+| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/nics/{nic_id}` | `s2ctl gateway delete-nic` |
+| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{tag}` | `s2ctl gateway delete-tag` |
+
+#### DNS domains and records — 9
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/domains` | `s2ctl domain list` |
+| `POST /api/v1/domains` | `s2ctl domain create` |
+| `GET /api/v1/domains/{domain_name}` | `s2ctl domain get` |
+| `DELETE /api/v1/domains/{domain_name}` | `s2ctl domain delete` |
+| `GET /api/v1/domains/{domain_name}/records` | `s2ctl domain list-record` |
+| `POST /api/v1/domains/{domain_name}/records` | `s2ctl domain create-record` |
+| `GET /api/v1/domains/{domain_name}/records/{record_id}` | `s2ctl domain get-record` |
+| `PUT /api/v1/domains/{domain_name}/records/{record_id}` | `s2ctl domain update-record` |
+| `DELETE /api/v1/domains/{domain_name}/records/{record_id}` | `s2ctl domain delete-record` |
+
+#### VMware catalogues — 3
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/vmware/gpu-models` | `s2ctl vmware gpu-models` |
+| `GET /api/v1/vmware/images` | `s2ctl vmware images` |
+| `GET /api/v1/vmware/locations` | `s2ctl vmware locations` |
+
+#### VMware networks and their edge gateways — 17
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/vmware/networks` | `s2ctl vmware network list` |
+| `POST /api/v1/vmware/networks/isolated` | `s2ctl vmware network create-isolated` |
+| `POST /api/v1/vmware/networks/public` | `s2ctl vmware network create-public` |
+| `POST /api/v1/vmware/networks/routed` | `s2ctl vmware network create-routed` |
+| `GET /api/v1/vmware/networks/{network_id}` | `s2ctl vmware network get` |
+| `PUT /api/v1/vmware/networks/{network_id}` | `s2ctl vmware network rename`<br>`s2ctl vmware network set-bandwidth` |
+| `DELETE /api/v1/vmware/networks/{network_id}` | `s2ctl vmware network delete` |
+| `POST /api/v1/vmware/networks/{network_id}/servers` | `s2ctl vmware network connect-servers` |
+| `PUT /api/v1/vmware/networks/{network_id}/edge/bandwidth` | `s2ctl vmware edge set-bandwidth` |
+| `GET /api/v1/vmware/networks/{network_id}/edge/firewall` | `s2ctl vmware edge get-firewall` |
+| `PUT /api/v1/vmware/networks/{network_id}/edge/firewall` | `s2ctl vmware edge update-firewall` |
+| `GET /api/v1/vmware/networks/{network_id}/edge/nat` | `s2ctl vmware edge get-nat` |
+| `POST /api/v1/vmware/networks/{network_id}/edge/nat` | `s2ctl vmware edge upsert-nat-rule` |
+| `GET /api/v1/vmware/networks/{network_id}/edge/vpn` | `s2ctl vmware edge get-vpn` |
+| `POST /api/v1/vmware/networks/{network_id}/edge/vpn` | `s2ctl vmware edge upsert-vpn-tunnel` |
+| `DELETE /api/v1/vmware/networks/{network_id}/edge/nat/{rule_id}` | `s2ctl vmware edge delete-nat-rule` |
+| `DELETE /api/v1/vmware/networks/{network_id}/edge/vpn/{tunnel_id}` | `s2ctl vmware edge delete-vpn-tunnel` |
+
+#### VMware servers — 33
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/vmware/servers` | `s2ctl vmware server list` |
+| `POST /api/v1/vmware/servers` | `s2ctl vmware server create` |
+| `POST /api/v1/vmware/servers/verify` | `s2ctl vmware server verify` |
+| `GET /api/v1/vmware/servers/{server_id}` | `s2ctl vmware server get` |
+| `PUT /api/v1/vmware/servers/{server_id}` | `s2ctl vmware server set-configuration` |
+| `DELETE /api/v1/vmware/servers/{server_id}` | `s2ctl vmware server delete` |
+| `PUT /api/v1/vmware/servers/{server_id}/computer-name` | `s2ctl vmware server set-computer-name` |
+| `POST /api/v1/vmware/servers/{server_id}/copy` | `s2ctl vmware server copy` |
+| `GET /api/v1/vmware/servers/{server_id}/firewall` | `s2ctl vmware server get-firewall` |
+| `PUT /api/v1/vmware/servers/{server_id}/firewall` | `s2ctl vmware server update-firewall` |
+| `PUT /api/v1/vmware/servers/{server_id}/name` | `s2ctl vmware server rename` |
+| `GET /api/v1/vmware/servers/{server_id}/nics` | `s2ctl vmware server list-nic` |
+| `POST /api/v1/vmware/servers/{server_id}/nics` | `s2ctl vmware server connect-client-network` |
+| `POST /api/v1/vmware/servers/{server_id}/rebuild` | `s2ctl vmware server rebuild` |
+| `GET /api/v1/vmware/servers/{server_id}/snapshot` | `s2ctl vmware server get-snapshot` |
+| `POST /api/v1/vmware/servers/{server_id}/snapshot` | `s2ctl vmware server create-snapshot` |
+| `DELETE /api/v1/vmware/servers/{server_id}/snapshot` | `s2ctl vmware server delete-snapshot` |
+| `GET /api/v1/vmware/servers/{server_id}/volumes` | `s2ctl vmware server list-volume` |
+| `POST /api/v1/vmware/servers/{server_id}/volumes` | `s2ctl vmware server add-volume` |
+| `POST /api/v1/vmware/servers/{server_id}/nested-hypervisor/disable` | `s2ctl vmware server disable-nested-hypervisor` |
+| `POST /api/v1/vmware/servers/{server_id}/nested-hypervisor/enable` | `s2ctl vmware server enable-nested-hypervisor` |
+| `POST /api/v1/vmware/servers/{server_id}/nics/shared` | `s2ctl vmware server connect-shared-network` |
+| `PUT /api/v1/vmware/servers/{server_id}/nics/{nic_id}` | `s2ctl vmware server edit-nic` |
+| `DELETE /api/v1/vmware/servers/{server_id}/nics/{nic_id}` | `s2ctl vmware server disconnect-nic` |
+| `POST /api/v1/vmware/servers/{server_id}/power/off` | `s2ctl vmware server power-off` |
+| `POST /api/v1/vmware/servers/{server_id}/power/on` | `s2ctl vmware server power-on` |
+| `POST /api/v1/vmware/servers/{server_id}/power/reboot` | `s2ctl vmware server reboot` |
+| `POST /api/v1/vmware/servers/{server_id}/power/reset` | `s2ctl vmware server reset` |
+| `POST /api/v1/vmware/servers/{server_id}/power/shutdown` | `s2ctl vmware server shutdown` |
+| `POST /api/v1/vmware/servers/{server_id}/snapshot/restore` | `s2ctl vmware server restore-snapshot` |
+| `GET /api/v1/vmware/servers/{server_id}/volumes/{volume_id}` | `s2ctl vmware server get-volume` |
+| `PUT /api/v1/vmware/servers/{server_id}/volumes/{volume_id}` | `s2ctl vmware server edit-volume` |
+| `DELETE /api/v1/vmware/servers/{server_id}/volumes/{volume_id}` | `s2ctl vmware server delete-volume` |
+
+### Not covered: Kubernetes
+
+Kubernetes clusters are not managed by `s2ctl`. The section is absent from the
+published API reference and its service is under maintenance only, so there is no
+partial support either — none of the 16 operations below has a command.
+
+| Operation |
+| --- |
+| `GET /api/v1/k8s_clusters` |
+| `POST /api/v1/k8s_clusters` |
+| `GET /api/v1/k8s_versions` |
+| `GET /api/v1/k8s_clusters/{cluster_id}` |
+| `PUT /api/v1/k8s_clusters/{cluster_id}` |
+| `DELETE /api/v1/k8s_clusters/{cluster_id}` |
+| `GET /api/v1/tasks/k8s_{task_id}` |
+| `GET /api/v1/k8s_clusters/{cluster_id}/k8s_versions` |
+| `GET /api/v1/k8s_clusters/{cluster_id}/node_groups` |
+| `POST /api/v1/k8s_clusters/{cluster_id}/node_groups` |
+| `POST /api/v1/k8s_clusters/{cluster_id}/tags` |
+| `GET /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
+| `PUT /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
+| `DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
+| `DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{tag}` |
+| `POST /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}/ingress` |
