@@ -1,7 +1,7 @@
 import asyncio
 
 import click
-from click import Context
+from click.core import Context
 
 from s2ctl.click import S2CTLCommand, echo, output_option
 from s2ctl.client import client_factory

@@ -2,9 +2,8 @@ import ssl
 from typing import Any, Dict, Optional
 from urllib import parse as urlparse
 
-import aiohttp
 import certifi
-from aiohttp import client_exceptions, hdrs
+from aiohttp import ClientResponse, ClientResponseError, ClientSession, hdrs
 
 from ssclient import errors
 
@@ -19,7 +18,7 @@ class HttpClient(object):  # noqa: WPS214
     async def make_request(
         self, method: str, path: str, payload: Any = None,
     ) -> Any:
-        async with aiohttp.ClientSession(connector_owner=True) as sess:
+        async with ClientSession(connector_owner=True) as sess:
             request_manager = sess.request(
                 method=method,
                 url=urlparse.urljoin(self.host, path),
@@ -55,11 +54,11 @@ class HttpClient(object):  # noqa: WPS214
 
         return headers
 
-    async def _process_response(self, resp: aiohttp.ClientResponse) -> Any:
+    async def _process_response(self, resp: ClientResponse) -> Any:
         msg = await resp.json(content_type=None)
         try:
             resp.raise_for_status()
-        except client_exceptions.ClientResponseError as exc:
+        except ClientResponseError as exc:
             if isinstance(msg, dict):
                 err_message = msg.get('errors')
             else:

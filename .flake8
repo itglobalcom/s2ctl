@@ -2,19 +2,25 @@
 max-line-length=120
 max-arguments = 6
 
+# W503 конфликтует с W504: стиль репозитория переносит бинарный оператор в начало строки
 ignore =
-    D100, D101, D102, D103, D104, D107,
     W503,
 
+# Модуль команд описывает команду декораторами click и параметрами колбэка, поэтому число
+# декораторов (WPS216), аргументов (WPS211), членов модуля (WPS202) и повторов выражений
+# и строк (WPS204, WPS226) здесь задаётся составом команд CLI, а не сложностью кода.
+# WPS463: имя колбэка — это имя команды, и команды `get-*` печатают результат, а не возвращают его;
+# переименование сломало бы обратную совместимость CLI.
+# WPS235/WPS412: `s2ctl/__init__.py` регистрирует группы команд импортом — без этого они не попадают в бинарь.
 per-file-ignores =
     src/s2ctl/__init__.py: WPS235, WPS412
-    src/s2ctl/cmd_*.py: D205, D400, DAR101, WPS216, WPS211
-    src/s2ctl/cmd_server.py: D205, D400, DAR101, DAR401, WPS202, WPS204, WPS211, WPS216, WPS226
-    src/s2ctl/cmd_network.py: D205, D400, DAR101, WPS216, WPS211, WPS202, WPS226
-    src/s2ctl/cmd_domain.py: D205, D400, DAR101, DAR401, WPS216, WPS211, WPS202, WPS204, WPS226
-    src/ssclient/ports.py: WPS428
     src/s2ctl/click.py: WPS202
-    src/ssclient/domain/record_entities.py: WPS202, D105
+    src/s2ctl/cmd_ansible.py: WPS463
+    src/s2ctl/cmd_domain.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
+    src/s2ctl/cmd_network.py: WPS202, WPS211, WPS216, WPS226
+    src/s2ctl/cmd_server.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
+    src/s2ctl/cmd_sshkey.py: WPS216
+    src/ssclient/domain/record_entities.py: WPS202
 
 exclude =
     .git,

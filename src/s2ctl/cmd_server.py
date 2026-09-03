@@ -3,7 +3,7 @@ import string
 from typing import Any, Dict, List, Optional, Sequence
 
 import click
-from click import Context
+from click.core import Context
 
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
@@ -57,16 +57,15 @@ class SizeType(click.types.StringParamType):
         else:
             suffix = ''
 
-        if suffix not in string.digits:
-            if suffix in {'m', 'g'}:
-                size = int(value[:-1])
-            else:
-                self.fail(
-                    '{suffix} wrong size suffix (available only m, g)'.format(suffix=suffix), param, ctx,
-                )
-        else:
+        if suffix in string.digits:
             suffix = 'm'
             size = int(value)
+        elif suffix in {'m', 'g'}:
+            size = int(value[:-1])
+        else:
+            self.fail(
+                '{suffix} wrong size suffix (available only m, g)'.format(suffix=suffix), param, ctx,
+            )
 
         if suffix == 'g':
             size *= 1024
