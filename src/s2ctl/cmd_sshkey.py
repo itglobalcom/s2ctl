@@ -56,7 +56,9 @@ def create(
     service_resp = asyncio.run(
         sshkey_service.create(
             name=name,
-            public_key=public_key or sshkey_file.read(),
+            # случай «ни один источник ключа не задан» отсечён проверками выше,
+            # но pyright сужение по ним не выводит
+            public_key=public_key or sshkey_file.read(),  # pyright: ignore[reportOptionalMemberAccess]
         ),
     )
     echo(service_resp)

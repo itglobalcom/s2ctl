@@ -1,3 +1,8 @@
+# Допустимые значения ttl и типа записи перечисляет enum, а Literal собирается из него
+# на лету: статически такой Literal не разбирается, а дублировать реестр значений строками
+# в аннотациях нельзя.
+# pyright: reportInvalidTypeForm=false
+
 from enum import Enum, unique
 from typing import Literal, Optional, Type, TypedDict, Union
 

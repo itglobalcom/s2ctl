@@ -1,4 +1,4 @@
-from typing import List, TypedDict
+from typing import ClassVar, List, TypedDict
 
 from ssclient.base import BaseService
 
@@ -10,7 +10,7 @@ class SshkeyEntity(TypedDict):
 
 
 class SshkeyService(BaseService):
-    path = 'api/v1/ssh-keys'
+    _path: ClassVar[str] = 'api/v1/ssh-keys'
 
     async def create(self, *, name: str, public_key: str) -> SshkeyEntity:
         return await self._http_client.post(

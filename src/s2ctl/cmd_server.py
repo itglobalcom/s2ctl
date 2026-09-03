@@ -30,10 +30,10 @@ _SERVER_FIELDS_ORDER = (
 )
 
 
-class VolumeType(click.types.StringParamType):
+class VolumeType(click.types.ParamType[VolumeCreationData]):
     name = '<(NAME:)SIZE{M|G}>'
 
-    def convert(self, value: str, param, ctx):  # noqa: WPS110
+    def convert(self, value: Any, param, ctx) -> VolumeCreationData:  # noqa: WPS110
         splitted_value = value.rsplit(':', 1)
         if len(splitted_value) == 1:
             name = 'boot'
@@ -48,10 +48,10 @@ class VolumeType(click.types.StringParamType):
         return VolumeCreationData(name, size)
 
 
-class SizeType(click.types.StringParamType):
+class SizeType(click.types.ParamType[int]):
     name = '<INT{M|G}>'
 
-    def convert(self, value: str, param, ctx):  # noqa: WPS110
+    def convert(self, value: Any, param, ctx) -> int:  # noqa: WPS110
         if value:
             suffix = value[-1].lower()
         else:

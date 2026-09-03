@@ -9,3 +9,7 @@ test-tox:
 .PHONY: test
 test:
 	poetry run pytest --cov=src --color=yes tests
+
+.PHONY: pyright
+pyright:
+	poetry run pyright ./src

@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import ClassVar, TypedDict
 
 from ssclient.base import BaseService
 
@@ -12,7 +12,7 @@ class ProjectEntity(TypedDict):
 
 
 class ProjectService(BaseService):
-    path = 'api/v1/project'
+    _path: ClassVar[str] = 'api/v1/project'
 
     async def get(self) -> ProjectEntity:
         project_resp = await self._http_client.get(self.path)

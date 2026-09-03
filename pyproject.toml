@@ -29,6 +29,7 @@ pytest-aiohttp = "^1.1"
 pytest-asyncio = "^1.4"
 pytest-cov = "^7.1"
 autopep8 = "^2.3"
+pyright = "^1.1"
 # верхняя граница Python — от самого pyinstaller (<3.16), без маркера lock не решается
 pyinstaller = {version = "^6.22", python = ">=3.10,<3.16"}
 
@@ -47,6 +48,12 @@ testpaths = [
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.pyright]
+# Гейт есть в шаблоне CI (`poetry run pyright ./src`) — здесь он воспроизводится локально.
+include = ["src"]
+pythonVersion = "3.10"
+typeCheckingMode = "standard"
 
 [tool.isort]
 multi_line_output = 3

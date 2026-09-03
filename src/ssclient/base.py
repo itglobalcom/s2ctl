@@ -6,7 +6,7 @@ from async_timeout import timeout
 
 from ssclient import errors
 from ssclient.ports import HttpClientPort
-from ssclient.task_entities import TaskEntity, TaskState, completed_task, task_state
+from ssclient.task_entities import TaskEntity, TaskState, completed_task
 from ssclient.task_id import TaskId
 
 URLFields = Dict[str, Any]
@@ -63,7 +63,7 @@ class BaseService(object):
         while True:
             task_resp = await self._http_client.get(task_path(task_id))
             task_data = task_resp['task']
-            state = task_state(task_data)
+            state = TaskState(task_data['is_completed'])
             if state == TaskState.completed:
                 return task_data
             elif state in _FAILURE_STATES:

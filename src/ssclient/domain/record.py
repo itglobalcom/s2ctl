@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Optional, Union  # noqa: WPS226
+from typing import Any, ClassVar, Dict, List, Optional, Union  # noqa: WPS226
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.domain import record_entities as entities
@@ -167,7 +167,7 @@ class RecordService(BaseService):  # noqa: WPS214
         wait: bool = False,
     ) -> Union[TaskIDWrap, entities.AnyRecord]:
         path = self._make_path(str(record_id))
-        payload = {
+        payload: Dict[str, Any] = {
             'name': name,
             'type': record_type.value,
             'ttl': ttl.value,

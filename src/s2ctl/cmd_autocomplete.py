@@ -50,6 +50,7 @@ def install_autocomplete(shell: Optional[str], path: Optional[str]) -> None:
             ),
             err=True,
         )
+        return
     startup_file = Path(path or shell_setup.startup_file).expanduser()
     _add_source_line(startup_file, shell_setup.source_line.format(var=COMPLETE_VAR, prog=PROG_NAME))
     echo({'shell': shell_name, 'installed_in': str(startup_file)})

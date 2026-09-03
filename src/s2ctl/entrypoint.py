@@ -41,10 +41,12 @@ def entry_point(
     keyring_path = config['keyring']
     keyring_key = os.environ.get('S2CTL_CONTEXT_KEY') or config.get('keyring_key', '')
     if not (keyring_key or apikey):
-        ctx.exit(
+        click.echo(
             "Please set S2CTL_CONTEXT_KEY env variable or 'keyring_key' configuration value.\n"
             + 'Also you may set --apikey/S2CTL_APIKEY.',
+            err=True,
         )
+        ctx.exit(1)
 
     context_maanger = ContextManager(
         config_manager=config_manager,

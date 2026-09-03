@@ -36,18 +36,17 @@ class TaskResourceEntity(TypedDict):
     id: str  # noqa: WPS125
 
 
-class TaskEntity(TypedDict, total=False):
+class BaseTaskEntity(TypedDict):
     id: str  # noqa: WPS125
+    is_completed: str
+
+
+class TaskEntity(BaseTaskEntity, total=False):
     type: str  # noqa: WPS125
     progress_percent: int
-    is_completed: str
     created: str
     completed: Optional[str]
     resources: List[TaskResourceEntity]
-
-
-def task_state(task: TaskEntity) -> TaskState:
-    return TaskState(task['is_completed'])
 
 
 def task_resource_id(task: TaskEntity, resource_type: TaskResourceType) -> str:
@@ -59,7 +58,7 @@ def task_resource_id(task: TaskEntity, resource_type: TaskResourceType) -> str:
     for resource in task.get('resources') or ():
         if resource['type'] == resource_type.value:
             return resource['id']
-    raise errors.TaskResourceMissingError(task.get('id', ''), resource_type.value)
+    raise errors.TaskResourceMissingError(task['id'], resource_type.value)
 
 
 def completed_task(task_id: str) -> TaskEntity:

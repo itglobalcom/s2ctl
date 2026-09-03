@@ -14,10 +14,12 @@ def context(ctx: Context):
     You may have more than one context to control several projects.
     """
     if not ctx.obj['keyring_pass_setted']:
-        ctx.exit(
+        click.echo(
             "You must set S2CTL_CONTEXT_KEY (or 'keyring_key' configuration value) "
             + 'to be able to perform operations on contexts.',
+            err=True,
         )
+        ctx.exit(1)
 
 
 def _get_context_manager(ctx) -> ContextManager:

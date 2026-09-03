@@ -18,6 +18,7 @@ class FormatterPort(Protocol):
             raw_obj(Any): raw python object like dict, list or str.
             sorter(Optional[SorterType]): function for sorting fields order of raw_obj.
         """
+        ...
 
 
 def general_fields_sort(
