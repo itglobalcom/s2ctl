@@ -1,6 +1,5 @@
 import asyncio
-import json
-from typing import IO, Any, List, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 import click
 from click.core import Context
@@ -8,16 +7,12 @@ from click.core import Context
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
-from s2ctl.params import parse_network_id, parse_network_ids
+from s2ctl.params import parse_network_id, parse_network_ids, rules_file_option
 from ssclient.gateway.gateway import GatewayService
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
 from ssclient.network.network_id import NetworkId
 
 GATEWAY_ID_ARG = 'gateway-id'
-_RULES_FILE_HELP = (
-    'Path to the file with the whole rule set in JSON, as printed by the matching '
-    + '"get-*" command with "--output json". Pass "-" to read the set from stdin.'
-)
 
 
 def _get_gateway_service(ctx: Context) -> GatewayService:
@@ -31,28 +26,6 @@ def _parse_gateway_id(_ctx, _click_param, raw_id: str) -> GatewayId:
             'gateway id format: {template}'.format(template=GATEWAY_ID_TEMPLATE),
         )
     return gateway_id
-
-
-def _parse_rules(_ctx, _click_param, rules_file: IO) -> List[Any]:
-    try:
-        rules = json.load(rules_file)
-    except ValueError as exc:
-        raise click.BadParameter('file content is not valid JSON') from exc
-
-    if not isinstance(rules, list):
-        raise click.BadParameter('file must contain a JSON array of rules')
-    return rules
-
-
-def _rules_file_option(func):
-    return click.option(
-        '--rules-file',
-        'rules',
-        type=click.File('r'),
-        required=True,
-        callback=_parse_rules,
-        help=_RULES_FILE_HELP,
-    )(func)
 
 
 @entry_point.group()
@@ -183,7 +156,7 @@ def get_firewall(ctx, gateway_id: GatewayId):
 @gateway.command('replace-firewall', cls=S2CTLCommand)
 @output_option
 @wait_option
-@_rules_file_option
+@rules_file_option
 @click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
 @click.pass_context
 def replace_firewall(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: bool):
@@ -207,7 +180,7 @@ def get_nat(ctx, gateway_id: GatewayId):
 @gateway.command('replace-nat', cls=S2CTLCommand)
 @output_option
 @wait_option
-@_rules_file_option
+@rules_file_option
 @click.argument(GATEWAY_ID_ARG, required=True, callback=_parse_gateway_id)
 @click.pass_context
 def replace_nat(ctx, gateway_id: GatewayId, rules: Sequence[Any], wait: bool):
