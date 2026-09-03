@@ -63,6 +63,7 @@ class VmwareServerGpu(object):
     card_count: int
 
 
+# WPS230: состав полей задан формой запроса контракта — заказ передаётся целиком.
 @dataclass(frozen=True)
 class VmwareServerOrder(object):  # noqa: WPS230
     """Заказ VMware-сервера — одно тело запроса и на создание, и на его предпроверку."""
