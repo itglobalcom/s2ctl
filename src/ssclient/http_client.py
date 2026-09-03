@@ -8,6 +8,13 @@ from aiohttp import ClientResponse, ClientResponseError, ClientSession, hdrs
 from ssclient import errors
 
 
+def _error_message(body: Any, reason: str) -> Any:
+    """Причина отказа: `errors` из тела ответа контракта, иначе само тело, иначе статус."""
+    if isinstance(body, dict):
+        body = body.get('errors') or body  # noqa: WPS110
+    return body or reason
+
+
 class HttpClient(object):  # noqa: WPS214
     def __init__(self, host: str, apikey: Optional[str]) -> None:
         self.host = host
@@ -55,13 +62,17 @@ class HttpClient(object):  # noqa: WPS214
         return headers
 
     async def _process_response(self, resp: ClientResponse) -> Any:
-        msg = await resp.json(content_type=None)
+        msg = await self._read_body(resp)
         try:
             resp.raise_for_status()
         except ClientResponseError as exc:
-            if isinstance(msg, dict):
-                err_message = msg.get('errors')
-            else:
-                err_message = msg or exc.message  # noqa: B306
-            raise errors.HttpClientResponseError(exc.status, err_message)  # noqa: B306
+            raise errors.HttpClientResponseError(exc.status, _error_message(msg, exc.message))  # noqa: B306
         return msg
+
+    async def _read_body(self, resp: ClientResponse) -> Any:
+        try:
+            return await resp.json(content_type=None)
+        except ValueError:
+            # Отказ приходит и не в JSON контракта — страницей прокси, простым текстом:
+            # такое тело всё равно годится в сообщение об ошибке.
+            return await resp.text()
