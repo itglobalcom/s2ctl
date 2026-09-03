@@ -79,8 +79,8 @@ class VmwareServerOrder(object):  # noqa: WPS230
     network_bandwidth_mbps: Optional[int] = None
     backup_enabled: bool = False
     backup_period: Optional[int] = None
-    # `ssh_keys` — примитив намеренно: ключ принадлежит проекту, а не разделу VMware,
-    # и в сигнатурах раздела рядом с другими id не встречается (см. archi.md).
+    # Своего типа идентификатора SSH-ключа в репозитории нет: он заводится вместе
+    # с типизацией группы команд `ssh-key`.
     ssh_keys: Sequence[int] = field(default_factory=tuple)
     need_sysprep: bool = False
     nested_hypervisor: bool = False
