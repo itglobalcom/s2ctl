@@ -606,7 +606,7 @@ operation out of scope all fail the tests.
 | `PUT /api/v1/vmware/servers/{server_id}/computer-name` | `s2ctl vmware server set-computer-name` |
 | `POST /api/v1/vmware/servers/{server_id}/copy` | `s2ctl vmware server copy` |
 | `GET /api/v1/vmware/servers/{server_id}/firewall` | `s2ctl vmware server get-firewall` |
-| `PUT /api/v1/vmware/servers/{server_id}/firewall` | `s2ctl vmware server update-firewall` |
+| `PUT /api/v1/vmware/servers/{server_id}/firewall` | `s2ctl vmware server replace-firewall` |
 | `PUT /api/v1/vmware/servers/{server_id}/name` | `s2ctl vmware server rename` |
 | `GET /api/v1/vmware/servers/{server_id}/nics` | `s2ctl vmware server list-nic` |
 | `POST /api/v1/vmware/servers/{server_id}/nics` | `s2ctl vmware server connect-client-network` |

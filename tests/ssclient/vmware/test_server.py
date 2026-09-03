@@ -265,10 +265,10 @@ async def test_get_firewall_unwraps_rules(fake_http_client):
     assert rules == [FIREWALL_RULE]
 
 
-async def test_update_firewall_replaces_whole_rule_set(fake_http_client):
+async def test_replace_firewall_puts_whole_rule_set(fake_http_client):
     fake_http_client.on('PUT', FIREWALL_PATH, {'task_id': 'vmw17'})
 
-    task_wrap = await _service(fake_http_client).firewall(SERVER_ID).update(rules=[FIREWALL_RULE])
+    task_wrap = await _service(fake_http_client).firewall(SERVER_ID).replace(rules=[FIREWALL_RULE])
 
     assert fake_http_client.requests == [
         FakeRequest('PUT', FIREWALL_PATH, {'rules': [FIREWALL_RULE]}),
@@ -276,13 +276,13 @@ async def test_update_firewall_replaces_whole_rule_set(fake_http_client):
     assert task_wrap == {'task_id': 'vmw17'}
 
 
-async def test_update_firewall_with_wait_survives_response_without_task(fake_http_client):
+async def test_replace_firewall_with_wait_survives_response_without_task(fake_http_client):
     # Правку без фактических изменений publisher закрывает 204 без тела: задачи нет,
     # ждать нечего — операция обязана дочитать правила, а не упасть на пустом ответе.
     fake_http_client.on('PUT', FIREWALL_PATH, None)
     fake_http_client.on('GET', FIREWALL_PATH, {'rules': [FIREWALL_RULE]})
 
-    rules = await _service(fake_http_client).firewall(SERVER_ID).update(
+    rules = await _service(fake_http_client).firewall(SERVER_ID).replace(
         rules=[FIREWALL_RULE], wait=True,
     )
 

@@ -86,7 +86,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'POST /api/v1/vmware/servers/{server_id}/copy': ('vmware server copy',),
     'POST /api/v1/vmware/servers/{server_id}/rebuild': ('vmware server rebuild',),
     'GET /api/v1/vmware/servers/{server_id}/firewall': ('vmware server get-firewall',),
-    'PUT /api/v1/vmware/servers/{server_id}/firewall': ('vmware server update-firewall',),
+    'PUT /api/v1/vmware/servers/{server_id}/firewall': ('vmware server replace-firewall',),
     'POST /api/v1/vmware/servers/{server_id}/nested-hypervisor/enable': ('vmware server enable-nested-hypervisor',),
     'POST /api/v1/vmware/servers/{server_id}/nested-hypervisor/disable': ('vmware server disable-nested-hypervisor',),
     'POST /api/v1/vmware/servers/{server_id}/power/on': ('vmware server power-on',),

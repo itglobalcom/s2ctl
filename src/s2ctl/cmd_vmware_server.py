@@ -428,16 +428,16 @@ def get_firewall(ctx, server_id: VmwareServerId):
     echo(service_resp)
 
 
-@server.command('update-firewall', cls=S2CTLCommand)
+@server.command('replace-firewall', cls=S2CTLCommand)
 @output_option
 @wait_option
 @rules_file_option
 @_server_id_argument
 @click.pass_context
-def update_firewall(ctx, server_id: VmwareServerId, rules: Sequence[Any], wait: bool):
+def replace_firewall(ctx, server_id: VmwareServerId, rules: Sequence[Any], wait: bool):
     """Replace the whole firewall rule set of a VMware server."""
     firewall_service = _firewall_service(ctx, server_id)
-    service_resp = asyncio.run(firewall_service.update(rules=rules, wait=wait))
+    service_resp = asyncio.run(firewall_service.replace(rules=rules, wait=wait))
     echo(service_resp)
 
 

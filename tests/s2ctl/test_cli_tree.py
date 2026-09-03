@@ -130,12 +130,12 @@ EXPECTED_VMWARE_SERVER_COMMANDS = frozenset({
     'reboot',
     'rebuild',
     'rename',
+    'replace-firewall',
     'reset',
     'restore-snapshot',
     'set-computer-name',
     'set-configuration',
     'shutdown',
-    'update-firewall',
     'verify',
 })
 

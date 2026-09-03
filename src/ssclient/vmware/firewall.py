@@ -28,7 +28,7 @@ class VmwareServerFirewallService(BaseService):
         firewall_resp = await self._http_client.get(self.path)
         return firewall_resp['rules']
 
-    async def update(
+    async def replace(
         self, *, rules: Sequence[VmwareServerFirewallRuleEntity], wait: bool = False,
     ) -> Union[TaskIDWrap, List[VmwareServerFirewallRuleEntity], None]:
         # Набор правил заменяется целиком; правку без фактических изменений publisher
