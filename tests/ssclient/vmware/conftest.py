@@ -25,3 +25,18 @@ SERVER_ID = 100
 
 SERVERS_PATH = 'api/v1/vmware/servers'
 SERVER_PATH = '{path}/{server_id}'.format(path=SERVERS_PATH, server_id=SERVER_ID)
+
+VOLUME_ID = 7
+NIC_ID = 3
+
+VOLUMES_PATH = '{server_path}/volumes'.format(server_path=SERVER_PATH)
+VOLUME_PATH = '{path}/{volume_id}'.format(path=VOLUMES_PATH, volume_id=VOLUME_ID)
+
+NICS_PATH = '{server_path}/nics'.format(server_path=SERVER_PATH)
+NIC_PATH = '{path}/{nic_id}'.format(path=NICS_PATH, nic_id=NIC_ID)
+# Общая сеть подключается своим маршрутом: это отдельная операция контракта, а не
+# признак в теле запроса к маршруту клиентской сети.
+SHARED_NICS_PATH = '{path}/shared'.format(path=NICS_PATH)
+
+# Снимок VMware-сервера один и адресуется самим сервером — сегмента с id снимка в пути нет.
+SNAPSHOT_PATH = '{server_path}/snapshot'.format(server_path=SERVER_PATH)
