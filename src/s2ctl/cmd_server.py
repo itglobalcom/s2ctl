@@ -571,6 +571,21 @@ def list_snapshot(ctx, server_id: str):
 
 @server.command(cls=S2CTLCommand)
 @output_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.option('--snapshot-id', type=int, required=True, help='Snapshot identifier.')
+@click.pass_context
+def get_snapshot(ctx, server_id: str, snapshot_id: int):
+    """Get information about a snapshot of a server."""
+    server_service = _get_server_serivce(ctx)
+    snapshot_service = server_service.snapshots(server_id=server_id)
+    service_resp = asyncio.run(
+        snapshot_service.get(snapshot_id=snapshot_id),
+    )
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True)
 @click.option('--snapshot-id', type=int, required=True, help='Snapshot identifier.')

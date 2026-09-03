@@ -66,6 +66,7 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'edit-volume',
     'get',
     'get-nic',
+    'get-snapshot',
     'get-volume',
     'list',
     'list-nic',
