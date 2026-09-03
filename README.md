@@ -377,12 +377,19 @@ its firewall, NAT rules and IPsec VPN tunnels:
 >s2ctl vmware edge delete-nat-rule 77 --rule-id 3 --wait
 ```
 
+`upsert-vpn-tunnel` asks for the IPsec pre-shared key interactively; in a script
+pass it in `S2CTL_VPN_SHARED_KEY` instead of `--shared-key`, so that the secret
+stays out of `ps`, of the shell history and of the log of a CI job.
+
 ### Rule sets
 
 Firewall and NAT of a vStack gateway are replaced as a whole set, not rule by
 rule: read the current set with the matching `get-*` command in JSON, edit the
 file and pass it back with `--rules-file` (`-` reads the set from stdin). The
 same holds for the firewall of a VMware server and of a VMware edge gateway.
+`vmware edge get-firewall` prints the rules inside an object, together with the
+state of the firewall itself; `--rules-file` accepts that object as it is and
+takes the rules out of it, so the round trip holds for all four pairs.
 
 ### Waiting for a task
 

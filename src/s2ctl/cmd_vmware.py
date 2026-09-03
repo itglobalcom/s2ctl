@@ -473,7 +473,15 @@ def get_vpn(ctx, network_id: VmwareNetworkId):
 @_network_id_argument
 @click.option('--tunnel-id', type=int, help='VPN tunnel to change. Without it a new tunnel is created.')
 @click.option('--name', required=True, help='Name of the tunnel.')
-@click.option('--shared-key', required=True, help='IPsec pre-shared key.')
+@click.option(
+    '--shared-key',
+    envvar='S2CTL_VPN_SHARED_KEY',
+    prompt=True,
+    hide_input=True,
+    help='IPsec pre-shared key. Asked for interactively unless it is passed in '
+    + 'S2CTL_VPN_SHARED_KEY: the command line lands in "ps", in the shell history '
+    + 'and in the logs of a CI job.',
+)
 @click.option('--peer-network', required=True, help='Subnet of the remote side.')
 @click.option('--peer-endpoint', required=True, help='Endpoint of the remote side.')
 @click.option('--peer-identificator', required=True, help='Identifier of the remote side.')
