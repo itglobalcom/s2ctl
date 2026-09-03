@@ -8,6 +8,7 @@ from ssclient.project import ProjectService
 from ssclient.server.server import ServerService
 from ssclient.sshkey import SshkeyService
 from ssclient.task import TaskService
+from ssclient.vmware.vmware import VmwareService
 
 
 class SSClient(object):  # noqa: WPS214
@@ -46,3 +47,6 @@ class SSClient(object):  # noqa: WPS214
 
     def gateways(self) -> GatewayService:
         return GatewayService(self._http_client)
+
+    def vmware(self) -> VmwareService:
+        return VmwareService(self._http_client)

@@ -1,6 +1,6 @@
 import asyncio
-from typing import Any, ClassVar, Dict, Optional, TypedDict
-from urllib.parse import urljoin
+from typing import Any, ClassVar, Dict, Mapping, Optional, TypedDict
+from urllib.parse import urlencode, urljoin
 
 from async_timeout import timeout
 
@@ -10,6 +10,7 @@ from ssclient.task_entities import TaskEntity, TaskState, completed_task
 from ssclient.task_id import TaskId
 
 URLFields = Dict[str, Any]
+Payload = Dict[str, Any]
 
 TASKS_PATH = 'api/v1/tasks'
 DEFAULT_TASK_TIMEOUT = 60
@@ -29,6 +30,14 @@ def task_path(task_id: TaskId) -> str:
 def with_return_task(path: str) -> str:
     """Путь удаления, по которому publisher отдаёт ссылку на задачу: без параметра ответ пуст."""
     return '{path}?{query}'.format(path=path, query=_RETURN_TASK_QUERY)
+
+
+def with_filters(path: str, filters: Mapping[str, Any]) -> str:
+    """Путь с непустыми фильтрами: на пустое значение объявленного параметра publisher отвечает 500."""
+    query = {name: raw_filter for name, raw_filter in filters.items() if raw_filter is not None}
+    if not query:
+        return path
+    return '{path}?{query}'.format(path=path, query=urlencode(query))
 
 
 class BaseService(object):
