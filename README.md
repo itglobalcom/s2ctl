@@ -738,3 +738,38 @@ partial support either — none of the 16 operations below has a command.
 | `DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
 | `DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{tag}` |
 | `POST /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}/ingress` |
+
+## Verification status
+
+The commands were run against the production API `api.serverspace.io` on a real
+project. What that run covered and what it did not is listed below, so that the
+next change knows what is already known to work and what is still only covered
+by tests.
+
+Exercised against the live platform:
+
+- the catalogues and every read command of every section;
+- vStack edge gateways — all 17 operations: creation, reading, renaming and
+  deletion, bandwidth, the firewall and the NAT set both read and written back,
+  `add-nic` and `delete-nic`, the three power commands, tags;
+- VMware edge gateways — all 9 operations: the firewall, a SNAT rule and a VPN
+  tunnel, each created and deleted again;
+- VMware servers — ordering a server, `verify`, the power commands, `copy`,
+  `rebuild`, `set-computer-name` and deletion;
+- volumes, network interfaces and the snapshot of a VMware server — all 14
+  operations;
+- affinity groups — the whole set of four operations, deletion included, whose
+  task the API answers with the synthetic identifier `already_completed_task`;
+- DNS — a zone and its records, with the task of the `dns{n}` shape awaited;
+- a refusal of the API (401, 403 and 404) turned into a readable message with a
+  non-zero exit code and no traceback;
+- `--wait` and `--timeout` on real tasks of the platform.
+
+Not exercised against the live platform:
+
+- `vmware server enable-nested-hypervisor` and `disable-nested-hypervisor`: both
+  operations answer 404 on production, the feature is not deployed there yet;
+- `server price` of the vStack section: the project is answered 403, the service
+  is not available to it;
+- the Windows binary: it was not built, only the Linux one;
+- operations whose resources the project did not have at the time of the run.
