@@ -48,8 +48,14 @@ def _get_config_manager(_ctx, _format, value: Path) -> ConfigManager:  # noqa: W
     default=DEFAULT_CONFIG_PATH,
     show_default=True,
     callback=_get_config_manager,
+    help='Configuration file to read the contexts, the keyring and the API address from.',
 )
-@click.option('--apikey', '-k', envvar='S2CTL_APIKEY')
+@click.option(
+    '--apikey',
+    '-k',
+    envvar='S2CTL_APIKEY',
+    help='API key to use instead of the one kept in the current context.',
+)
 @click.option(
     '--debug',
     is_flag=True,

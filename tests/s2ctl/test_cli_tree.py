@@ -1,6 +1,7 @@
 import json
 import sys
 import types
+from itertools import chain
 
 import click
 import pytest
@@ -408,16 +409,18 @@ def test_every_command_offers_a_description():
 
 
 def test_every_option_offers_help():
+    # Обход дерева команд начинается с самого `entry_point`: его глобальные опции
+    # ни в одну команду не входят, а в справке печатаются наравне с ними.
     without_help = [
         '{name} {option}'.format(name=name, option=param.opts[0])
-        for name, command in _commands_of_cli()
+        for name, command in chain((('s2ctl', entry_point),), _commands_of_cli())
         for param in command.params
-        if isinstance(param, click.Option) and not param.help
+        if isinstance(param, click.Option) and not param.hidden and not param.help
     ]
 
     # Текст подсказки не проверяется — проверяется, что он есть: опция без help
     # печатается в справке одним своим именем, и назначение её пользователь узнаёт
-    # только из отказа команды.
+    # только из отказа команды. Скрытая опция в справке не печатается вовсе.
     assert without_help == []
 
 

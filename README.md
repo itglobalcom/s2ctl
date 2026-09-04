@@ -92,6 +92,38 @@ host: https://api.ss4test.com
 The key is read for every command, so a stand is usually kept in a separate
 configuration file passed with `-c`.
 
+### Where the API key comes from
+
+Every command needs an API key, and there are two ways to give it one.
+
+The usual way is a context: `s2ctl context create` puts the key into the keyring
+next to the configuration file, and the keyring is locked with a password. That
+password is `keyring_key` of the configuration file, or the `S2CTL_CONTEXT_KEY`
+environment variable, which wins over the file — keep the password out of the
+configuration and in the environment on a shared machine or in a CI job:
+
+```
+>export S2CTL_CONTEXT_KEY=<keyring password>
+>s2ctl server list
+```
+
+The other way skips the keyring altogether: `-k/--apikey`, or the same value in
+`S2CTL_APIKEY`, is used as the key of the call and the current context is not
+consulted. This is the way to run a single command against a project that has no
+context on this machine:
+
+```
+>export S2CTL_APIKEY=04d1f...4ea4
+>s2ctl project show
+```
+
+Without either of them the command stops before it reaches the API:
+
+```
+Please set S2CTL_CONTEXT_KEY env variable or 'keyring_key' configuration value.
+Also you may set --apikey/S2CTL_APIKEY.
+```
+
 ## Autocompletion
 
 `s2ctl` uses the completion mechanism built into click: the shell asks `s2ctl`
@@ -187,8 +219,11 @@ At any time you can type `--help` to get list of commands:
 Usage: s2ctl [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  -c, --config PATH  [default: /home/user/.config/serverspace.s2ctl/config.yaml]
-  -k, --apikey TEXT
+  -c, --config PATH  Configuration file to read the contexts, the keyring and
+                     the API address from.  [default:
+                     /home/user/.config/serverspace.s2ctl/config.yaml]
+  -k, --apikey TEXT  API key to use instead of the one kept in the current
+                     context.
   -h, --help         Show this message and exit.
 
 Commands:
