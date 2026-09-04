@@ -2,13 +2,20 @@
 
 Обратной совместимости у этих правил нет: до задачи `--config` роняла CLI всегда.
 """
+import random
+
 import yaml
 from click.testing import CliRunner
 
-from s2ctl.config import KEYRING_FILE_NAME, ConfigManager
+from s2ctl.config import KEYRING_FILE_NAME, ConfigManager, generate_password
 from s2ctl.entrypoint import entry_point
 
+APIKEY = '02deadbeef'
+
 _STAND_CONFIG = 'host: https://api.ss4test.com\n'
+# Ключ, сгенерированный прошлым релизом: тот же алфавит, только источник случайности
+# у него был `random`.
+_KEY_OF_A_PREVIOUS_RELEASE = "'$]z2GZ&*.'"
 
 
 def _stand_config(tmp_path):
@@ -96,3 +103,29 @@ def test_keyring_file_of_another_scheme_is_named_as_alien(tmp_path, cli_config):
     assert result.exit_code != 0
     assert 'another tool or another version' in result.output
     assert 'CFB' in result.output
+
+
+def test_generated_keyring_key_is_not_reproducible_from_the_seeded_random():
+    """Ключ шифрования keyring — секрет: `random` предсказуем по своему состоянию."""
+    random.seed(0)
+    first_key = generate_password()
+    random.seed(0)
+    second_key = generate_password()
+
+    assert first_key != second_key
+
+
+def test_keyring_key_stored_by_a_previous_release_still_opens_its_keyring(tmp_path, cli_config):
+    """Ключ уже созданного конфига лежит в файле, и смена генератора его не касается."""
+    config_path = _stand_config(tmp_path)
+    config_path.write_text(_STAND_CONFIG + 'keyring_key: {key}\n'.format(key=_KEY_OF_A_PREVIOUS_RELEASE))
+    runner = CliRunner()
+    created = runner.invoke(
+        entry_point, ('-c', str(config_path), 'context', 'create', '-n', 'stand', '-k', APIKEY),
+    )
+    assert created.exit_code == 0, created.output
+
+    result = runner.invoke(entry_point, ('-c', str(config_path), 'context', 'show'))
+
+    assert result.exit_code == 0, result.output
+    assert 'stand' in result.output

@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 import types
 from pathlib import Path
@@ -9,8 +9,9 @@ import yaml
 
 
 def generate_password(length: int = 10):
+    """Ключ шифрования нового keyring: секрет, поэтому источник — `secrets`, не `random`."""
     char_seq = string.ascii_letters + string.digits + string.punctuation + string.whitespace
-    return ''.join((random.choice(char_seq)for _ in range(length)))  # noqa: S311
+    return ''.join(secrets.choice(char_seq) for _ in range(length))
 
 
 KEYRING_FILE_NAME = 'keyring.cfg'
