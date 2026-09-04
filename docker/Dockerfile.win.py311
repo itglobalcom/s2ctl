@@ -1,4 +1,4 @@
-FROM python:3.10-windowsservercore-1809
+FROM python:3.11-windowsservercore-1809
 
 ENV PYTHONFAULTHANDLER=1 \
     PYTHONUNBUFFERED=1 \

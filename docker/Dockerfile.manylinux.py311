@@ -4,7 +4,7 @@ FROM quay.io/pypa/manylinux_2_28_x86_64
 LABEL maintainer="vladislav.orlov"
 LABEL email="vladislav.orlov@itglobal.com"
 
-ENV PATH="/opt/python/cp310-cp310/bin:${PATH}"
+ENV PATH="/opt/python/cp311-cp311/bin:${PATH}"
 # poetry 1.8 читает формат poetry.lock репозитория
 ENV POETRY_VERSION="1.8.*"
 

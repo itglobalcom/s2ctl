@@ -1,6 +1,6 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.145.1/containers/python-3/.devcontainer/base.Dockerfile
 
-# [Choice] Python version: 3, 3.12, 3.11, 3.10
+# [Choice] Python version: 3, 3.13, 3.12, 3.11
 ARG VARIANT="3"
 FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
