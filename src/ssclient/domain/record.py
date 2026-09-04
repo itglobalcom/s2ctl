@@ -7,6 +7,20 @@ from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
 
 
+def _given_fields(fields: Dict[str, Any]) -> Dict[str, Any]:
+    """Поля записи, которые пришли: пустое от нулевого отличается наличием значения.
+
+    Нулевой `priority` записи MX и нулевые `weight`/`port` записи SRV — штатные
+    значения, а publisher требует их непустыми (`[EncodedRequired]`), поэтому
+    выпасть из тела по ложности они не могут.
+    """
+    return {
+        field: field_value
+        for field, field_value in fields.items()
+        if field_value is not None
+    }
+
+
 class RecordService(BaseService):  # noqa: WPS214
     _path: ClassVar[str] = 'api/v1/domains/{domain_name}/records/'
 
@@ -171,29 +185,20 @@ class RecordService(BaseService):  # noqa: WPS214
             'name': name,
             'type': record_type.value,
             'ttl': ttl.value,
+            **_given_fields({
+                'ip': ip,
+                'canonical_name': cname,
+                'mail_host': mail_host,
+                'name_server_host': name_server_host,
+                'text': text,
+                'protocol': protocol,
+                'service': service,
+                'weight': weight,
+                'port': port,
+                'target': target,
+                'priority': priority,
+            }),
         }
-        if ip:
-            payload['ip'] = ip
-        if cname:
-            payload['canonical_name'] = cname
-        if mail_host:
-            payload['mail_host'] = mail_host
-        if name_server_host:
-            payload['name_server_host'] = name_server_host
-        if text:
-            payload['text'] = text
-        if protocol:
-            payload['protocol'] = protocol
-        if service:
-            payload['service'] = service
-        if weight:
-            payload['weight'] = weight
-        if port:
-            payload['port'] = port
-        if target:
-            payload['target'] = target
-        if priority:
-            payload['priority'] = priority
         task_wrap: TaskIDWrap = await self._http_client.put(
             path=path,
             payload=payload,

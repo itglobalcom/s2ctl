@@ -10,13 +10,13 @@ from typing import Any, Callable, Sequence
 
 import pytest
 
-from s2ctl import cmd_affinity_group, cmd_gateway, cmd_server, cmd_vmware
+from s2ctl import cmd_affinity_group, cmd_domain, cmd_gateway, cmd_server, cmd_vmware
 from ssclient.client import SSClient
 
 # Группы, чьи команды покрыты здесь: каждая строит сервис фабрикой клиента, и подменяется
 # именно она — доменные сервисы остаются настоящими. Подгруппы (`vmware server`,
 # `vmware edge`) берут сервис у своей группы, отдельной подмены им не нужно.
-_COMMAND_MODULES = (cmd_affinity_group, cmd_gateway, cmd_server, cmd_vmware)
+_COMMAND_MODULES = (cmd_affinity_group, cmd_domain, cmd_gateway, cmd_server, cmd_vmware)
 
 
 @pytest.fixture

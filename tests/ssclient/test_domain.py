@@ -3,6 +3,8 @@
 Регресс на миграцию с legacy-полей задачи (`domain_id`, `record_id`) на `resources[]`:
 ошибка в типе ресурса вылезала бы только в рантайме, на живой задаче.
 """
+import pytest
+
 from ssclient.domain.domain import DomainService
 from ssclient.domain.record import RecordService
 from ssclient.domain.record_entities import AllowedRecordType, AllowedTTLType
@@ -74,3 +76,72 @@ async def test_update_record_with_wait_reads_record_from_task_resources(fake_htt
 
     assert fake_http_client.paths('GET') == ['api/v1/tasks/dns347', RECORD_PATH]
     assert record == RECORD_ENTITY
+
+
+# Нулевой приоритет записи MX и нулевые вес и порт записи SRV — штатные значения
+# контракта, а не «поле не задано»: publisher требует их непустыми
+# (`[EncodedRequired]` у `RecordMxCommand.Priority`, `RecordSrvCommand.Weight`
+# и `.Port`) и на отсутствующем поле отвечает 400.
+_ZERO_VALUED_UPDATES = (
+    (
+        {'record_type': AllowedRecordType.mx, 'mail_host': 'mx.example.com', 'priority': 0},
+        {'mail_host': 'mx.example.com', 'priority': 0},
+    ),
+    (
+        {
+            'record_type': AllowedRecordType.srv,
+            'protocol': 'tcp',
+            'service': 'sip',
+            'target': 'sip.example.com.',
+            'priority': 0,
+            'weight': 0,
+            'port': 0,
+        },
+        {
+            'protocol': 'tcp',
+            'service': 'sip',
+            'target': 'sip.example.com.',
+            'priority': 0,
+            'weight': 0,
+            'port': 0,
+        },
+    ),
+)
+
+
+@pytest.mark.parametrize('update_fields,expected_fields', _ZERO_VALUED_UPDATES)
+async def test_update_record_keeps_zero_values_in_the_request(
+    fake_http_client, update_fields, expected_fields,
+):
+    fake_http_client.on('PUT', RECORD_PATH, {'task_id': 'dns348'})
+
+    await RecordService(fake_http_client, 'example.com').update(
+        17, name='www', ttl=AllowedTTLType.one_h, **update_fields,
+    )
+
+    assert fake_http_client.requests[0].payload == {
+        'name': 'www',
+        'type': update_fields['record_type'].value,
+        'ttl': '1h',
+        **expected_fields,
+    }
+
+
+async def test_update_record_omits_the_fields_of_other_record_types(fake_http_client):
+    fake_http_client.on('PUT', RECORD_PATH, {'task_id': 'dns349'})
+
+    await RecordService(fake_http_client, 'example.com').update(
+        17,
+        name='www',
+        ttl=AllowedTTLType.one_h,
+        record_type=AllowedRecordType.a,
+        ip='10.0.0.5',
+    )
+
+    # Поле чужого типа записи publisher не принимает вовсе: в теле только свои.
+    assert fake_http_client.requests[0].payload == {
+        'name': 'www',
+        'type': 'a',
+        'ttl': '1h',
+        'ip': '10.0.0.5',
+    }
