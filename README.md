@@ -161,6 +161,10 @@ Some commands of the previous releases behave differently now:
   `server add-nic`) reject a malformed identifier themselves — with the expected
   format and the exit code `2` of a usage error, instead of asking the API and
   reporting its refusal;
+- an unexpected failure is reported as a message with a non-zero exit code
+  wherever it happens, including before the command itself is reached — a
+  configuration file that cannot be read used to end in a traceback. Pass
+  `--debug` to get the traceback back;
 - `--help` of a command inside a group (`s2ctl server create --help`,
   `s2ctl vmware server get --help`) no longer needs an API key: the key is asked
   for when a command is run, not when its group is parsed, so the built-in help

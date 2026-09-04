@@ -1,18 +1,38 @@
 import os
+import sys
 import types
 from pathlib import Path
 
 import click
 from click.core import Context
 
+from s2ctl.click import DEBUG_MODE, BaseFailException
 from s2ctl.config import DEFAULT_CONFIG_PATH, ConfigManager
 from s2ctl.context import ContextManager
 
 CONTEXT_SETTINGS = types.MappingProxyType({'help_option_names': ['-h', '--help']})
 
 
-def run_cli():
-    entry_point()
+def run_cli() -> None:
+    """Точка входа CLI и последний перехват неожиданного отказа.
+
+    Обёртка команды закрывает только её колбэк, а отказать может и то, что click
+    выполняет до него: разбор конфигурации, колбэк группы, колбэк параметра.
+    """
+    try:
+        entry_point()
+    except Exception as exc:
+        if DEBUG_MODE.get():
+            raise
+        # Тем же сообщением, что и неожиданный отказ внутри команды: `repr`, потому
+        # что у неожиданного исключения тип и есть половина причины.
+        failure = BaseFailException('\n{failure!r}'.format(failure=exc))
+        failure.show()
+        sys.exit(failure.exit_code)
+
+
+def _set_debug_mode(_ctx, _click_param, debug: bool) -> None:
+    DEBUG_MODE.set(debug)
 
 
 def _get_config_manager(_ctx, _format, value: Path) -> ConfigManager:  # noqa: WPS110
@@ -30,11 +50,18 @@ def _get_config_manager(_ctx, _format, value: Path) -> ConfigManager:  # noqa: W
     callback=_get_config_manager,
 )
 @click.option('--apikey', '-k', envvar='S2CTL_APIKEY')
-@click.option('--debug', is_flag=True, hidden=True)
+@click.option(
+    '--debug',
+    is_flag=True,
+    # Eager: признак отладки нужен раньше остальных колбэков — отказать может
+    # и разбор конфигурации, и тогда трассировку печатать или нет решает он.
+    is_eager=True,
+    hidden=True,
+    callback=_set_debug_mode,
+    expose_value=False,
+)
 @click.pass_context
-def entry_point(
-    ctx: Context, config_manager: ConfigManager, apikey: str, debug: bool,
-):
+def entry_point(ctx: Context, config_manager: ConfigManager, apikey: str):
     ctx.ensure_object(dict)
     ctx.obj['config_manager'] = config_manager
     config = config_manager.get_config()
@@ -56,4 +83,3 @@ def entry_point(
     ctx.obj['keyring_pass_setted'] = bool(keyring_key)
     ctx.obj['context_manager'] = context_maanger
     ctx.obj['apikey_arg'] = apikey
-    ctx.obj['debug'] = debug

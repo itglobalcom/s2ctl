@@ -6,6 +6,7 @@
 тем же способом: оно идёт той же веткой обработчика, что и отказ API.
 """
 import json
+import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -14,7 +15,8 @@ import yaml
 from click.testing import CliRunner
 
 from s2ctl.click import FORMATTER_NAMES
-from s2ctl.entrypoint import entry_point
+from s2ctl.config import ConfigManager
+from s2ctl.entrypoint import entry_point, run_cli
 from ssclient.gateway.gateway import GatewayService
 
 APIKEY = '02deadbeef'
@@ -164,3 +166,38 @@ def test_forbidden_outside_the_contract_form_is_still_readable(api_config, body)
 
     assert 'no access to the project' in result.output
     _assert_reported_without_traceback(result)
+
+
+def test_failure_outside_a_command_is_reported_without_traceback(monkeypatch, capsys):
+    """Отказ до колбэка команды тоже сообщение, а не трассировка.
+
+    Обёртка команды закрывает только её колбэк, поэтому проверяется точка входа
+    целиком: разбор конфигурации идёт в колбэке группы `entry_point`, и его отказ
+    в обёртку команды не попадает.
+    """
+    def _fail(*args, **kwargs):
+        raise RuntimeError('config file is a directory')
+
+    monkeypatch.setattr(ConfigManager, 'get_config', _fail)
+    monkeypatch.setattr(sys, 'argv', ['s2ctl', '-k', APIKEY, 'server', 'list'])
+
+    with pytest.raises(SystemExit) as exit_info:
+        run_cli()
+
+    assert exit_info.value.code != 0
+    reported = capsys.readouterr().err
+    assert 'config file is a directory' in reported
+    assert 'RuntimeError' in reported
+    assert 'Traceback' not in reported
+
+
+def test_debug_keeps_the_traceback_of_a_failure_outside_a_command(monkeypatch):
+    """`--debug` отдаёт исключение как есть: иначе причину сбоя не разглядеть."""
+    def _fail(*args, **kwargs):
+        raise RuntimeError('config file is a directory')
+
+    monkeypatch.setattr(ConfigManager, 'get_config', _fail)
+    monkeypatch.setattr(sys, 'argv', ['s2ctl', '--debug', '-k', APIKEY, 'server', 'list'])
+
+    with pytest.raises(RuntimeError, match='config file is a directory'):
+        run_cli()

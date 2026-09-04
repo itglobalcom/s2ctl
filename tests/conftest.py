@@ -8,6 +8,7 @@ from aiohttp.test_utils import TestServer
 from aiohttp.web_request import Request
 
 from s2ctl import config as config_module
+from s2ctl.click import DEBUG_MODE
 from s2ctl.entrypoint import entry_point
 from ssclient.http_client import HttpClient
 from ssclient.task_entities import TaskState
@@ -64,6 +65,16 @@ def task_timeout_of_invocation():
     yield
 
     TASK_TIMEOUT_SECS.reset(token)
+
+
+@pytest.fixture(autouse=True)
+def debug_mode_of_invocation():
+    """Признак `--debug` живёт в контексте вызова CLI и не достаётся следующему тесту."""
+    token = DEBUG_MODE.set(False)
+
+    yield
+
+    DEBUG_MODE.reset(token)
 
 
 async def _server_handelr(request: Request):

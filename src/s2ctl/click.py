@@ -1,4 +1,5 @@
 import types
+from contextvars import ContextVar
 from functools import wraps
 from http import HTTPStatus
 from typing import Any, Callable, Dict, Optional, Union, cast
@@ -15,6 +16,10 @@ from s2ctl.formatters import (
 )
 from ssclient.errors import HttpClientResponseError, TaskWaitTimeoutError
 from ssclient.task_wait import DEFAULT_TASK_TIMEOUT, TASK_TIMEOUT_SECS
+
+# Признак отладки живёт в контексте вызова, а не в `ctx.obj`: перехват верхнего
+# уровня работает и там, где контекста click ещё (или уже) нет.
+DEBUG_MODE: ContextVar[bool] = ContextVar('debug_mode', default=False)
 
 FORMATTERS = types.MappingProxyType({
     'yaml': YAMLFormatter,
@@ -123,9 +128,7 @@ def _command_callback_wrap(  # noqa: WPS231
         except (HttpClientResponseError, TaskWaitTimeoutError) as exc:
             _report_expected_failure(exc)
         except Exception as exc:
-            ctx = click.get_current_context()
-            debug: bool = ctx.obj.get('debug')
-            if debug:
+            if DEBUG_MODE.get():
                 raise
             # Текстом, а не объектом: `echo` отдаёт значение форматтеру вывода,
             # а исключение json-форматтер сериализовать не умеет — вторая ошибка
