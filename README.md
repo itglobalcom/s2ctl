@@ -412,6 +412,12 @@ outside the contract before the first rule can be written.
 pass it in `S2CTL_VPN_SHARED_KEY` instead of `--shared-key`, so that the secret
 stays out of `ps`, of the shell history and of the log of a CI job.
 
+`vmware edge set-bandwidth` does not change the bandwidth: the platform accepts
+the task and completes it successfully, while the network keeps its previous
+value — the operation applies nothing on the platform side. Use
+`vmware network set-bandwidth`, which writes the bandwidth of the same network
+through `PUT /api/v1/vmware/networks/{network_id}`.
+
 ### Rule sets
 
 Firewall and NAT of a vStack gateway are replaced as a whole set, not rule by
@@ -433,6 +439,13 @@ has to be written out. A field left out is not "keep it as it is": the API reads
 a missing `action`, `direction`, `protocol` or `type` as the first value of its
 dictionary — `Allow`, `In`, `ICMP` and `SNAT` — and accepts such a rule without
 a word. The file goes to the API as it is, `s2ctl` fills nothing in.
+
+A set with no rules in it is printed as empty output, not as `[]`: `s2ctl`
+prints nothing where the API answers with an empty collection, so on a gateway
+that has no firewall or NAT rules yet `get-firewall` and `get-nat` write a file
+of zero bytes. `--rules-file` accepts such a file and reads it as the empty set,
+so the round trip closes on an empty set as well — a script that reads a set,
+edits it and writes it back needs no special case for a fresh gateway.
 
 ### Waiting for a task
 
