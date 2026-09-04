@@ -112,7 +112,7 @@ class ContextManager(BaseContextManager):
         self.keyring.file_path = keyring_path  # type: ignore
         try:
             # Ключ проверяется расшифровкой файла прямо здесь, в конструкторе.
-            self.keyring.keyring_key = keyring_key  # type: ignore
+            self.keyring.keyring_key = keyring_key
         except ValueError as exc:
             raise KeyringUnlockError(keyring_path, exc) from exc
 
