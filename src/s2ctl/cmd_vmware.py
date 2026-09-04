@@ -324,7 +324,12 @@ def edge():
 @click.option('--bandwidth', type=int, required=True, help='Uplink bandwidth of the edge gateway in Mbps.')
 @click.pass_context
 def edge_set_bandwidth(ctx, network_id: VmwareNetworkId, bandwidth: int, wait: bool):
-    """Set the uplink bandwidth of the edge gateway of a network."""
+    """Set the uplink bandwidth of the edge gateway of a network.
+
+    The platform accepts the task and completes it successfully, but the bandwidth
+    of the network keeps its previous value: the operation applies nothing.
+    Use "s2ctl vmware network set-bandwidth" to change the bandwidth for real.
+    """
     service_resp = asyncio.run(_edge_service(ctx, network_id).set_bandwidth(
         bandwidth_mbps=bandwidth, wait=wait,
     ))
