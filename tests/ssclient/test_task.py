@@ -13,9 +13,12 @@ from tests.conftest import task_response
 # сломанное условие терминального статуса упирается в таймаут, а не висит минуту.
 WAIT_TIMEOUT_SECS = 2
 
-# Замер на проде: заказ VMware-сервера (`vmw6502463`) шёл 186 с — самая долгая
-# из замеренных операций контракта. Дефолт ожидания обязан её покрывать.
-LONGEST_MEASURED_OPERATION_SECS = 186
+# Замер на проде: пересборка VMware-сервера шла 296 с — самая долгая из замеренных
+# операций контракта (заказ сервера — 213 с, копия — 134 с). Дефолт ожидания обязан
+# покрывать её с кратным запасом: совпав с замером, он даёт ложный таймаут на успешной
+# операции, стоит платформе замедлиться.
+LONGEST_MEASURED_OPERATION_SECS = 296
+MEASURED_OPERATION_MARGIN = 1.5
 
 TASK_IDS_OF_EVERY_FORMAT = ('l2t345', 'lt345', 'dns42', 'vmw7')
 
@@ -120,8 +123,8 @@ async def test_wait_without_given_timeout_takes_the_default(monkeypatch, fake_ht
 
 
 def test_default_timeout_covers_the_longest_measured_operation():
-    """Дефолт покрывает самую долгую замеренную операцию — заказ VMware-сервера (186 с)."""
-    assert task_wait.DEFAULT_TASK_TIMEOUT > LONGEST_MEASURED_OPERATION_SECS
+    """Дефолт покрывает самую долгую замеренную операцию — пересборку VMware-сервера (296 с)."""
+    assert task_wait.DEFAULT_TASK_TIMEOUT >= LONGEST_MEASURED_OPERATION_SECS * MEASURED_OPERATION_MARGIN
 
 
 async def test_always_completed_task_is_not_polled(fake_http_client):

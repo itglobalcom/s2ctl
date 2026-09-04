@@ -262,7 +262,7 @@ Usage: s2ctl server create [OPTIONS]
 Options:
   -o, --output [yaml|json|table]  [default: yaml]
   --wait                          wait for task to complete.
-  --timeout INTEGER RANGE         seconds to wait for the task, 300 by default;
+  --timeout INTEGER RANGE         seconds to wait for the task, 480 by default;
                                   makes sense only together with --wait.  [x>=1]
   --name TEXT                     Name of new server.  [required]
   --location TEXT                 Where to create a server (see "locations"
@@ -433,12 +433,15 @@ identifier — of any service, whatever the shape of the identifier:
 ```
 
 How long `--wait` waits is limited by `--timeout`, in seconds. Operations differ
-in duration by an order of magnitude: powering a server off, writing a DNS
-record and creating a network take 6 to 13 seconds, deleting a server about half
-a minute, while ordering a VMware server takes around three minutes — the
-platform installs the template and customizes the guest OS. The default of 300
-seconds covers the longest of these with room for a loaded platform; raise it for
-what takes longer, such as copying or rebuilding a server with a large disk:
+in duration by an order of magnitude: powering a server off, writing a DNS record
+and creating an isolated network take 6 to 13 seconds, creating a gateway or
+switching its power 20 to 25, deleting a VMware server about half a minute,
+creating a routed VMware network a minute, copying a server a little over two
+minutes, ordering a VMware server around three — the platform installs the
+template and customizes the guest OS — and rebuilding one 296 seconds, the
+longest operation measured. The default of 480 seconds covers that one with room
+for a loaded platform; raise it for what the measurements do not cover, such as a
+server with a disk far larger than theirs:
 
 ```
 >s2ctl vmware server copy 1234 --name web-copy --wait --timeout 900
