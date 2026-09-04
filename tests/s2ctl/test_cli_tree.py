@@ -6,7 +6,7 @@ import click
 import pytest
 from click.testing import CliRunner
 
-from s2ctl import params
+from s2ctl import entrypoint, params
 from s2ctl.entrypoint import entry_point
 from ssclient.client import SSClient
 
@@ -333,6 +333,26 @@ def _prints_task_reference(output: str) -> bool:
     return bool(printed) and set(printed) <= _TASK_REFERENCE_FIELDS
 
 
+class _EmptyContextManager(object):
+    """Контексты без keyring: ключа проекта достать нечем, и открывать файл нечего.
+
+    Открытие настоящего keyring — argon2 на каждый вызов CLI, и обход всего дерева
+    команд с ним идёт минуты. Ключа в конфигурации прогона всё равно нет, поэтому
+    подмена ничего не скрывает: команда, которой ключ нужен, отказывает и здесь.
+    """
+
+    def __init__(self, config_manager, keyring_key: str, keyring_path: str) -> None:
+        self.config_manager = config_manager
+
+    def get_current_apikey(self) -> None:
+        raise RuntimeError("context doesn't exist")
+
+
+@pytest.fixture
+def without_api_key(cli_config, monkeypatch):
+    monkeypatch.setattr(entrypoint, 'ContextManager', _EmptyContextManager)
+
+
 @pytest.fixture
 def stub_api(cli_config, monkeypatch, tmp_path):
     """Каждая группа строит сервис фабрикой клиента — подменяется она во всех модулях команд."""
@@ -358,6 +378,22 @@ def test_every_command_prints_through_the_shared_output_option():
     # Печатать в машинном формате умеет любая команда: разбирать вывод CLI приходится
     # и скриптам пользователя, и следующей команде в конвейере.
     assert without_output == []
+
+
+def test_help_of_every_command_needs_no_api_key(without_api_key):
+    """Справка доступна без ключа проекта — на любой глубине дерева команд.
+
+    Ключ нужен в момент вызова команды, а не разбора её группы: клиент API,
+    созданный колбэком группы, делал бы `--help` подкоманды недоступным, потому
+    что click выполняет группу до того, как доберётся до самого `--help`.
+    """
+    refused = {}
+    for name, _command in _commands_of_cli():
+        invocation = CliRunner().invoke(entry_point, tuple(name.split()) + ('--help',))
+        if invocation.exit_code != 0:
+            refused[name] = invocation.output
+
+    assert refused == {}
 
 
 def test_every_command_offers_a_description():

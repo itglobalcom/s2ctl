@@ -161,6 +161,10 @@ Some commands of the previous releases behave differently now:
   `server add-nic`) reject a malformed identifier themselves — with the expected
   format and the exit code `2` of a usage error, instead of asking the API and
   reporting its refusal;
+- `--help` of a command inside a group (`s2ctl server create --help`,
+  `s2ctl vmware server get --help`) no longer needs an API key: the key is asked
+  for when a command is run, not when its group is parsed, so the built-in help
+  of the whole tree is readable before any context is created;
 - an empty collection from the API is printed as a document of the chosen format
   (`[]` with `--output json`, `{}` with `--output yaml`) instead of the empty
   output of the previous releases, so `gateway get-firewall`, `gateway get-nat`,

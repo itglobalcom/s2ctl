@@ -27,14 +27,12 @@ _GROUP_HELP = (
 
 
 def _get_gateway_service(ctx: Context) -> GatewayService:
-    return ctx.obj['gateway_service']
+    return client_factory(ctx).gateways()
 
 
 @entry_point.group(help=_GROUP_HELP)
-@click.pass_context
-def gateway(ctx):
-    client = client_factory(ctx)
-    ctx.obj['gateway_service'] = client.gateways()
+def gateway():
+    """Manage edge gateways connecting isolated networks to the Internet."""
 
 
 @gateway.command(cls=S2CTLCommand)

@@ -11,19 +11,16 @@ from ssclient.domain.domain import DomainService
 
 
 def _get_domain_serivce(ctx) -> DomainService:
-    return ctx.obj['domain_service']
+    return client_factory(ctx).domains()
 
 
 @entry_point.group()
-@click.pass_context
-def domain(ctx):
+def domain():
     """Manage dns domains and records.
 
     Commands address a domain by its own name, as printed by "list" (e.g. "example.com"),
     and a record inside it by "--record-id" — the plain integer printed by "list-record".
     """
-    client = client_factory(ctx)
-    ctx.obj['domain_service'] = client.domains()
 
 
 @domain.command(cls=S2CTLCommand)

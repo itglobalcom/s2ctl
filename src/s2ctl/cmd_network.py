@@ -17,14 +17,12 @@ _GROUP_HELP = (
 
 
 def _get_net_serivce(ctx) -> NetworkService:
-    return ctx.obj['network_service']
+    return client_factory(ctx).networks()
 
 
 @entry_point.group(help=_GROUP_HELP)
-@click.pass_context
-def network(ctx):
-    client = client_factory(ctx)
-    ctx.obj['network_service'] = client.networks()
+def network():
+    """Manage isolated networks without Internet access."""
 
 
 @network.command(cls=S2CTLCommand)

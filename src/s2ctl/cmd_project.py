@@ -1,7 +1,6 @@
 import asyncio
 
 import click
-from click.core import Context
 
 from s2ctl.click import S2CTLCommand, echo, output_option
 from s2ctl.client import client_factory
@@ -11,15 +10,12 @@ from ssclient.project import ProjectService
 
 @entry_point.group()
 @output_option
-@click.pass_context
-def project(ctx: Context):
+def project():
     """Various actions related to projects — containers of anyother serverspace entities."""
-    client = client_factory(ctx)
-    ctx.obj['project_service'] = client.project()
 
 
 def _get_proj_serivce(ctx) -> ProjectService:
-    return ctx.obj['project_service']
+    return client_factory(ctx).project()
 
 
 @project.command(cls=S2CTLCommand)

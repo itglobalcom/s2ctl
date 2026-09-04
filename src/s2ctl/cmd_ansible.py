@@ -14,20 +14,16 @@ from ssclient.server.server import ServerEntity, ServerNicEntity, ServerService
 
 
 def _get_server_serivce(ctx: Context) -> ServerService:
-    return ctx.obj['server_service']
+    return client_factory(ctx).servers()
 
 
 def _get_net_serivce(ctx) -> NetworkService:
-    return ctx.obj['network_service']
+    return client_factory(ctx).networks()
 
 
 @entry_point.group()
-@click.pass_context
-def ansible(ctx):
+def ansible():
     """Set of ansible management commands."""
-    client = client_factory(ctx)
-    ctx.obj['server_service'] = client.servers()
-    ctx.obj['network_service'] = client.networks()
 
 
 @ansible.command(cls=S2CTLCommand)

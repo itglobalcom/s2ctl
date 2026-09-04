@@ -11,18 +11,15 @@ from ssclient.sshkey import SshkeyService
 
 
 def _get_sshkey_serivce(ctx: Context) -> SshkeyService:
-    return ctx.obj['sshkeys_service']
+    return client_factory(ctx).sshkeys()
 
 
 @entry_point.group()
-@click.pass_context
-def ssh_key(ctx):
+def ssh_key():
     """SSH keys management.
 
     Commands take the key id — the plain integer printed by "list".
     """
-    client = client_factory(ctx)
-    ctx.obj['sshkeys_service'] = client.sshkeys()
 
 
 @ssh_key.command(cls=S2CTLCommand)

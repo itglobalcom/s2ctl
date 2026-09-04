@@ -20,14 +20,12 @@ _GROUP_HELP = (
 
 
 def _get_affinity_group_service(ctx: Context) -> AffinityGroupService:
-    return ctx.obj['affinity_group_service']
+    return client_factory(ctx).affinity_groups()
 
 
 @entry_point.group('affinity-group', help=_GROUP_HELP)
-@click.pass_context
-def affinity_group(ctx):
-    client = client_factory(ctx)
-    ctx.obj['affinity_group_service'] = client.affinity_groups()
+def affinity_group():
+    """Manage affinity and anti-affinity groups of servers."""
 
 
 @affinity_group.command(cls=S2CTLCommand)

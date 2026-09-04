@@ -21,7 +21,6 @@ from ssclient.vmware.vmware import VmwareService
 
 NETWORK_ID_ARG = 'network-id'
 
-_SERVICE_KEY = 'vmware_service'
 _LOCATION_HELP = 'Location identifier (see "vmware locations" command).'
 _SERVER_NIC_HINT = 'server format: SERVER_ID[:IP], e.g. "42" or "42:10.0.0.5"'
 
@@ -38,8 +37,8 @@ _DIFFIE_HELLMAN_GROUPS = ('DH2', 'DH5', 'DH14', 'DH15', 'DH16')
 
 
 def vmware_service(ctx: Context) -> VmwareService:
-    """Сервис услуги VMware, положенный в контекст группой: на нём строятся её подгруппы."""
-    return ctx.obj[_SERVICE_KEY]
+    """Сервис услуги VMware: на нём строятся команды подгрупп `network`, `edge` и `server`."""
+    return client_factory(ctx).vmware()
 
 
 def _network_service(ctx: Context) -> VmwareNetworkService:
@@ -66,14 +65,11 @@ def _network_id_argument(func):
 
 
 @entry_point.group()
-@click.pass_context
-def vmware(ctx):
+def vmware():
     """Manage VMware Cloud resources: catalogs, networks and their edge gateways.
 
     Ids of VMware resources are plain integers, not the composite ids of the vStack sections.
     """
-    client = client_factory(ctx)
-    ctx.obj[_SERVICE_KEY] = client.vmware()
 
 
 @vmware.command(cls=S2CTLCommand)

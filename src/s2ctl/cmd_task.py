@@ -18,17 +18,14 @@ _GET_HELP = (
 
 
 def _get_task_serivce(ctx: Context) -> TaskService:
-    return ctx.obj['tasks_service']
+    return client_factory(ctx).tasks()
 
 
 @entry_point.group()
-@click.pass_context
-def task(ctx):
+def task():
     """Many actions are long-running (e.g. creating a server) and
     executed in asynchronous way returning a task.
     """
-    client = client_factory(ctx)
-    ctx.obj['tasks_service'] = client.tasks()
 
 
 @task.command(cls=S2CTLCommand, help=_GET_HELP)

@@ -28,8 +28,24 @@ HOSTS_MAP = types.MappingProxyType({
     '29': 'https://api.vcloud-test.uzum.io',
 })
 
+_CLIENT_KEY = 'api_client'
+
 
 def client_factory(ctx: Context) -> SSClient:
+    """Клиент API этого вызова: создаётся при первом обращении команды и переиспользуется.
+
+    Ключ проекта нужен в момент вызова команды, а не разбора группы: click выполняет
+    колбэк группы до того, как доберётся до `--help` подкоманды, и клиент, созданный
+    там, делал бы справку `s2ctl <группа> <команда> --help` недоступной без ключа.
+    """
+    client = ctx.obj.get(_CLIENT_KEY)
+    if client is None:
+        client = _new_client(ctx)
+        ctx.obj[_CLIENT_KEY] = client
+    return client
+
+
+def _new_client(ctx: Context) -> SSClient:
     context_manager: ContextManager = ctx.obj['context_manager']
     apikey_arg: str = ctx.obj['apikey_arg']
     try:
