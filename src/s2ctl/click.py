@@ -23,6 +23,11 @@ FORMATTERS = types.MappingProxyType({
 })
 FORMATTER_NAMES = tuple(FORMATTERS.keys())
 
+_OUTPUT_HELP = (
+    'format of the printed result: yaml and json are machine-readable, for a script '
+    + 'that parses the output; table is for reading by a human.'
+)
+
 _TIMEOUT_HELP = (
     'seconds to wait for the task, {default} by default; makes sense only together with --wait.'
 ).format(default=DEFAULT_TASK_TIMEOUT)
@@ -87,6 +92,7 @@ def output_option(func):
         show_default=True,
         expose_value=False,
         callback=_get_formatter,
+        help=_OUTPUT_HELP,
     )(func)
 
 
