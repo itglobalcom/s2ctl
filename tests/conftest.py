@@ -11,6 +11,7 @@ from s2ctl import config as config_module
 from s2ctl.entrypoint import entry_point
 from ssclient.http_client import HttpClient
 from ssclient.task_entities import TaskState
+from ssclient.task_wait import TASK_TIMEOUT_SECS
 
 TEST_SERVER_PORT = 65182
 
@@ -49,6 +50,20 @@ def cli_config(tmp_path, monkeypatch):
     monkeypatch.setenv('HOME', str(tmp_path))
 
     return config_path
+
+
+@pytest.fixture(autouse=True)
+def task_timeout_of_invocation():
+    """Таймаут ожидания задачи живёт в контексте вызова CLI.
+
+    Значение `--timeout`, поставленное одним тестом, иначе досталось бы следующим:
+    прогон идёт в одном процессе и одном контексте.
+    """
+    token = TASK_TIMEOUT_SECS.set(None)
+
+    yield
+
+    TASK_TIMEOUT_SECS.reset(token)
 
 
 async def _server_handelr(request: Request):

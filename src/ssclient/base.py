@@ -8,12 +8,12 @@ from ssclient import errors
 from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskEntity, TaskState, completed_task
 from ssclient.task_id import TaskId
+from ssclient.task_wait import task_timeout_secs
 
 URLFields = Dict[str, Any]
 Payload = Dict[str, Any]
 
 TASKS_PATH = 'api/v1/tasks'
-DEFAULT_TASK_TIMEOUT = 60
 _POLL_INTERVAL_SECS = 1
 _FAILURE_STATES = frozenset((TaskState.failed, TaskState.canceled))
 _RETURN_TASK_QUERY = 'return_task=true'
@@ -66,16 +66,17 @@ class BaseService(object):
         return urljoin(path, fragment)
 
     async def _wait_task_completion(
-        self, task_id: TaskId, timeout_secs: int = DEFAULT_TASK_TIMEOUT,
+        self, task_id: TaskId, timeout_secs: Optional[int] = None,
     ) -> TaskEntity:
         if task_id.is_always_completed:
             return completed_task(task_id.value)
 
+        wait_secs = task_timeout_secs() if timeout_secs is None else timeout_secs
         try:
-            async with timeout(timeout_secs):
+            async with timeout(wait_secs):
                 return await self._poll_task(task_id)
         except asyncio.TimeoutError as exc:
-            raise errors.TaskWaitTimeoutError(task_id.value, timeout_secs) from exc
+            raise errors.TaskWaitTimeoutError(task_id.value, wait_secs) from exc
 
     async def _poll_task(self, task_id: TaskId) -> TaskEntity:
         while True:

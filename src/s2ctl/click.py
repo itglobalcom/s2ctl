@@ -1,7 +1,7 @@
 import types
 from functools import wraps
 from http import HTTPStatus
-from typing import Any, Callable, Dict, Optional, cast
+from typing import Any, Callable, Dict, Optional, Union, cast
 
 import click
 
@@ -13,7 +13,8 @@ from s2ctl.formatters import (
     YAMLFormatter,
     general_fields_sort,
 )
-from ssclient.errors import HttpClientResponseError
+from ssclient.errors import HttpClientResponseError, TaskWaitTimeoutError
+from ssclient.task_wait import DEFAULT_TASK_TIMEOUT, TASK_TIMEOUT_SECS
 
 FORMATTERS = types.MappingProxyType({
     'yaml': YAMLFormatter,
@@ -21,6 +22,17 @@ FORMATTERS = types.MappingProxyType({
     'table': TableFormatter,
 })
 FORMATTER_NAMES = tuple(FORMATTERS.keys())
+
+_TIMEOUT_HELP = (
+    'seconds to wait for the task, {default} by default; makes sense only together with --wait.'
+).format(default=DEFAULT_TASK_TIMEOUT)
+
+# Истёкшее ожидание задачу не отменяет: платформа применяет изменение дальше,
+# поэтому отказ обязан назвать, чем задачу дождаться.
+_TIMEOUT_MESSAGE = (
+    '{reason}; the task is not canceled and goes on: '
+    + 'check it with "s2ctl task get {task_id}" or wait longer with --timeout.'
+)
 
 
 def echo(
@@ -40,11 +52,30 @@ def echo(
 
 
 def wait_option(func):
+    """`--wait` и парная к нему `--timeout`: ждать задачу и сколько её ждать."""
+    func = click.option(
+        '--timeout',
+        type=click.IntRange(min=1),
+        expose_value=False,
+        callback=_set_task_timeout,
+        help=_TIMEOUT_HELP,
+    )(func)
     return click.option(
         '--wait',
         is_flag=True,
+        # Eager: колбэк `--timeout` смотрит на `--wait`, а в `ctx.params` флаг
+        # появляется только после того, как click обработал его параметр.
+        is_eager=True,
         help='wait for task to complete.',
     )(func)
+
+
+def _set_task_timeout(ctx, _timeout_param, raw_timeout: Optional[int]) -> None:
+    if raw_timeout is None:
+        return
+    if not ctx.params.get('wait'):
+        raise click.UsageError('--timeout makes sense only together with --wait')
+    TASK_TIMEOUT_SECS.set(raw_timeout)
 
 
 def output_option(func):
@@ -75,8 +106,8 @@ def _command_callback_wrap(  # noqa: WPS231
             return func(*args, **kwargs)
         except BaseFailException:  # noqa: WPS329
             raise
-        except HttpClientResponseError as exc:
-            _check_http_response_error(exc)
+        except (HttpClientResponseError, TaskWaitTimeoutError) as exc:
+            _report_expected_failure(exc)
         except Exception as exc:
             ctx = click.get_current_context()
             debug: bool = ctx.obj.get('debug')
@@ -89,6 +120,22 @@ def _command_callback_wrap(  # noqa: WPS231
             echo(repr(exc), err=True)
 
     return wrapper
+
+
+def _report_expected_failure(
+    exc: Union[HttpClientResponseError, TaskWaitTimeoutError],
+) -> None:
+    """Ожидаемый исход операции: отказ API либо истёкшее ожидание задачи."""
+    if isinstance(exc, TaskWaitTimeoutError):
+        return _report_task_wait_timeout(exc)
+    return _check_http_response_error(exc)
+
+
+def _report_task_wait_timeout(exc: TaskWaitTimeoutError) -> None:
+    echo(
+        _TIMEOUT_MESSAGE.format(reason=exc, task_id=exc.task_id),
+        err=True,
+    )
 
 
 def _check_http_response_error(exc: HttpClientResponseError) -> None:

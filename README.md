@@ -262,6 +262,8 @@ Usage: s2ctl server create [OPTIONS]
 Options:
   -o, --output [yaml|json|table]  [default: yaml]
   --wait                          wait for task to complete.
+  --timeout INTEGER RANGE         seconds to wait for the task, 300 by default;
+                                  makes sense only together with --wait.  [x>=1]
   --name TEXT                     Name of new server.  [required]
   --location TEXT                 Where to create a server (see "locations"
                                   command).  [required]
@@ -429,6 +431,23 @@ identifier — of any service, whatever the shape of the identifier:
 ```
 >s2ctl task get l1t9876
 ```
+
+How long `--wait` waits is limited by `--timeout`, in seconds. Operations differ
+in duration by an order of magnitude: powering a server off, writing a DNS
+record and creating a network take 6 to 13 seconds, deleting a server about half
+a minute, while ordering a VMware server takes around three minutes — the
+platform installs the template and customizes the guest OS. The default of 300
+seconds covers the longest of these with room for a loaded platform; raise it for
+what takes longer, such as copying or rebuilding a server with a large disk:
+
+```
+>s2ctl vmware server copy 1234 --name web-copy --wait --timeout 900
+```
+
+`--timeout` only makes sense together with `--wait`, and the command refuses it
+without it. When the time is up, the command reports an error, but the task
+itself is not canceled: the platform goes on applying the change, and the task
+can be followed by its identifier with `s2ctl task get`.
 
 Four VMware commands print the whole set of resources of the server instead of
 the single resource they created: `vmware server add-volume` prints all volumes

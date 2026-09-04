@@ -1,6 +1,8 @@
+from typing import Optional
+
 import pytest
 
-from ssclient import errors
+from ssclient import errors, task_wait
 from ssclient.base import TASKS_PATH, BaseService
 from ssclient.task import TaskService
 from ssclient.task_entities import TaskState
@@ -10,6 +12,10 @@ from tests.conftest import task_response
 # Опрос идёт раз в секунду, поэтому ожидание в тестах ограничено парой опросов:
 # сломанное условие терминального статуса упирается в таймаут, а не висит минуту.
 WAIT_TIMEOUT_SECS = 2
+
+# Замер на проде: заказ VMware-сервера (`vmw6502463`) шёл 186 с — самая долгая
+# из замеренных операций контракта. Дефолт ожидания обязан её покрывать.
+LONGEST_MEASURED_OPERATION_SECS = 186
 
 TASK_IDS_OF_EVERY_FORMAT = ('l2t345', 'lt345', 'dns42', 'vmw7')
 
@@ -23,7 +29,7 @@ class _TaskWaiter(BaseService):
 
     _path = TASKS_PATH
 
-    async def wait(self, raw_id: str, timeout_secs: int = WAIT_TIMEOUT_SECS):
+    async def wait(self, raw_id: str, timeout_secs: Optional[int] = WAIT_TIMEOUT_SECS):
         return await self._wait_task_completion(TaskId.parse(raw_id), timeout_secs)
 
 
@@ -82,6 +88,40 @@ async def test_wait_timeout_names_task_and_waited_seconds(fake_http_client):
     assert exc_info.value.task_id == 'l2t345'
     assert exc_info.value.timeout_secs == WAIT_TIMEOUT_SECS
     assert fake_http_client.paths('GET')
+
+
+async def test_wait_takes_the_timeout_of_the_current_invocation(fake_http_client):
+    """Таймаут, поставленный опцией `--timeout`, доезжает до ожидания задачи."""
+    fake_http_client.on(
+        'GET', _task_path('vmw7'), task_response('vmw7', TaskState.in_progress),
+    )
+    token = task_wait.TASK_TIMEOUT_SECS.set(WAIT_TIMEOUT_SECS)
+
+    try:
+        with pytest.raises(errors.TaskWaitTimeoutError) as exc_info:
+            await _TaskWaiter(fake_http_client).wait('vmw7', timeout_secs=None)
+    finally:
+        task_wait.TASK_TIMEOUT_SECS.reset(token)
+
+    assert exc_info.value.timeout_secs == WAIT_TIMEOUT_SECS
+
+
+async def test_wait_without_given_timeout_takes_the_default(monkeypatch, fake_http_client):
+    """Без `--timeout` ожидание идёт по дефолту — единственному значению для всех услуг."""
+    monkeypatch.setattr(task_wait, 'DEFAULT_TASK_TIMEOUT', WAIT_TIMEOUT_SECS)
+    fake_http_client.on(
+        'GET', _task_path('vmw7'), task_response('vmw7', TaskState.in_progress),
+    )
+
+    with pytest.raises(errors.TaskWaitTimeoutError) as exc_info:
+        await _TaskWaiter(fake_http_client).wait('vmw7', timeout_secs=None)
+
+    assert exc_info.value.timeout_secs == WAIT_TIMEOUT_SECS
+
+
+def test_default_timeout_covers_the_longest_measured_operation():
+    """Дефолт покрывает самую долгую замеренную операцию — заказ VMware-сервера (186 с)."""
+    assert task_wait.DEFAULT_TASK_TIMEOUT > LONGEST_MEASURED_OPERATION_SECS
 
 
 async def test_always_completed_task_is_not_polled(fake_http_client):
