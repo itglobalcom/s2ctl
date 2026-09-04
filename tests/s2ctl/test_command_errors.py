@@ -18,8 +18,7 @@ from s2ctl.click import FORMATTER_NAMES
 from s2ctl.config import ConfigManager
 from s2ctl.entrypoint import entry_point, run_cli
 from ssclient.gateway.gateway import GatewayService
-
-APIKEY = '02deadbeef'
+from tests.s2ctl.conftest import APIKEY
 
 FORBIDDEN = 403
 NOT_FOUND = 404

@@ -4,6 +4,7 @@ from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
 from tests.conftest import FakeRequest
+from tests.s2ctl.conftest import APIKEY
 
 DOMAIN_NAME = 'example.com'
 RECORD_ID = 17
@@ -50,7 +51,7 @@ _ZERO_VALUED_RECORDS = (
 
 
 def _invoke(*args):
-    return CliRunner().invoke(entry_point, ('-k', '02dadsd', 'domain') + args)
+    return CliRunner().invoke(entry_point, ('-k', APIKEY, 'domain') + args)
 
 
 @pytest.mark.parametrize('record_args,expected_fields', _ZERO_VALUED_RECORDS)

@@ -5,6 +5,7 @@ from click.testing import CliRunner
 from s2ctl.entrypoint import entry_point
 from ssclient.server.server_id import SERVER_ID_TEMPLATE
 from tests.conftest import FakeRequest
+from tests.s2ctl.conftest import APIKEY
 
 SERVER_ID = 'l1s2'
 
@@ -75,7 +76,7 @@ _CONFIGURATION_COMMANDS = (
 
 
 def _invoke(*args):
-    return CliRunner().invoke(entry_point, ('-k', '02dadsd', 'server') + args)
+    return CliRunner().invoke(entry_point, ('-k', APIKEY, 'server') + args)
 
 
 @pytest.mark.parametrize('command_args,expected_request', _CONTRACT_FIELD_CASES)
@@ -193,7 +194,6 @@ def test_power_command_hits_its_own_route(cli_http_client, command_args, fragmen
     assert cli_http_client.requests == [FakeRequest('POST', expected_path, {})]
 
 
-# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
 def test_malformed_server_id_is_reported_as_bad_parameter(cli_config):
     result = _invoke('get', 's1l2')
 

@@ -4,6 +4,7 @@ from click.testing import CliRunner
 from s2ctl.entrypoint import entry_point
 from ssclient.affinity_group_id import AFFINITY_GROUP_ID_TEMPLATE
 from tests.conftest import FakeRequest
+from tests.s2ctl.conftest import APIKEY
 
 _USAGE_ERROR_EXIT_CODE = 2
 
@@ -28,10 +29,9 @@ _GROUP_KINDS = (
 
 
 def _invoke(*args):
-    return CliRunner().invoke(entry_point, ('-k', '02dadsd', 'affinity-group') + args)
+    return CliRunner().invoke(entry_point, ('-k', APIKEY, 'affinity-group') + args)
 
 
-# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
 def test_malformed_group_id_is_reported_as_bad_parameter(cli_config):
     result = _invoke('get', 'g1l2')
 

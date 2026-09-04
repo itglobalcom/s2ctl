@@ -9,8 +9,7 @@ from click.testing import CliRunner
 
 from s2ctl.config import KEYRING_FILE_NAME, ConfigManager, generate_password
 from s2ctl.entrypoint import entry_point
-
-APIKEY = '02deadbeef'
+from tests.s2ctl.conftest import APIKEY
 
 _STAND_CONFIG = 'host: https://api.ss4test.com\n'
 # Ключ, сгенерированный прошлым релизом: тот же алфавит, только источник случайности
@@ -25,7 +24,6 @@ def _stand_config(tmp_path):
     return config_path
 
 
-# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
 def test_keyring_of_a_config_lives_next_to_it(tmp_path, cli_config):
     config_path = _stand_config(tmp_path)
 

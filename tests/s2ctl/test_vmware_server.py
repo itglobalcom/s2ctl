@@ -4,6 +4,7 @@ from click.testing import CliRunner
 from s2ctl.click import FORMATTER_NAMES
 from s2ctl.entrypoint import entry_point
 from tests.conftest import FakeRequest
+from tests.s2ctl.conftest import APIKEY
 from tests.ssclient.vmware.conftest import (
     NIC_ID,
     NIC_PATH,
@@ -98,7 +99,7 @@ _ORDER_ROUTES = (
 
 
 def _invoke(*args):
-    return CliRunner().invoke(entry_point, ('-k', '02dadsd', 'vmware', 'server') + args)
+    return CliRunner().invoke(entry_point, ('-k', APIKEY, 'vmware', 'server') + args)
 
 
 @pytest.mark.parametrize('command_name,expected_path', POWER_COMMANDS)
@@ -114,7 +115,7 @@ def test_each_power_command_hits_its_own_route(cli_http_client, command_name, ex
 @pytest.mark.parametrize('command_name', ('power-off', 'reboot'))
 def test_power_commands_have_no_hard_flag(cli_config, command_name):
     result = CliRunner().invoke(
-        entry_point, ('-k', '02dadsd', 'vmware', 'server', command_name, str(SERVER_ID), '--hard'),
+        entry_point, ('-k', APIKEY, 'vmware', 'server', command_name, str(SERVER_ID), '--hard'),
     )
 
     # Обесточить и погасить гостевую ОС — разные команды, а не одна с признаком жёсткости.
@@ -134,7 +135,7 @@ def test_gpu_triple_is_sent_as_the_whole_profile(cli_http_client):
 
 def test_malformed_gpu_is_reported_as_bad_parameter(cli_config):
     result = CliRunner().invoke(entry_point, (
-        '-k', '02dadsd', 'vmware', 'server', 'create',
+        '-k', APIKEY, 'vmware', 'server', 'create',
     ) + _CREATE_ARGS + ('--gpu', '3:8192'))
 
     # Разбор тройки падает до запроса: пользователь видит формат, а не общую ошибку команды.
@@ -241,7 +242,7 @@ def test_command_options_reach_the_fields_of_the_contract(
 @pytest.mark.parametrize('command_name,required_args', _SNAPSHOT_COMMANDS)
 def test_snapshot_commands_take_no_snapshot_id(cli_config, command_name, required_args):
     result = CliRunner().invoke(entry_point, (
-        '-k', '02dadsd', 'vmware', 'server', command_name, str(SERVER_ID),
+        '-k', APIKEY, 'vmware', 'server', command_name, str(SERVER_ID),
     ) + required_args + ('--snapshot-id', '5'))
 
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
@@ -265,7 +266,7 @@ def test_get_snapshot_of_a_server_without_snapshot_prints_nothing(
 
 def test_connect_client_network_has_no_shared_flag(cli_config):
     result = CliRunner().invoke(entry_point, (
-        '-k', '02dadsd', 'vmware', 'server', 'connect-client-network', str(SERVER_ID),
+        '-k', APIKEY, 'vmware', 'server', 'connect-client-network', str(SERVER_ID),
         '--network', '42', '--shared',
     ))
 

@@ -5,6 +5,7 @@ from s2ctl.entrypoint import entry_point
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE
 from ssclient.network.network_id import NETWORK_ID_TEMPLATE
 from tests.conftest import FakeRequest
+from tests.s2ctl.conftest import APIKEY
 from tests.ssclient.gateway.conftest import GATEWAY_PATH, GATEWAYS_PATH, RAW_GATEWAY_ID
 
 _USAGE_ERROR_EXIT_CODE = 2
@@ -104,10 +105,9 @@ _DELETE_COMMANDS = (
 
 
 def _invoke(*args):
-    return CliRunner().invoke(entry_point, ('-k', '02dadsd', 'gateway') + args)
+    return CliRunner().invoke(entry_point, ('-k', APIKEY, 'gateway') + args)
 
 
-# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
 def test_malformed_gateway_id_is_reported_as_bad_parameter(cli_config):
     result = _invoke('get', 'e1l2')
 

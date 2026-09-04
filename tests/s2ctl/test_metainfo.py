@@ -6,9 +6,9 @@ from click.testing import CliRunner
 from s2ctl.entrypoint import entry_point
 from ssclient.http_client import HttpClient
 from ssclient.metainfo import LocationEntity
+from tests.s2ctl.conftest import APIKEY
 
 
-# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
 def test_get_locations(cli_config):
     with patch.object(HttpClient, 'make_request') as make_request:
         id_ = 'test_id'
@@ -26,7 +26,7 @@ def test_get_locations(cli_config):
             )],
         }
         runner = CliRunner()
-        result = runner.invoke(entry_point, ('-k', '02dadsd', 'locations', '--output=json'))
+        result = runner.invoke(entry_point, ('-k', APIKEY, 'locations', '--output=json'))
         make_request.assert_awaited()
         args = make_request.await_args[0]
         assert args[0] == 'GET'
@@ -51,7 +51,7 @@ def test_applications_passes_its_filters_to_the_query_of_the_contract(
     expected_path = 'api/v1/applications?{query}'.format(query=expected_query)
     cli_http_client.on('GET', expected_path, {'applications': []})
 
-    result = CliRunner().invoke(entry_point, ('-k', '02dadsd', 'applications') + command_args)
+    result = CliRunner().invoke(entry_point, ('-k', APIKEY, 'applications') + command_args)
 
     assert result.exit_code == 0, result.output
     assert cli_http_client.paths('GET') == [expected_path]

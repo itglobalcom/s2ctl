@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from s2ctl import entrypoint, params
 from s2ctl.entrypoint import entry_point
 from ssclient.client import SSClient
+from tests.s2ctl.conftest import APIKEY
 
 # Состав CLI: группа или команда попадает сюда, только если её модуль импортирован
 # в s2ctl/__init__.py — незарегистрированный модуль не виден ни в CLI, ни в бинаре
@@ -431,7 +432,7 @@ def test_asynchronous_command_is_exactly_the_one_that_offers_wait(stub_api):
             continue
         argv = tuple(name.split()) + _required_args(command, stub_api)
         argv += _EXTRA_ARGS.get(name, ()) + ('--output', 'json')
-        invocation = CliRunner().invoke(entry_point, ('-k', '02dadsd') + argv)
+        invocation = CliRunner().invoke(entry_point, ('-k', APIKEY) + argv)
 
         assert invocation.exit_code == 0, '{name}: {output}'.format(
             name=name, output=invocation.output,

@@ -1,16 +1,16 @@
 from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
+from tests.s2ctl.conftest import APIKEY
 
 _USAGE_ERROR_EXIT_CODE = 2
 
 
-# cli_config — autouse, объявлена явно: без неё прогон пишет конфиг и keyring в домашний каталог.
 def test_public_network_capacity_is_enum_token_not_prefix_length(cli_config):
     runner = CliRunner()
 
     result = runner.invoke(entry_point, (
-        '-k', '02dadsd',
+        '-k', APIKEY,
         'vmware', 'network', 'create-public',
         '--location', '1', '--name', 'net', '--capacity', '26',
     ))
@@ -25,7 +25,7 @@ def test_malformed_server_nic_is_reported_as_bad_parameter(cli_config):
     runner = CliRunner()
 
     result = runner.invoke(entry_point, (
-        '-k', '02dadsd',
+        '-k', APIKEY,
         'vmware', 'network', 'connect-servers', '42', '--server', 'srv-1',
     ))
 

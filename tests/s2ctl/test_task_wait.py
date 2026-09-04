@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from s2ctl.entrypoint import entry_point
 from ssclient.task_entities import TaskState
 from tests.conftest import task_response
+from tests.s2ctl.conftest import APIKEY
 from tests.ssclient.vmware.conftest import SERVER_ID
 
 _USAGE_ERROR_EXIT_CODE = 2
@@ -26,7 +27,7 @@ TIMEOUT_SECS = 1
 def _invoke(*args):
     return CliRunner().invoke(
         entry_point,
-        ('-k', '02dadsd', 'vmware', 'server', 'power-off', str(SERVER_ID)) + args,
+        ('-k', APIKEY, 'vmware', 'server', 'power-off', str(SERVER_ID)) + args,
     )
 
 

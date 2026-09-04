@@ -9,6 +9,7 @@ from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
 from tests.conftest import FakeRequest
+from tests.s2ctl.conftest import APIKEY
 from tests.ssclient.vmware.conftest import (
     EDIT_NETWORK_REQUIRED_FIELDS,
     EDGE_PATH,
@@ -170,7 +171,7 @@ _FIREWALL_STATE_CASES = (
 
 
 def _invoke(group: str, *args):
-    return CliRunner().invoke(entry_point, ('-k', '02dadsd', 'vmware', group) + args)
+    return CliRunner().invoke(entry_point, ('-k', APIKEY, 'vmware', group) + args)
 
 
 @pytest.mark.parametrize('command_args,expected_request', _NETWORK_CASES)
