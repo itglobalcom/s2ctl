@@ -52,8 +52,16 @@ def echo(
 
     if 'err' in kwargs:
         raise BaseFailException('\n{err_message}'.format(err_message=formatter.format(raw_obj)))
-    elif raw_obj:
-        click.echo(formatter.format(raw_obj, sorter), **kwargs)
+    if raw_obj is None:
+        # Операция без тела ответа: печатать нечего. Пустая коллекция от API — не этот
+        # случай, её машинные форматы печатают документом (`[]`, `{}`), иначе скрипт
+        # получает на разбор пустую строку.
+        return
+    printed = formatter.format(raw_obj, sorter)
+    if printed:
+        # `table` печатает пустой набор пустой строкой — таков вид пустоты у tabulate,
+        # и перевод строки к нему не добавляется.
+        click.echo(printed, **kwargs)
 
 
 def wait_option(func):

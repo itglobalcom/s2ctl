@@ -152,12 +152,21 @@ eval "$(_S2CTL_COMPLETE=zsh_source s2ctl)"
 _S2CTL_COMPLETE=fish_source s2ctl | source
 ```
 
-Two commands of the previous releases behave differently now: `install-autocomplete`
-writes the line above instead of the completion script it used to generate, and the
-commands taking an identifier of an isolated network (`network get`, `network edit`,
-`network delete`, `network add-tag`, `network delete-tag` and `server add-nic`) reject
-a malformed identifier themselves — with the expected format and the exit code `2`
-of a usage error, instead of asking the API and reporting its refusal.
+Some commands of the previous releases behave differently now:
+
+- `install-autocomplete` writes the line above instead of the completion script it
+  used to generate;
+- the commands taking an identifier of an isolated network (`network get`,
+  `network edit`, `network delete`, `network add-tag`, `network delete-tag` and
+  `server add-nic`) reject a malformed identifier themselves — with the expected
+  format and the exit code `2` of a usage error, instead of asking the API and
+  reporting its refusal;
+- an empty collection from the API is printed as a document of the chosen format
+  (`[]` with `--output json`, `{}` with `--output yaml`) instead of the empty
+  output of the previous releases, so `gateway get-firewall`, `gateway get-nat`,
+  `server list` and any other reading command give a script something to parse
+  when the project has none of the resources yet. With `--output table` an empty
+  collection still prints nothing: that is what an empty table looks like.
 
 ## Usage
 
@@ -441,12 +450,13 @@ a missing `action`, `direction`, `protocol` or `type` as the first value of its
 dictionary — `Allow`, `In`, `ICMP` and `SNAT` — and accepts such a rule without
 a word. The file goes to the API as it is, `s2ctl` fills nothing in.
 
-A set with no rules in it is printed as empty output, not as `[]`: `s2ctl`
-prints nothing where the API answers with an empty collection, so on a gateway
-that has no firewall or NAT rules yet `get-firewall` and `get-nat` write a file
-of zero bytes. `--rules-file` accepts such a file and reads it as the empty set,
-so the round trip closes on an empty set as well — a script that reads a set,
-edits it and writes it back needs no special case for a fresh gateway.
+A set with no rules in it is printed as a document of the chosen format: `[]`
+with `--output json`, `{}` with `--output yaml`, and empty output with
+`--output table`, which is what an empty table looks like. So on a gateway that
+has no firewall or NAT rules yet `get-firewall` and `get-nat` write a file a
+script can parse. `--rules-file` also accepts a file of zero bytes and reads it
+as the empty set — the round trip closes on an empty set whichever format the set
+was taken in.
 
 ### Waiting for a task
 

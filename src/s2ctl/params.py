@@ -59,8 +59,8 @@ def parse_task_id(_ctx, _click_param, raw_id: str) -> TaskId:
 def parse_rules(_ctx, _click_param, rules_file: IO) -> List[Any]:
     raw_rules = rules_file.read()
     if not raw_rules.strip():
-        # Набор без правил парная `get-*` печатает пустым выводом, а не `[]`,
-        # поэтому снятый с неё файл пуст: пустой файл и есть пустой набор.
+        # Пустой файл и есть пустой набор: под `--output table` парная `get-*`
+        # печатает набор без правил пустым выводом.
         return []
 
     try:

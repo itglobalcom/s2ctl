@@ -88,6 +88,13 @@ _POWER_COMMANDS = (
     ('restart', '{gateway_path}/restart'.format(gateway_path=GATEWAY_PATH)),
 )
 
+# Пустой набор правил — валидный ответ API, и машинный формат обязан напечатать
+# документ, который скрипту есть чем разобрать.
+_EMPTY_SET_DOCUMENTS = (
+    ('json', '[]'),
+    ('yaml', '{}'),
+)
+
 # Ссылку на задачу удаления publisher отдаёт только по `return_task=true`; без него
 # ответ пуст и `--wait` нечего ждать.
 _DELETE_COMMANDS = (
@@ -163,3 +170,25 @@ def test_delete_asks_the_publisher_for_the_reference_to_the_task(
 
     assert result.exit_code == 0, result.output
     assert cli_http_client.paths('DELETE') == [expected_path]
+
+
+@pytest.mark.parametrize('output_format,expected_document', _EMPTY_SET_DOCUMENTS)
+def test_empty_rule_set_is_printed_as_a_document_of_the_machine_format(
+    cli_http_client, output_format, expected_document,
+):
+    cli_http_client.on('GET', FIREWALL_PATH, {'firewall_rules': []})
+
+    result = _invoke('get-firewall', RAW_GATEWAY_ID, '--output', output_format)
+
+    assert result.exit_code == 0, result.output
+    assert result.output.strip() == expected_document
+
+
+def test_empty_rule_set_prints_nothing_in_the_table_format(cli_http_client):
+    cli_http_client.on('GET', FIREWALL_PATH, {'firewall_rules': []})
+
+    result = _invoke('get-firewall', RAW_GATEWAY_ID, '--output', 'table')
+
+    assert result.exit_code == 0, result.output
+    # Пустая таблица — это пустой вывод tabulate: заголовков у набора без правил нет.
+    assert result.output == ''
