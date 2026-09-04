@@ -410,7 +410,13 @@ def get_nat(ctx, network_id: VmwareNetworkId):
     required=True,
     help='Protocol the rule applies to.',
 )
-@click.option('--original-ip', required=True, help='Original IP address.')
+@click.option(
+    '--original-ip',
+    required=True,
+    help='Original IP address. For a DNAT rule this is the external address of the edge gateway, '
+    + 'which no read operation of the contract publishes: it shows up only in the rules of the '
+    + 'edge that already exist ("get-nat") and in the "local_ip" of a VPN tunnel ("get-vpn").',
+)
 @click.option('--original-port', help='Original port.')
 @click.option('--translated-ip', required=True, help='Translated IP address.')
 @click.option('--translated-port', help='Translated port.')

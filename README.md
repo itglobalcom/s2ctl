@@ -392,6 +392,13 @@ its firewall, NAT rules and IPsec VPN tunnels:
 >s2ctl vmware edge delete-nat-rule 77 --rule-id 3 --wait
 ```
 
+For a DNAT rule `--original-ip` is the external address of the edge gateway itself,
+and no read operation of the contract publishes it: neither the network nor any
+other VMware resource carries the field. The address is visible only in the rules of
+an edge that already has them (`vmware edge get-nat`) and in the `local_ip` of a VPN
+tunnel (`vmware edge get-vpn`), so for an edge without either it has to be learned
+outside the contract before the first rule can be written.
+
 `upsert-vpn-tunnel` asks for the IPsec pre-shared key interactively; in a script
 pass it in `S2CTL_VPN_SHARED_KEY` instead of `--shared-key`, so that the secret
 stays out of `ps`, of the shell history and of the log of a CI job.
