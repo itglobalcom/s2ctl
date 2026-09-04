@@ -7,17 +7,22 @@ from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.params import parse_network_id
 from ssclient.network.network import NetworkService
-from ssclient.network.network_id import NetworkId
+from ssclient.network.network_id import NETWORK_ID_TEMPLATE, NetworkId
+
+_GROUP_HELP = (
+    'Manage isolated networks without Internet access.'
+    + '\n\n'
+    + 'Commands take the network id in the {template} format, as printed by "list".'
+).format(template=NETWORK_ID_TEMPLATE)
 
 
 def _get_net_serivce(ctx) -> NetworkService:
     return ctx.obj['network_service']
 
 
-@entry_point.group()
+@entry_point.group(help=_GROUP_HELP)
 @click.pass_context
 def network(ctx):
-    """Manage isolated networks without Internet access."""
     client = client_factory(ctx)
     ctx.obj['network_service'] = client.networks()
 
@@ -83,8 +88,8 @@ def get(ctx, network_id: NetworkId):
 @network.command(cls=S2CTLCommand)
 @output_option
 @click.argument('network-id', required=True, callback=parse_network_id)
-@click.option('--name', required=True)
-@click.option('--description', required=True)
+@click.option('--name', required=True, help='New name of the network.')
+@click.option('--description', required=True, help='New long description of the network.')
 @click.pass_context
 def edit(ctx, network_id: NetworkId, name: str, description: str):
     """Update network information."""
