@@ -4,7 +4,7 @@
 
 ## Installation
 
-`s2ctl` is available for Linux and Windows as single binary. Just download it from [Github](https://github.com/itglobalcom/s2ctl/releases) and extract.
+`s2ctl` is available for Linux as single binary. Just download it from [Github](https://github.com/itglobalcom/s2ctl/releases) and extract.
 
 ### To install on Linux
 
@@ -46,39 +46,6 @@ To apply changes to current session type:
 ```
 source ~/.bashrc
 ```
-
-### To install on Windows
-
-1. Download file **s2ctl-vX.X.X-windows.zip** from [Github](https://github.com/itglobalcom/s2ctl/releases) and extract it
-
-2. Run the command line:
-
-- Press `Win+R` or Start → text `run` → OK
-
-- Enter the command `cmd` → OK
-
-3. By default, the command line shows the directory of the current user. Navigate to the directory with the extracted file:
-
-```
-cd <extracted file directory>
-```
-
-4. After navigating to the required directory, run the command:
-
-```
-s2ctl
-```
-
-Set the PATH on Windows 10:
-
-- In Search, search for and then select: System (Control Panel)
-
-- Click the **Advanced system settings** link
-
-- Click **Environment Variables**. In the section **System Variables** find the PATH environment variable and select it. Click **Edit**. If the PATH environment variable does not exist, click **New**
-
-- In the **Edit System Variable** (or **New System Variable**) window, specify the value of the PATH environment variable. Click **OK**. Close all remaining windows by clicking **OK**.
-
 
 ## Before start
 
@@ -825,7 +792,6 @@ Not exercised against the live platform:
   operations answer 404 on production, the feature is not deployed there yet;
 - `server price` of the vStack section: the project is answered 403, the service
   is not available to it;
-- the Windows binary: it was not built, only the Linux one;
 - what was added after that run: `server shutdown` and `server reset`, `--wait`
   of the seven deletions that return a task, `--volume-name` of
   `server edit-volume`, and the query filters of `affinity-group list` and

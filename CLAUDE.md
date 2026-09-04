@@ -1,8 +1,8 @@
 # s2ctl — CLI Public API
 
 Python-клиент того же контракта `public-api`, что и Go SDK: серверы, сети, DNS,
-шлюзы, VMware Cloud, ansible-инвентарь. Один бинарь на Linux и Windows для всех
-брендов платформы — хост API выбирается по префиксу ключа проекта
+шлюзы, VMware Cloud, ansible-инвентарь. Один бинарь для Linux на все бренды
+платформы — хост API выбирается по префиксу ключа проекта
 (`HOSTS_MAP` в `src/s2ctl/client.py`) либо ключом `host` в `config.yaml`.
 Дефолтная ветка — `origin/master`.
 
@@ -22,9 +22,9 @@ pyinstaller 6 для бинаря.
 | `src/s2ctl/` | слой команд: разбор аргументов, вызов сервиса, вывод. `cmd_<раздел>.py` — по разделу контракта |
 | `src/s2ctl/__init__.py` | реестр состава CLI: группа, не импортированная сюда, в бинарь не попадает |
 | `tests/ssclient/`, `tests/s2ctl/` | тесты клиентского слоя и команд соответственно |
-| `bundle/` | сборка единого бинаря (`build_linux.sh`, `build_win.*`, `bundle.py`) |
-| `docker/` | образы окружения сборки: `Dockerfile.linux.py311` (glibc 2.28) и `Dockerfile.win.py311` |
-| `.gitlab-ci.yml` | пайплайн проекта: гейты стадии `test`, сборка бинарей на `build` и `prod` |
+| `bundle/` | сборка единого бинаря (`build_linux.sh`, `bundle.py`) |
+| `docker/` | образ окружения сборки: `Dockerfile.linux.py311` (glibc 2.28) |
+| `.gitlab-ci.yml` | пайплайн проекта: гейты стадии `test`, сборка бинаря на `build` и `prod` |
 
 ## Перед сдачей изменения
 
@@ -40,8 +40,7 @@ bash bundle/build_linux.sh
 Пайплайн лежит в самом репозитории (`.gitlab-ci.yml`, внешних `include` нет)
 и на стадии `test` гоняет те же три гейта — `make test` матрицей по py311,
 py312 и py313, `flake8 src`, `pyright ./src`. Стадия `build` собирает бинарь
-на ветке, `prod` — по тегу `vX.Y.Z`. Windows-часть пайплайна локально
-не воспроизводится: раннера с Windows нет.
+на ветке, `prod` — по тегу `vX.Y.Z`.
 
 ## Конвенции
 
