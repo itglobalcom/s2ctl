@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
@@ -31,3 +32,26 @@ def test_get_locations(cli_config):
         assert args[0] == 'GET'
         assert 'locations' in args[1]
         assert result.exit_code == 0
+
+
+# Каталог приложений фильтруется тремя параметрами запроса, и у каждого своя опция:
+# имена опций и имена параметров контракта расходятся (`--application` кладётся
+# в `application_id`).
+_APPLICATION_FILTERS = (
+    (('--location', 'am2'), 'location_id=am2'),
+    (('--application', 'docker'), 'application_id=docker'),
+    (('--image', 'ubuntu-22-04'), 'image_id=ubuntu-22-04'),
+)
+
+
+@pytest.mark.parametrize('command_args,expected_query', _APPLICATION_FILTERS)
+def test_applications_passes_its_filters_to_the_query_of_the_contract(
+    cli_http_client, command_args, expected_query,
+):
+    expected_path = 'api/v1/applications?{query}'.format(query=expected_query)
+    cli_http_client.on('GET', expected_path, {'applications': []})
+
+    result = CliRunner().invoke(entry_point, ('-k', '02dadsd', 'applications') + command_args)
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('GET') == [expected_path]

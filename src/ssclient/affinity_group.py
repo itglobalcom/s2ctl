@@ -1,7 +1,7 @@
 from typing import ClassVar, List, Optional, TypedDict
 
 from ssclient.affinity_group_id import AffinityGroupId
-from ssclient.base import BaseService, TaskIDWrap, with_return_task
+from ssclient.base import BaseService, TaskIDWrap, with_filters, with_return_task
 from ssclient.task_id import TaskId
 
 
@@ -34,8 +34,11 @@ class AffinityGroupService(BaseService):
         group_resp = await self._http_client.get(path)
         return group_resp['affinity_group']
 
-    async def list(self) -> List[AffinityGroupEntity]:  # noqa: WPS125
-        groups_resp = await self._http_client.get(self.path)
+    async def list(  # noqa: WPS125
+        self, location_id: Optional[str] = None,
+    ) -> List[AffinityGroupEntity]:
+        path = with_filters(self.path, {'location_id': location_id})
+        groups_resp = await self._http_client.get(path)
         return groups_resp['affinity_groups']
 
     async def delete(self, group_id: AffinityGroupId, wait: bool = False) -> Optional[TaskIDWrap]:

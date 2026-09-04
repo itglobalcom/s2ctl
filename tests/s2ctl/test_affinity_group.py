@@ -66,3 +66,13 @@ def test_delete_asks_the_publisher_for_the_reference_to_the_task(cli_http_client
 
     assert result.exit_code == 0, result.output
     assert cli_http_client.paths('DELETE') == [expected_path]
+
+
+def test_list_passes_the_location_to_the_query_of_the_contract(cli_http_client):
+    expected_path = '{path}?location_id=am2'.format(path=GROUPS_PATH)
+    cli_http_client.on('GET', expected_path, {'affinity_groups': [GROUP_ENTITY]})
+
+    result = _invoke('list', '--location', 'am2')
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('GET') == [expected_path]

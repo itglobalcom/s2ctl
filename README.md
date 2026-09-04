@@ -386,8 +386,18 @@ anti-affinity group spreads them over different hosts:
 
 ```
 >s2ctl affinity-group create --location am2 --name web --anti-affinity
->s2ctl affinity-group list
+>s2ctl affinity-group list --location am2
 >s2ctl affinity-group delete l1g789 --wait
+```
+
+Reading commands that the API filters server-side take the filter as an option
+instead of leaving it to `grep`: `--location` of `affinity-group list`,
+`gateway list`, `vmware network list`, `vmware server list`, `vmware images` and
+`applications`, `--type` of `vmware network list`, `--gpu` of `vmware images`,
+and `--application` with `--image` of `applications`:
+
+```
+>s2ctl applications --location am2 --image ubuntu-22-04
 ```
 
 ### VMware Cloud

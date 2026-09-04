@@ -102,3 +102,23 @@ async def test_delete_with_wait_does_not_poll_synthetic_task(fake_http_client):
     assert fake_http_client.requests == [FakeRequest('DELETE', delete_path)]
     assert fake_http_client.paths('GET') == []
     assert task_wrap is None
+
+
+async def test_list_is_filtered_by_the_location_of_the_contract(fake_http_client):
+    expected_path = '{path}?location_id=am2'.format(path=GROUPS_PATH)
+    fake_http_client.on('GET', expected_path, {'affinity_groups': [GROUP_ENTITY]})
+
+    groups = await AffinityGroupService(fake_http_client).list(location_id='am2')
+
+    assert fake_http_client.paths('GET') == [expected_path]
+    assert groups == [GROUP_ENTITY]
+
+
+async def test_list_without_a_location_asks_for_the_whole_project(fake_http_client):
+    fake_http_client.on('GET', GROUPS_PATH, {'affinity_groups': [GROUP_ENTITY]})
+
+    await AffinityGroupService(fake_http_client).list()
+
+    # Пустое значение объявленного параметра publisher не принимает: фильтра нет —
+    # нет и параметра в запросе.
+    assert fake_http_client.paths('GET') == [GROUPS_PATH]

@@ -1,6 +1,6 @@
-from typing import List, TypedDict
+from typing import List, Optional, TypedDict
 
-from ssclient.base import BaseService
+from ssclient.base import BaseService, with_filters
 
 
 class LocationEntity(TypedDict):
@@ -49,6 +49,16 @@ class ImagesService(BaseService):
 class ApplicationsService(BaseService):
     _path = 'api/v1/applications'
 
-    async def get(self) -> List[ApplicationEntity]:
-        applications_resp = await self._http_client.get(self.path)
+    async def get(
+        self,
+        location_id: Optional[str] = None,
+        application_id: Optional[str] = None,
+        image_id: Optional[str] = None,
+    ) -> List[ApplicationEntity]:
+        path = with_filters(self.path, {
+            'location_id': location_id,
+            'application_id': application_id,
+            'image_id': image_id,
+        })
+        applications_resp = await self._http_client.get(path)
         return applications_resp['applications']

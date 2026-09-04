@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import click
 from click.core import Context
@@ -50,11 +51,12 @@ def create(ctx, location: str, name: str, affinity: bool):
 
 @affinity_group.command('list', cls=S2CTLCommand)
 @output_option
+@click.option('--location', help='Show only groups of the location (see "locations" command).')
 @click.pass_context
-def groups_list(ctx):
+def groups_list(ctx, location: Optional[str]):
     """Display all affinity and anti-affinity groups in the project."""
     group_service = _get_affinity_group_service(ctx)
-    service_resp = asyncio.run(group_service.list())
+    service_resp = asyncio.run(group_service.list(location_id=location))
     echo(service_resp)
 
 

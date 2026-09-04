@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 import click
 
@@ -31,10 +32,17 @@ def images(ctx):
 
 @entry_point.command(cls=S2CTLCommand)
 @output_option
+@click.option('--location', help='Show only applications of the location (see "locations" command).')
+@click.option('--application', help='Show only the application with this identifier.')
+@click.option('--image', help='Show only applications of the OS image (see "images" command).')
 @click.pass_context
-def applications(ctx):
+def applications(
+    ctx, location: Optional[str], application: Optional[str], image: Optional[str],
+):
     """List of applications which you can install on your server."""
     client = client_factory(ctx)
-    applications_resp = asyncio.run(client.applications().get())
+    applications_resp = asyncio.run(client.applications().get(
+        location_id=location, application_id=application, image_id=image,
+    ))
 
     echo(applications_resp)
