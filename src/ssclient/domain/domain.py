@@ -44,7 +44,7 @@ class BaseDomainService(BaseService):
         domain_resp = await self._http_client.get(path)
         return domain_resp['domain']
 
-    async def list(self) -> List[DomainEntity]:  # noqa: WPS125
+    async def list(self) -> List[DomainEntity]:
         domains_resp = await self._http_client.get(self.path)
         return domains_resp['domains']
 

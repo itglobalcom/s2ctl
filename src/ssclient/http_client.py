@@ -11,7 +11,7 @@ from ssclient import errors
 def _error_message(body: Any, reason: str) -> Any:
     """Причина отказа: `errors` из тела ответа контракта, иначе само тело, иначе статус."""
     if isinstance(body, dict):
-        body = body.get('errors') or body  # noqa: WPS110
+        body = body.get('errors') or body
     return body or reason
 
 
@@ -66,7 +66,7 @@ class HttpClient(object):  # noqa: WPS214
         try:
             resp.raise_for_status()
         except ClientResponseError as exc:
-            raise errors.HttpClientResponseError(exc.status, _error_message(msg, exc.message))  # noqa: B306
+            raise errors.HttpClientResponseError(exc.status, _error_message(msg, exc.message))
         return msg
 
     async def _read_body(self, resp: ClientResponse) -> Any:

@@ -34,7 +34,7 @@ class BaseVmwareServerService(BaseService):  # noqa: WPS214
 
     _path: ClassVar[str] = 'api/v1/vmware/servers'
 
-    async def list(  # noqa: WPS125
+    async def list(
         self, location_id: Optional[VmwareLocationId] = None,
     ) -> List[VmwareServerEntity]:
         path = with_filters(self.path, {'location_id': location_id})

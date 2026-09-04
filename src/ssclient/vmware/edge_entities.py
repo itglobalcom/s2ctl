@@ -20,10 +20,10 @@ class VmwareEdgeFirewallEntity(TypedDict):
 
 
 class VmwareEdgeNatRuleEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     vcloud_id: str
     description: str
-    type: str  # noqa: WPS125
+    type: str
     original_ip: str
     translated_ip: str
     protocol: str
@@ -33,7 +33,7 @@ class VmwareEdgeNatRuleEntity(TypedDict):
 
 
 class VmwareEdgeVpnTunnelEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     vcloud_id: str
     enabled: bool
     name: str

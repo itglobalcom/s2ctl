@@ -9,9 +9,9 @@ from ssclient.vmware.ids import VmwareLocationId, VmwareNetworkId, VmwareServerI
 
 
 class VmwareNetworkEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     location_id: int
-    type: str  # noqa: WPS125
+    type: str
     name: str
     address: str
     mask: int
@@ -45,7 +45,7 @@ def _create_payload(location_id: VmwareLocationId, name: str) -> Payload:
 class BaseVmwareNetworkService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/networks'
 
-    async def list(  # noqa: WPS125
+    async def list(
         self,
         location_id: Optional[VmwareLocationId] = None,
         network_type: Optional[str] = None,
@@ -106,8 +106,7 @@ class BaseVmwareNetworkService(BaseService):
 
 
 class VmwareNetworkService(BaseVmwareNetworkService):
-    # WPS211: состав параметров задан формой запроса контракта — операция неделима.
-    async def create_isolated(  # noqa: WPS211
+    async def create_isolated(
         self,
         *,
         location_id: VmwareLocationId,

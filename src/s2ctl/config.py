@@ -42,7 +42,7 @@ class ConfigManager(object):
     def _fill_defaults(self, stored: Dict[str, Any]) -> Dict[str, Any]:
         """Недостающие значения дописываются в файл: сгенерированный ключ обязан пережить вызов."""
         missing = {
-            key: value  # noqa: WPS110
+            key: value
             for key, value in self._defaults().items()  # noqa: WPS110
             if key not in stored
         }

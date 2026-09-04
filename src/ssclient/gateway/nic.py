@@ -7,7 +7,7 @@ from ssclient.ports import HttpClientPort
 
 
 class GatewayNicEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     network_id: str
     ip_address: str
     bandwidth_mbps: int

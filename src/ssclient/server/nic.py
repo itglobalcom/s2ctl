@@ -9,7 +9,7 @@ from ssclient.task_id import TaskId
 
 
 class NicEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     server_id: str
     mac: str
     ip_address: str
@@ -44,7 +44,7 @@ class NicService(BaseService):
         nic_resp = await self._http_client.get(path)
         return nic_resp['nic']
 
-    async def list(self) -> List[NicEntity]:  # noqa: WPS125
+    async def list(self) -> List[NicEntity]:
         nics_resp = await self._http_client.get(self.path)
         return nics_resp['nics']
 

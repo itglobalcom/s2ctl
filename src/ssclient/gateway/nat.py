@@ -6,7 +6,7 @@ from ssclient.ports import HttpClientPort
 
 
 class NatRuleEntity(TypedDict):
-    type: str  # noqa: WPS125
+    type: str
     protocol: str
     source: str
     destination: str

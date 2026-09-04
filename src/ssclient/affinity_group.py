@@ -6,7 +6,7 @@ from ssclient.task_id import TaskId
 
 
 class AffinityGroupEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     location_id: str
     name: str
     affinity: bool
@@ -34,7 +34,7 @@ class AffinityGroupService(BaseService):
         group_resp = await self._http_client.get(path)
         return group_resp['affinity_group']
 
-    async def list(  # noqa: WPS125
+    async def list(
         self, location_id: Optional[str] = None,
     ) -> List[AffinityGroupEntity]:
         path = with_filters(self.path, {'location_id': location_id})

@@ -8,7 +8,7 @@ from ssclient.task_id import TaskId
 
 
 class NetworkEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     location_id: str
     name: str
     description: str
@@ -23,7 +23,7 @@ class NetworkEntity(TypedDict):
 class BaseNetworkService(BaseService):
     _path: ClassVar[str] = 'api/v1/networks/isolated'
 
-    async def create(  # noqa: WPS211
+    async def create(
         self,
         *,
         location_id: str,
@@ -51,7 +51,7 @@ class BaseNetworkService(BaseService):
     async def get(self, network_id: NetworkId) -> NetworkEntity:
         return await self._read(network_id.value)
 
-    async def list(self) -> List[NetworkEntity]:  # noqa: WPS125
+    async def list(self) -> List[NetworkEntity]:
         networks_resp = await self._http_client.get(self.path)
         return networks_resp['isolated_networks']
 

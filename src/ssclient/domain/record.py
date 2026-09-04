@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Dict, List, Optional, Union  # noqa: WPS226
+from typing import Any, ClassVar, Dict, List, Optional, Union
 
 from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.domain import record_entities as entities
@@ -156,7 +156,7 @@ class RecordService(BaseService):  # noqa: WPS214
         record_resp = await self._http_client.get(path)
         return record_resp['record']
 
-    async def list(self) -> List[entities.AnyRecord]:  # noqa: WPS125
+    async def list(self) -> List[entities.AnyRecord]:
         domains_resp = await self._http_client.get(self.path)
         return domains_resp['records']
 

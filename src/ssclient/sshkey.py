@@ -4,7 +4,7 @@ from ssclient.base import BaseService
 
 
 class SshkeyEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     name: str
     public_key: str
 
@@ -26,7 +26,7 @@ class SshkeyService(BaseService):
         ssh_resp = await self._http_client.get(path)
         return ssh_resp['ssh_key']
 
-    async def list(self) -> List[SshkeyEntity]:  # noqa: WPS125
+    async def list(self) -> List[SshkeyEntity]:
         sshs_resp = await self._http_client.get(self.path)
         return sshs_resp['ssh_keys']
 

@@ -14,14 +14,14 @@ from ssclient.task_id import TaskId
 
 
 class ServerVolumeEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     name: str
     size_mb: int
     created: str
 
 
 class ServerNicEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     network_id: str
     mac: str
     ip_address: str
@@ -30,7 +30,7 @@ class ServerNicEntity(TypedDict):
 
 
 class ServerEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     location_id: str
     cpu: int
     ram_mb: int
@@ -92,7 +92,7 @@ class BaseServerService(BaseService):  # noqa: WPS214
     async def get(self, server_id: ServerId) -> ServerEntity:
         return await self._read(server_id.value)
 
-    async def list(self) -> List[ServerEntity]:  # noqa: WPS125
+    async def list(self) -> List[ServerEntity]:
         servers_resp = await self._http_client.get(self.path)
         return servers_resp['servers']
 

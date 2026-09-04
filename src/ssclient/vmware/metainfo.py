@@ -16,7 +16,7 @@ class VmwareLocationDiskTypeEntity(TypedDict):
 
 
 class VmwareLocationEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     tech_title: str
     gpu_supported: bool
     nested_hypervisor_supported: bool
@@ -24,7 +24,7 @@ class VmwareLocationEntity(TypedDict):
 
 
 class VmwareImageEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     name: str
     os_family: str
     os_type: str
@@ -39,7 +39,7 @@ class VmwareImageEntity(TypedDict):
 
 
 class VmwareGpuModelEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     tech_title: str
     name: str
     capacity_vram_mb: int
@@ -52,7 +52,7 @@ class VmwareGpuModelEntity(TypedDict):
 class VmwareLocationsService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/locations'
 
-    async def list(self) -> List[VmwareLocationEntity]:  # noqa: WPS125
+    async def list(self) -> List[VmwareLocationEntity]:
         locations_resp = await self._http_client.get(self.path)
         return locations_resp['locations']
 
@@ -60,7 +60,7 @@ class VmwareLocationsService(BaseService):
 class VmwareImagesService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/images'
 
-    async def list(  # noqa: WPS125
+    async def list(
         self, location_id: Optional[VmwareLocationId] = None, gpu: Optional[str] = None,
     ) -> List[VmwareImageEntity]:
         path = with_filters(self.path, {'location_id': location_id, 'gpu': gpu})
@@ -71,7 +71,7 @@ class VmwareImagesService(BaseService):
 class VmwareGpuModelsService(BaseService):
     _path: ClassVar[str] = 'api/v1/vmware/gpu-models'
 
-    async def list(  # noqa: WPS125
+    async def list(
         self, location_id: Optional[VmwareLocationId] = None,
     ) -> List[VmwareGpuModelEntity]:
         path = with_filters(self.path, {'location_id': location_id})

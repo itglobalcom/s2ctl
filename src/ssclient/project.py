@@ -4,7 +4,7 @@ from ssclient.base import BaseService
 
 
 class ProjectEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     balance: float
     currency: str
     state: str

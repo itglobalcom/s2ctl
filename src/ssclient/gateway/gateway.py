@@ -13,7 +13,7 @@ from ssclient.task_id import TaskId
 
 
 class GatewayEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     location_id: str
     name: str
     nics: List[GatewayNicEntity]
@@ -54,7 +54,7 @@ class BaseGatewayService(BaseService):
     async def get(self, gateway_id: GatewayId) -> GatewayEntity:
         return await self._read(gateway_id.value)
 
-    async def list(self, location_id: Optional[str] = None) -> List[GatewayEntity]:  # noqa: WPS125
+    async def list(self, location_id: Optional[str] = None) -> List[GatewayEntity]:
         path = with_filters(self.path, {'location_id': location_id})
         gateways_resp = await self._http_client.get(path)
         return gateways_resp['gateways']

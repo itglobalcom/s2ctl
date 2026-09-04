@@ -4,7 +4,7 @@ from ssclient.base import BaseService, with_filters
 
 
 class LocationEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     system_volume_min: int
     additional_volume_min: int
     volume_max: int
@@ -16,16 +16,16 @@ class LocationEntity(TypedDict):
 
 
 class ImageEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     location_id: str
-    type: str  # noqa: WPS125
+    type: str
     os_version: str
     architecture: str
     allow_ssh_keys: bool
 
 
 class ApplicationEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     location_id: str
     images: List[str]
 

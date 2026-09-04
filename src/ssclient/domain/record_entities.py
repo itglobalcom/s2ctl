@@ -24,7 +24,7 @@ class AllowedTTLType(Enum):
     one_day = '1d'
 
     @classmethod
-    def list(cls):  # noqa: WPS125
+    def list(cls):
         return [enum_item.value for enum_item in cls]
 
 
@@ -42,7 +42,7 @@ class AllowedRecordType(Enum):
     txt = 'txt'
 
     @classmethod
-    def list(cls):  # noqa: WPS125
+    def list(cls):
         return [enum_item.value for enum_item in cls]
 
     def __eq__(self, other):
@@ -56,7 +56,7 @@ RecordType = Literal[AllowedRecordType.list()]
 
 class BaseRecordEntity(TypedDict):
     name: str
-    type: RecordType  # noqa: WPS125
+    type: RecordType
     ttl: TTLType
 
 

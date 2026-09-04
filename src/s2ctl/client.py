@@ -50,7 +50,7 @@ def _new_client(ctx: Context) -> SSClient:
     apikey_arg: str = ctx.obj['apikey_arg']
     try:
         apikey = apikey_arg or context_manager.get_current_apikey()
-    except Exception:  # noqa: WPS329
+    except Exception:
         raise KeyMissingError
 
     if not apikey:

@@ -7,7 +7,7 @@ from ssclient.task_id import TaskId
 
 
 class SnapshotEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     server_id: str
     name: str
     size_mb: int
@@ -37,7 +37,7 @@ class SnapshotService(BaseService):
         snap_resp = await self._http_client.get(path)
         return snap_resp['snapshot']
 
-    async def list(self) -> List[SnapshotEntity]:  # noqa: WPS125
+    async def list(self) -> List[SnapshotEntity]:
         snaps_resp = await self._http_client.get(self.path)
         return snaps_resp['snapshots']
 

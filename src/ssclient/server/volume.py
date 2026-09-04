@@ -8,7 +8,7 @@ from ssclient.task_id import TaskId
 
 
 class VolumeEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     server_id: str
     name: str
     size_mb: int
@@ -45,7 +45,7 @@ class VolumeService(BaseService):
         volume_resp = await self._http_client.get(path)
         return volume_resp['volume']
 
-    async def list(self) -> List[VolumeEntity]:  # noqa: WPS125
+    async def list(self) -> List[VolumeEntity]:
         volumes_resp = await self._http_client.get(self.path)
         return volumes_resp['volumes']
 

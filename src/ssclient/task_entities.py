@@ -32,17 +32,17 @@ class TaskResourceType(Enum):
 
 
 class TaskResourceEntity(TypedDict):
-    type: str  # noqa: WPS125
-    id: str  # noqa: WPS125
+    type: str
+    id: str
 
 
 class BaseTaskEntity(TypedDict):
-    id: str  # noqa: WPS125
+    id: str
     is_completed: str
 
 
 class TaskEntity(BaseTaskEntity, total=False):
-    type: str  # noqa: WPS125
+    type: str
     progress_percent: int
     created: str
     completed: Optional[str]

@@ -6,7 +6,7 @@ from ssclient.vmware.ids import VmwareServerId, VmwareVolumeId
 
 
 class VmwareServerVolumeEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     name: str
     size_mb: int
     disk_type: str
@@ -20,7 +20,7 @@ class VmwareServerVolumeService(BaseService):
     def __init__(self, http_client: HttpClientPort, server_id: VmwareServerId) -> None:
         super().__init__(http_client, {'server_id': server_id})
 
-    async def list(self) -> List[VmwareServerVolumeEntity]:  # noqa: WPS125
+    async def list(self) -> List[VmwareServerVolumeEntity]:
         volumes_resp = await self._http_client.get(self.path)
         return volumes_resp['volumes']
 

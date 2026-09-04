@@ -120,10 +120,10 @@ def _command_callback_wrap(  # noqa: WPS231
     func: Callable[..., Any],
 ) -> Optional[Callable[..., Any]]:
     @wraps(func)
-    def wrapper(*args, **kwargs):  # noqa: WPS430
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except BaseFailException:  # noqa: WPS329
+        except BaseFailException:
             raise
         except (HttpClientResponseError, TaskWaitTimeoutError) as exc:
             _report_expected_failure(exc)

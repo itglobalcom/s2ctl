@@ -16,7 +16,7 @@ class VmwareServerGpuEntity(TypedDict):
 
 
 class VmwareServerNicEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     number: int
     is_primary: bool
     network_id: int
@@ -26,7 +26,7 @@ class VmwareServerNicEntity(TypedDict):
 
 
 class VmwareServerEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     project_id: int
     location_id: int
     name: str
@@ -63,9 +63,8 @@ class VmwareServerGpu(object):
     card_count: int
 
 
-# WPS230: состав полей задан формой запроса контракта — заказ передаётся целиком.
 @dataclass(frozen=True)
-class VmwareServerOrder(object):  # noqa: WPS230
+class VmwareServerOrder(object):
     """Заказ VMware-сервера — одно тело запроса и на создание, и на его предпроверку."""
 
     location_id: VmwareLocationId

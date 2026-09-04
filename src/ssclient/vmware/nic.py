@@ -8,7 +8,7 @@ _SHARED_FRAGMENT = 'shared'
 
 
 class VmwareServerNicEntity(TypedDict):
-    id: int  # noqa: WPS125
+    id: int
     number: int
     is_primary: bool
     network_id: int
@@ -29,7 +29,7 @@ class VmwareServerNicService(BaseService):
     def __init__(self, http_client: HttpClientPort, server_id: VmwareServerId) -> None:
         super().__init__(http_client, {'server_id': server_id})
 
-    async def list(self) -> List[VmwareServerNicEntity]:  # noqa: WPS125
+    async def list(self) -> List[VmwareServerNicEntity]:
         nics_resp = await self._http_client.get(self.path)
         return nics_resp['nics']
 
@@ -64,8 +64,7 @@ class VmwareServerNicService(BaseService):
             wait=wait,
         )
 
-    # WPS211: набор параметров интерфейса задан формой запроса контракта — он передаётся целиком.
-    async def update(  # noqa: WPS211
+    async def update(
         self,
         nic_id: VmwareNicId,
         *,

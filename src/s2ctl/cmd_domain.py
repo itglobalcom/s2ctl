@@ -322,7 +322,7 @@ def create_record(  # noqa: WPS231
     + 'Usually lower value means more preferred',
 )
 @click.pass_context
-def update_record(  # noqa: WPS231
+def update_record(
     ctx,
     domain_name: str,
     record_id: int,
@@ -477,7 +477,7 @@ def check_allowed_fields(  # noqa: WPS213, WPS231
 
     # convert inner field name to external value
     all_necessary_fields = {
-        field.replace('_', '-') for field in record_entity_type.__annotations__  # noqa:WPS609
+        field.replace('_', '-') for field in record_entity_type.__annotations__
     }
 
     if set(all_necessary_fields) == getted_fields:

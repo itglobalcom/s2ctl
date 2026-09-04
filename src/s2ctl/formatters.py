@@ -11,7 +11,7 @@ AnyDict = Dict[Any, Any]
 
 
 class FormatterPort(Protocol):
-    def format(self, raw_obj: Any, sorter: Optional[SorterType] = None) -> str:  # noqa: WPS125
+    def format(self, raw_obj: Any, sorter: Optional[SorterType] = None) -> str:
         """Prepare python objects and convert them to string before output.
 
         Args:
@@ -44,7 +44,7 @@ def general_fields_sort(
 
 
 class JSONFormatter(object):
-    def format(  # noqa: WPS125
+    def format(
         self,
         raw_obj: Any,
         sorter: Optional[SorterType] = None,
@@ -55,7 +55,7 @@ class JSONFormatter(object):
 
 
 class YAMLFormatter(object):
-    def format(  # noqa: WPS125
+    def format(
         self,
         raw_obj: Any,
         sorter: Optional[SorterType] = None,
@@ -96,11 +96,11 @@ class TableFormatter(object):
     def __init__(self, table_format: str = 'presto') -> None:
         self.table_foramt = table_format
 
-    def format(  # noqa: WPS125
+    def format(
         self,
         raw_obj: Any,
         sorter: Optional[SorterType] = None,
-    ) -> str:  # noqa: WPS125
+    ) -> str:
         if sorter:
             raw_obj = sorter(raw_obj)
         if not isinstance(raw_obj, (dict, List)):

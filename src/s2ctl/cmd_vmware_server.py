@@ -152,8 +152,7 @@ def _order_options(command):
     return decorated
 
 
-# WPS211: состав заказа задан формой запроса контракта — разбирается он целиком.
-def _order(  # noqa: WPS211
+def _order(
     *,
     location: VmwareLocationId,
     name: str,
