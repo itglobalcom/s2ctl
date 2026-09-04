@@ -132,3 +132,38 @@ async def test_add_nic_sends_network_id_as_contract_string(
         'network_id': expected_field,
         'bandwidth_mbps': 100,
     })]
+
+
+# Ссылку на задачу удаления publisher отдаёт только по `return_task=true`: без него
+# ответ пуст, и дождаться удаления скрипту нечем. У сервера id задачи приходит
+# в форме без части локации (`lt{id}`) — реестр форматов её принимает.
+async def test_delete_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    expected_path = 'api/v1/servers/l2s99?return_task=true'
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'lt345'})
+
+    task_wrap = await ServerService(fake_http_client).delete('l2s99')
+
+    assert fake_http_client.requests == [FakeRequest('DELETE', expected_path)]
+    assert task_wrap == {'task_id': 'lt345'}
+
+
+async def test_delete_with_wait_polls_the_task_of_the_deletion(fake_http_client):
+    fake_http_client.on('DELETE', 'api/v1/servers/l2s99?return_task=true', {'task_id': 'lt345'})
+    fake_http_client.on('GET', 'api/v1/tasks/lt345', task_response('lt345', TaskState.completed))
+
+    task_wrap = await ServerService(fake_http_client).delete('l2s99', wait=True)
+
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/lt345']
+    assert task_wrap is None
+
+
+async def test_delete_nic_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    expected_path = 'api/v1/servers/l2s99/nics/7?return_task=true'
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'l2t345'})
+    fake_http_client.on('GET', 'api/v1/tasks/l2t345', task_response('l2t345', TaskState.completed))
+
+    task_wrap = await NicService(fake_http_client, 'l2s99').delete(7, wait=True)
+
+    assert fake_http_client.paths('DELETE') == [expected_path]
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t345']
+    assert task_wrap is None

@@ -74,12 +74,13 @@ def get(ctx, domain_name: str):
 
 @domain.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument('domain-name', required=True)
 @click.pass_context
-def delete(ctx, domain_name: str):
+def delete(ctx, domain_name: str, wait: bool):
     """Delete a domain."""
     domain_service = _get_domain_serivce(ctx)
-    service_resp = asyncio.run(domain_service.delete(domain_name=domain_name))
+    service_resp = asyncio.run(domain_service.delete(domain_name=domain_name, wait=wait))
     echo(service_resp)
 
 
@@ -412,6 +413,7 @@ def get_record(ctx, domain_name: str, record_id: int):
 
 @domain.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument('domain-name', required=True)
 @click.option(
     '--record-id',
@@ -421,12 +423,12 @@ def get_record(ctx, domain_name: str, record_id: int):
     help='Record id.',
 )
 @click.pass_context
-def delete_record(ctx, domain_name: str, record_id: int):
+def delete_record(ctx, domain_name: str, record_id: int, wait: bool):
     """Remove the record from a domain."""
     domain_service = _get_domain_serivce(ctx)
     record_service = domain_service.records(domain_name=domain_name)
     service_resp = asyncio.run(
-        record_service.delete(record_id=record_id),
+        record_service.delete(record_id=record_id, wait=wait),
     )
     echo(service_resp)
 

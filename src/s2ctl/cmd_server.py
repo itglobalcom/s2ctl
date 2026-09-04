@@ -283,12 +283,13 @@ def get(ctx, server_id: str):
 
 @server.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument(SERVER_ID_ARG, required=True)
 @click.pass_context
-def delete(ctx, server_id: str):
+def delete(ctx, server_id: str, wait: bool):
     """Delete a server."""
     server_service = _get_server_serivce(ctx)
-    service_resp = asyncio.run(server_service.delete(server_id=server_id))
+    service_resp = asyncio.run(server_service.delete(server_id=server_id, wait=wait))
     echo(service_resp, sorter=sort_server_resp)
 
 
@@ -374,15 +375,16 @@ def list_volume(ctx, server_id: str):
 
 @server.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument(SERVER_ID_ARG, required=True)
 @click.option('--volume-id', required=True, help='Volume identifier.')
 @click.pass_context
-def delete_volume(ctx, server_id: str, volume_id: int):
+def delete_volume(ctx, server_id: str, volume_id: int, wait: bool):
     """Remove a storage volume from a server."""
     server_service = _get_server_serivce(ctx)
     volume_service = server_service.volumes(server_id=server_id)
     service_resp = asyncio.run(
-        volume_service.delete(volume_id=volume_id),
+        volume_service.delete(volume_id=volume_id, wait=wait),
     )
     echo(service_resp)
 
@@ -479,14 +481,15 @@ def edit_nic(ctx, server_id: str, nic_id: int, bandwidth: int, wait: bool):
 
 @server.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument(SERVER_ID_ARG, required=True)
 @click.option('--nic-id', type=int, required=True, help='Network interface identifier.')
 @click.pass_context
-def delete_nic(ctx, server_id: str, nic_id: int):
+def delete_nic(ctx, server_id: str, nic_id: int, wait: bool):
     """Remove a network interface from a server."""
     server_service = _get_server_serivce(ctx)
     nic_service = server_service.nics(server_id=server_id)
-    service_resp = asyncio.run(nic_service.delete(nic_id=nic_id))
+    service_resp = asyncio.run(nic_service.delete(nic_id=nic_id, wait=wait))
     echo(service_resp)
 
 
@@ -609,15 +612,16 @@ def rollback_snapshot(ctx, server_id: str, snapshot_id: int, wait: bool):
 
 @server.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument(SERVER_ID_ARG, required=True)
 @click.option('--snapshot-id', type=int, required=True, help='Snapshot identifier.')
 @click.pass_context
-def delete_snapshot(ctx, server_id: str, snapshot_id: int):
+def delete_snapshot(ctx, server_id: str, snapshot_id: int, wait: bool):
     """Remove a snapshot of a server."""
     server_service = _get_server_serivce(ctx)
     snapshot_service = server_service.snapshots(server_id=server_id)
     service_resp = asyncio.run(
-        snapshot_service.delete(snapshot_id=snapshot_id),
+        snapshot_service.delete(snapshot_id=snapshot_id, wait=wait),
     )
     echo(service_resp)
 

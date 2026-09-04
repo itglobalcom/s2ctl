@@ -1,6 +1,6 @@
-from typing import ClassVar, List, TypedDict, Union
+from typing import ClassVar, List, Optional, TypedDict, Union
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.domain.record import RecordService
 from ssclient.domain.record_entities import AnyRecord
 from ssclient.task_entities import TaskResourceType, task_resource_id
@@ -48,9 +48,13 @@ class BaseDomainService(BaseService):
         domains_resp = await self._http_client.get(self.path)
         return domains_resp['domains']
 
-    async def delete(self, domain_name: str) -> None:
-        path = self._make_path(domain_name)
-        await self._http_client.delete(path)
+    async def delete(self, domain_name: str, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(domain_name))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap
 
 
 class DomainService(BaseDomainService):

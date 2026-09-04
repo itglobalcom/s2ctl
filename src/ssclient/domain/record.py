@@ -1,6 +1,6 @@
 from typing import Any, ClassVar, Dict, List, Optional, Union  # noqa: WPS226
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.domain import record_entities as entities
 from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskResourceType, task_resource_id
@@ -208,9 +208,13 @@ class RecordService(BaseService):  # noqa: WPS214
             return await self.get(int(task_resource_id(task, TaskResourceType.record)))
         return task_wrap
 
-    async def delete(self, record_id: int) -> None:
-        path = self._make_path(str(record_id))
-        await self._http_client.delete(path)
+    async def delete(self, record_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(str(record_id)))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap
 
     async def _craete_record(
         self,

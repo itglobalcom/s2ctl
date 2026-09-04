@@ -1,6 +1,6 @@
-from typing import ClassVar, List, TypedDict, Union
+from typing import ClassVar, List, Optional, TypedDict, Union
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.network.network_id import NetworkId
 from ssclient.network.tag import TagService
 from ssclient.task_entities import TaskResourceType, task_resource_id
@@ -71,9 +71,13 @@ class BaseNetworkService(BaseService):
             },
         )
 
-    async def delete(self, network_id: NetworkId) -> None:
-        path = self._make_path(network_id.value)
-        await self._http_client.delete(path)
+    async def delete(self, network_id: NetworkId, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(network_id.value))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap
 
     async def _read(self, raw_network_id: str) -> NetworkEntity:
         network_resp = await self._http_client.get(self._make_path(raw_network_id))

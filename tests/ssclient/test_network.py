@@ -71,12 +71,26 @@ async def test_update_puts_name_and_description(fake_http_client):
     assert task_wrap == {'task_id': 'l1t345'}
 
 
-async def test_delete_sends_bare_delete(fake_http_client):
-    fake_http_client.on('DELETE', NETWORK_PATH, None)
+async def test_delete_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    # Без `return_task=true` ответ удаления пуст, и `--wait` нечего ждать.
+    expected_path = '{path}?return_task=true'.format(path=NETWORK_PATH)
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'l1t345'})
 
-    await NetworkService(fake_http_client).delete(_network_id('l1n3'))
+    task_wrap = await NetworkService(fake_http_client).delete(_network_id('l1n3'))
 
-    assert fake_http_client.requests == [FakeRequest('DELETE', NETWORK_PATH)]
+    assert fake_http_client.requests == [FakeRequest('DELETE', expected_path)]
+    assert task_wrap == {'task_id': 'l1t345'}
+
+
+async def test_delete_with_wait_polls_the_task_of_the_deletion(fake_http_client):
+    expected_path = '{path}?return_task=true'.format(path=NETWORK_PATH)
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'l1t345'})
+    fake_http_client.on('GET', 'api/v1/tasks/l1t345', task_response('l1t345', TaskState.completed))
+
+    task_wrap = await NetworkService(fake_http_client).delete(_network_id('l1n3'), wait=True)
+
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/l1t345']
+    assert task_wrap is None
 
 
 async def test_create_with_wait_reads_network_addressed_by_task_resources(fake_http_client):

@@ -1,6 +1,6 @@
 from typing import ClassVar, List, Optional, TypedDict, Union
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
@@ -72,6 +72,10 @@ class VolumeService(BaseService):
             return await self.get(int(task_resource_id(task, TaskResourceType.volume)))
         return task_wrap
 
-    async def delete(self, volume_id: int) -> None:
-        path = self._make_path(str(volume_id))
-        await self._http_client.delete(path)
+    async def delete(self, volume_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(str(volume_id)))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap

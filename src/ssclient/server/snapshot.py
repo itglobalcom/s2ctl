@@ -1,6 +1,6 @@
 from typing import ClassVar, List, Optional, TypedDict
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.ports import HttpClientPort
 from ssclient.task_id import TaskId
 
@@ -40,9 +40,13 @@ class SnapshotService(BaseService):
         snaps_resp = await self._http_client.get(self.path)
         return snaps_resp['snapshots']
 
-    async def delete(self, snapshot_id: int) -> None:
-        path = self._make_path(str(snapshot_id))
-        await self._http_client.delete(path)
+    async def delete(self, snapshot_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(str(snapshot_id)))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap
 
     async def rollback(self, snapshot_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
         fragment = '{snap_id}/rollback'.format(snap_id=snapshot_id)

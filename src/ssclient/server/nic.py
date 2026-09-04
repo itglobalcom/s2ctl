@@ -1,6 +1,6 @@
 from typing import ClassVar, List, Optional, TypedDict, Union
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.network.network_id import NetworkId
 from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskResourceType, task_resource_id
@@ -62,6 +62,10 @@ class NicService(BaseService):
             return await self.get(nic_id)
         return task_wrap
 
-    async def delete(self, nic_id: int, wait: bool = False) -> None:
-        path = self._make_path(str(nic_id))
-        await self._http_client.delete(path)
+    async def delete(self, nic_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(str(nic_id)))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap

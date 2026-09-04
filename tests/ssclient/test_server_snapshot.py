@@ -41,3 +41,16 @@ async def test_create_without_wait_returns_the_task(fake_http_client):
     task_wrap = await SnapshotService(fake_http_client, 'l2s99').create(name='before')
 
     assert task_wrap == {'task_id': 'l2t345'}
+
+
+async def test_delete_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    # Без `return_task=true` ответ удаления пуст, и `--wait` нечего ждать.
+    expected_path = '{path}/31?return_task=true'.format(path=SNAPSHOTS_PATH)
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'l2t347'})
+    fake_http_client.on('GET', 'api/v1/tasks/l2t347', task_response('l2t347', TaskState.completed))
+
+    task_wrap = await SnapshotService(fake_http_client, 'l2s99').delete(31, wait=True)
+
+    assert fake_http_client.paths('DELETE') == [expected_path]
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t347']
+    assert task_wrap is None

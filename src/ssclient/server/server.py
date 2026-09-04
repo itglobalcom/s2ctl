@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass
 from typing import Iterable, List, Optional, TypedDict, Union
 
-from ssclient.base import BaseService, TaskIDWrap
+from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.server.nic import NicService
 from ssclient.server.power import ServerPowerService
 from ssclient.server.price import ServerPriceService
@@ -160,9 +160,13 @@ class BaseServerService(BaseService):
             return await self.get(server_id)
         return task_wrap
 
-    async def delete(self, server_id: str) -> None:
-        path = self._make_path(server_id)
-        await self._http_client.delete(path)
+    async def delete(self, server_id: str, wait: bool = False) -> Optional[TaskIDWrap]:
+        path = with_return_task(self._make_path(server_id))
+        task_wrap: TaskIDWrap = await self._http_client.delete(path)
+        if wait:
+            await self._wait_task_completion(self._task_id(task_wrap))
+            return None
+        return task_wrap
 
 
 class ServerService(BaseServerService):

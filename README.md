@@ -161,6 +161,13 @@ Some commands of the previous releases behave differently now:
   `server add-nic`) reject a malformed identifier themselves — with the expected
   format and the exit code `2` of a usage error, instead of asking the API and
   reporting its refusal;
+- every deletion the API answers with a task now prints the identifier of that
+  task and takes `--wait`: `server delete`, `server delete-volume`,
+  `server delete-nic`, `server delete-snapshot`, `network delete`,
+  `domain delete` and `domain delete-record` used to print nothing and return
+  before the platform had applied anything. The four deletions the API answers
+  with an empty body — `ssh-key delete` and the three `delete-tag` commands —
+  keep printing nothing: there is no task to wait for;
 - `server edit-volume` requires `--volume-size` and accepts `--volume-name`. The
   size is a non-nullable field of the operation, so a call without it was
   answered `400 VolumeBadSize` by the API and now stops as a usage error; the
@@ -515,6 +522,12 @@ server with a disk far larger than theirs:
 ```
 >s2ctl vmware server copy 1234 --name web-copy --wait --timeout 900
 ```
+
+Deletions are asynchronous too, and the API returns their task only when asked:
+`s2ctl` asks always, so `server delete l1s12345 --wait` returns when the server
+is really gone. The exceptions are `ssh-key delete` and the `delete-tag`
+commands — the API applies them synchronously, answers with an empty body and
+has no task to offer, so these four commands print nothing and take no `--wait`.
 
 `--timeout` only makes sense together with `--wait`, and the command refuses it
 without it. When the time is up, the command reports an error, but the task

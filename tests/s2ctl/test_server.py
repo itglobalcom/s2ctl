@@ -21,6 +21,11 @@ VOLUME_PATH = '{server_path}/volumes/{volume_id}'.format(
     server_path=SERVER_PATH, volume_id=VOLUME_ID,
 )
 
+SNAPSHOT_ID = 31
+SNAPSHOT_PATH = '{server_path}/snapshots/{snapshot_id}'.format(
+    server_path=SERVER_PATH, snapshot_id=SNAPSHOT_ID,
+)
+
 _PRICE_ARGS = (
     'price',
     '--location', 'am2',
@@ -132,3 +137,30 @@ def test_edit_volume_refuses_to_run_without_the_new_size(cli_config):
     # `VolumeBadSize`, поэтому команда отказывает до запроса.
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
     assert '--volume-size' in result.output
+
+
+# Каждое удаление раздела спрашивает у publisher'а ссылку на задачу: без
+# `return_task=true` ответ пуст, id задачи скрипту недоступен и `--wait` нечего ждать.
+_DELETE_COMMANDS = (
+    (('delete', SERVER_ID), SERVER_PATH),
+    (('delete-volume', SERVER_ID, '--volume-id', str(VOLUME_ID)), VOLUME_PATH),
+    (('delete-nic', SERVER_ID, '--nic-id', str(NIC_ID)), NIC_PATH),
+    (
+        ('delete-snapshot', SERVER_ID, '--snapshot-id', str(SNAPSHOT_ID)),
+        SNAPSHOT_PATH,
+    ),
+)
+
+
+@pytest.mark.parametrize('command_args,path', _DELETE_COMMANDS)
+def test_delete_asks_the_publisher_for_the_reference_to_the_task(
+    cli_http_client, command_args, path,
+):
+    expected_path = '{path}?return_task=true'.format(path=path)
+    cli_http_client.on('DELETE', expected_path, {'task_id': 'l1t9'})
+
+    result = _invoke(*command_args)
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('DELETE') == [expected_path]
+    assert 'l1t9' in result.output

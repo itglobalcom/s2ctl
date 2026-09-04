@@ -74,3 +74,16 @@ async def test_update_without_name_leaves_the_current_one_to_the_publisher(fake_
     # `VstackEditVolumeCommand.Name` необязателен, и на `null` publisher оставляет
     # диску текущее имя: подставлять его самому не нужно.
     assert fake_http_client.requests[0].payload == {'name': None, 'size_mb': 51200}
+
+
+async def test_delete_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    # Без `return_task=true` ответ удаления пуст, и `--wait` нечего ждать.
+    expected_path = '{path}?return_task=true'.format(path=VOLUME_PATH)
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'l2t349'})
+    fake_http_client.on('GET', 'api/v1/tasks/l2t349', task_response('l2t349', TaskState.completed))
+
+    task_wrap = await VolumeService(fake_http_client, 'l2s99').delete(20210, wait=True)
+
+    assert fake_http_client.paths('DELETE') == [expected_path]
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t349']
+    assert task_wrap is None

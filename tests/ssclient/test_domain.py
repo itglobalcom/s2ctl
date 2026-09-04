@@ -145,3 +145,27 @@ async def test_update_record_omits_the_fields_of_other_record_types(fake_http_cl
         'ttl': '1h',
         'ip': '10.0.0.5',
     }
+
+
+# У DNS своя база контроллеров, но `return_task=true` она понимает так же, как
+# vStack: без параметра ответ удаления пуст, с ним — id задачи в форме `dns{id}`.
+async def test_delete_domain_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    expected_path = '{path}?return_task=true'.format(path=DOMAIN_PATH)
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'dns350'})
+    fake_http_client.on('GET', 'api/v1/tasks/dns350', task_response('dns350', TaskState.completed))
+
+    task_wrap = await DomainService(fake_http_client).delete('example.com', wait=True)
+
+    assert fake_http_client.paths('DELETE') == [expected_path]
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/dns350']
+    assert task_wrap is None
+
+
+async def test_delete_record_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):
+    expected_path = '{path}?return_task=true'.format(path=RECORD_PATH)
+    fake_http_client.on('DELETE', expected_path, {'task_id': 'dns351'})
+
+    task_wrap = await RecordService(fake_http_client, 'example.com').delete(17)
+
+    assert fake_http_client.paths('DELETE') == [expected_path]
+    assert task_wrap == {'task_id': 'dns351'}

@@ -68,3 +68,25 @@ def test_zero_valued_option_of_a_record_reaches_the_request(
         'ttl': '1h',
         **expected_fields,
     })]
+
+
+# Удаления DNS тоже спрашивают ссылку на задачу: `DnsControllerBase.DeleteOk`
+# отдаёт её по тому же `return_task=true`, только id приходит в форме `dns{id}`.
+_DELETE_COMMANDS = (
+    (('delete', DOMAIN_NAME), 'api/v1/domains/{domain}'.format(domain=DOMAIN_NAME)),
+    (('delete-record', DOMAIN_NAME, '--record-id', str(RECORD_ID)), RECORD_PATH),
+)
+
+
+@pytest.mark.parametrize('command_args,path', _DELETE_COMMANDS)
+def test_delete_asks_the_publisher_for_the_reference_to_the_task(
+    cli_http_client, command_args, path,
+):
+    expected_path = '{path}?return_task=true'.format(path=path)
+    cli_http_client.on('DELETE', expected_path, {'task_id': 'dns9'})
+
+    result = _invoke(*command_args)
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('DELETE') == [expected_path]
+    assert 'dns9' in result.output

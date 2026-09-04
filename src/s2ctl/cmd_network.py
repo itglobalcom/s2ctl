@@ -102,12 +102,13 @@ def edit(ctx, network_id: NetworkId, name: str, description: str):
 
 @network.command(cls=S2CTLCommand)
 @output_option
+@wait_option
 @click.argument('network-id', required=True, callback=parse_network_id)
 @click.pass_context
-def delete(ctx, network_id: NetworkId):
+def delete(ctx, network_id: NetworkId, wait: bool):
     """Delete a network."""
     net_service = _get_net_serivce(ctx)
-    service_resp = asyncio.run(net_service.delete(network_id=network_id))
+    service_resp = asyncio.run(net_service.delete(network_id=network_id, wait=wait))
     echo(service_resp)
 
 
