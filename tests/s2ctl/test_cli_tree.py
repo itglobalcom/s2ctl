@@ -283,6 +283,14 @@ class _AnyApi(object):
         return _AnyResponse({'task_id': 'l1t9'})
 
 
+def _commands_of_cli(command=entry_point, path=()):
+    """Каждая команда и подгруппа CLI: сам `entry_point` — это CLI, а не команда в нём."""
+    if isinstance(command, click.Group):
+        for name, subcommand in command.commands.items():
+            yield ' '.join(path + (name,)), subcommand
+            yield from _commands_of_cli(subcommand, path + (name,))
+
+
 def _leaf_commands(command=entry_point, path=()):
     if isinstance(command, click.Group):
         for name, subcommand in command.commands.items():
@@ -350,6 +358,28 @@ def test_every_command_prints_through_the_shared_output_option():
     # Печатать в машинном формате умеет любая команда: разбирать вывод CLI приходится
     # и скриптам пользователя, и следующей команде в конвейере.
     assert without_output == []
+
+
+def test_every_command_offers_a_description():
+    without_description = [name for name, command in _commands_of_cli() if not command.help]
+
+    # Описание команды — то, что видно в списке команд группы: без него `--help` группы
+    # перечисляет имена, по которым выбрать команду можно только угадав.
+    assert without_description == []
+
+
+def test_every_option_offers_help():
+    without_help = [
+        '{name} {option}'.format(name=name, option=param.opts[0])
+        for name, command in _commands_of_cli()
+        for param in command.params
+        if isinstance(param, click.Option) and not param.help
+    ]
+
+    # Текст подсказки не проверяется — проверяется, что он есть: опция без help
+    # печатается в справке одним своим именем, и назначение её пользователь узнаёт
+    # только из отказа команды.
+    assert without_help == []
 
 
 def test_asynchronous_command_is_exactly_the_one_that_offers_wait(stub_api):
