@@ -1,8 +1,9 @@
-"""Отказ API на команде нового раздела: читаемое сообщение и ненулевой код возврата.
+"""Отказ на команде нового раздела: читаемое сообщение и ненулевой код возврата.
 
-Путь ошибок в CLI общий (`_check_http_response_error` в `s2ctl/click.py`), но проверяется
+Путь ошибок в CLI общий (`_command_callback_wrap` в `s2ctl/click.py`), но проверяется
 он на уровне команды: заглушка API отвечает статусом и телом, а тест смотрит на то,
-что увидит пользователь, — сообщение вместо traceback.
+что увидит пользователь, — сообщение вместо traceback. Неожиданное исключение проверяется
+тем же способом: оно идёт той же веткой обработчика, что и отказ API.
 """
 import json
 import threading
@@ -12,7 +13,9 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
+from s2ctl.click import FORMATTER_NAMES
 from s2ctl.entrypoint import entry_point
+from ssclient.gateway.gateway import GatewayService
 
 APIKEY = '02deadbeef'
 
@@ -122,6 +125,29 @@ def test_not_found_is_reported_as_missing_object(api_config, command):
     result = _invoke(command)
 
     assert 'object not found' in result.output
+    _assert_reported_without_traceback(result)
+
+
+@pytest.mark.parametrize('output_format', FORMATTER_NAMES)
+def test_unexpected_failure_is_reported_readably_in_any_output_format(
+    monkeypatch, api_config, output_format,
+):
+    """Неожиданное исключение — тоже сообщение и ненулевой код, при любом `--output`.
+
+    Объект исключения форматтеру вывода не сериализовать: под `-o json` ошибка поверх
+    ошибки уходила наружу трассировкой стека, и любой неожиданный сбой доезжал
+    до пользователя стеком вместо причины.
+    """
+    def _fail(*args, **kwargs):
+        raise RuntimeError('platform answered nonsense')
+
+    monkeypatch.setattr(GatewayService, 'get', _fail)
+
+    result = _invoke(COMMANDS[0] + ('-o', output_format))
+
+    assert 'platform answered nonsense' in result.output
+    # Тип неожиданного исключения — часть причины: у KeyError он и есть всё сообщение.
+    assert 'RuntimeError' in result.output
     _assert_reported_without_traceback(result)
 
 

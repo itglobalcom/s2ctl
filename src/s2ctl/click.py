@@ -82,7 +82,11 @@ def _command_callback_wrap(  # noqa: WPS231
             debug: bool = ctx.obj.get('debug')
             if debug:
                 raise
-            echo(exc, err=True)
+            # Текстом, а не объектом: `echo` отдаёт значение форматтеру вывода,
+            # а исключение json-форматтер сериализовать не умеет — вторая ошибка
+            # поверх первой ушла бы наружу трассировкой вместо сообщения.
+            # `repr`, а не `str`: у неожиданного исключения тип и есть сообщение.
+            echo(repr(exc), err=True)
 
     return wrapper
 
