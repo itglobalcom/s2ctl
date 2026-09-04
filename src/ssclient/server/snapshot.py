@@ -2,6 +2,7 @@ from typing import ClassVar, List, Optional, TypedDict
 
 from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.ports import HttpClientPort
+from ssclient.server.server_id import ServerId
 from ssclient.task_id import TaskId
 
 
@@ -16,8 +17,8 @@ class SnapshotEntity(TypedDict):
 class SnapshotService(BaseService):
     _path: ClassVar[str] = 'api/v1/servers/{server_id}/snapshots'
 
-    def __init__(self, http_client: HttpClientPort, server_id: str) -> None:
-        super().__init__(http_client, {'server_id': server_id})
+    def __init__(self, http_client: HttpClientPort, server_id: ServerId) -> None:
+        super().__init__(http_client, {'server_id': server_id.value})
 
     async def create(self, *, name: str, wait: bool = False) -> Optional[TaskIDWrap]:
         task_wrap: TaskIDWrap = await self._http_client.post(

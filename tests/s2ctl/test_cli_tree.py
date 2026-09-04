@@ -225,6 +225,7 @@ _ID_BY_PARSER = types.MappingProxyType({
     params.parse_network_id: 'l1n2',
     params.parse_network_ids: 'l1n2',
     params.parse_affinity_group_id: 'l1g2',
+    params.parse_server_id: 'l1s2',
     params.parse_task_id: 'l2t3',
 })
 

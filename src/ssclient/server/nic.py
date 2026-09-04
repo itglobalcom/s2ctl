@@ -3,6 +3,7 @@ from typing import ClassVar, List, Optional, TypedDict, Union
 from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.network.network_id import NetworkId
 from ssclient.ports import HttpClientPort
+from ssclient.server.server_id import ServerId
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
 
@@ -19,8 +20,8 @@ class NicEntity(TypedDict):
 class NicService(BaseService):
     _path: ClassVar[str] = 'api/v1/servers/{server_id}/nics'
 
-    def __init__(self, http_client: HttpClientPort, server_id: str) -> None:
-        super().__init__(http_client, {'server_id': server_id})
+    def __init__(self, http_client: HttpClientPort, server_id: ServerId) -> None:
+        super().__init__(http_client, {'server_id': server_id.value})
 
     async def create(
         self, *, network_id: Optional[NetworkId], bandwidth: Optional[int], wait: bool = False,

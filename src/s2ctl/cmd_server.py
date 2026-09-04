@@ -9,11 +9,18 @@ from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.formatters import general_fields_sort
-from s2ctl.params import parse_network_id
+from s2ctl.params import parse_network_id, parse_server_id
 from ssclient.network.network_id import NetworkId
 from ssclient.server.server import ServerService, VolumeCreationData
+from ssclient.server.server_id import SERVER_ID_TEMPLATE, ServerId
 
 SERVER_ID_ARG = 'server-id'
+
+_GROUP_HELP = (
+    'Manage virtual servers inside your project.'
+    + '\n\n'
+    + 'Commands take the server id in the {template} format, as printed by "list".'
+).format(template=SERVER_ID_TEMPLATE)
 
 _POWER_OFF_HARD_HELP = (
     'Cut the power instead of asking the operating system. Without the flag the '
@@ -92,12 +99,9 @@ def sort_server_resp(resp: Dict[str, Any]) -> Dict[str, Any]:
     return general_fields_sort(resp, fields_order=_SERVER_FIELDS_ORDER)
 
 
-@entry_point.group()
+@entry_point.group(help=_GROUP_HELP)
 def server():
-    """Manage virtual servers inside your project.
-
-    Commands take the server id in the l<location>s<server> format, as printed by "list".
-    """
+    """Manage virtual servers inside your project."""
 
 
 @server.command(cls=S2CTLCommand)
@@ -169,7 +173,7 @@ def create(
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--cpu', help='CPU cores count.')
 @click.option(
     '--ram',
@@ -177,7 +181,7 @@ def create(
     help='RAM size (e.g. 1024, 1024M or 1G for 1Gb of RAM).',
 )
 @click.pass_context
-def edit(ctx, server_id: str, cpu: Optional[int], ram: Optional[int], wait: bool):
+def edit(ctx, server_id: ServerId, cpu: Optional[int], ram: Optional[int], wait: bool):
     """Change only the specified parameters of a server configuration."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
@@ -189,7 +193,7 @@ def edit(ctx, server_id: str, cpu: Optional[int], ram: Optional[int], wait: bool
 @server.command('set-configuration', cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--cpu', type=int, required=True, help='CPU cores count.')
 @click.option(
     '--ram',
@@ -198,7 +202,7 @@ def edit(ctx, server_id: str, cpu: Optional[int], ram: Optional[int], wait: bool
     help='RAM size (e.g. 1024, 1024M or 1G for 1Gb of RAM).',
 )
 @click.pass_context
-def set_configuration(ctx, server_id: str, cpu: int, ram: int, wait: bool):
+def set_configuration(ctx, server_id: ServerId, cpu: int, ram: int, wait: bool):
     """Set the whole server configuration: both CPU cores count and RAM size."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
@@ -210,10 +214,10 @@ def set_configuration(ctx, server_id: str, cpu: int, ram: int, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--name', required=True, help='New name of the server.')
 @click.pass_context
-def rename(ctx, server_id: str, name: str, wait: bool):
+def rename(ctx, server_id: ServerId, name: str, wait: bool):
     """Change the name of a server."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
@@ -282,9 +286,9 @@ def servers_list(ctx):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def get(ctx, server_id: str):
+def get(ctx, server_id: ServerId):
     """Get information about a server."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(server_service.get(server_id=server_id))
@@ -294,9 +298,9 @@ def get(ctx, server_id: str):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def delete(ctx, server_id: str, wait: bool):
+def delete(ctx, server_id: ServerId, wait: bool):
     """Delete a server."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(server_service.delete(server_id=server_id, wait=wait))
@@ -306,7 +310,7 @@ def delete(ctx, server_id: str, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--volume-name', required=True, help='Name of new volume.')
 @click.option(
     '--volume-size',
@@ -315,7 +319,7 @@ def delete(ctx, server_id: str, wait: bool):
     help='Size of new volume (e.g. 10240, 1024M or 10G for 10Gb volume)',
 )
 @click.pass_context
-def add_volume(ctx, server_id: str, volume_name: str, volume_size: int, wait: bool):
+def add_volume(ctx, server_id: ServerId, volume_name: str, volume_size: int, wait: bool):
     """Add new storage volume to a server."""
     server_service = _get_server_serivce(ctx)
     volume_service = server_service.volumes(server_id=server_id)
@@ -328,7 +332,7 @@ def add_volume(ctx, server_id: str, volume_name: str, volume_size: int, wait: bo
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--volume-id', required=True, help='Volume identifier.')
 @click.option(
     '--volume-size',
@@ -343,7 +347,7 @@ def add_volume(ctx, server_id: str, volume_name: str, volume_size: int, wait: bo
 )
 @click.pass_context
 def edit_volume(
-    ctx, server_id: str, volume_id: int, volume_size: int, volume_name: Optional[str], wait: bool,
+    ctx, server_id: ServerId, volume_id: int, volume_size: int, volume_name: Optional[str], wait: bool,
 ):
     """Change the size and the name of a storage volume."""
     server_service = _get_server_serivce(ctx)
@@ -358,10 +362,10 @@ def edit_volume(
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--volume-id', required=True, help='Volume identifier.')
 @click.pass_context
-def get_volume(ctx, server_id: str, volume_id: int):
+def get_volume(ctx, server_id: ServerId, volume_id: int):
     """Get information about a storage volume."""
     server_service = _get_server_serivce(ctx)
     volume_service = server_service.volumes(server_id=server_id)
@@ -373,9 +377,9 @@ def get_volume(ctx, server_id: str, volume_id: int):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def list_volume(ctx, server_id: str):
+def list_volume(ctx, server_id: ServerId):
     """Display all storage volumes of a server."""
     server_service = _get_server_serivce(ctx)
     volume_service = server_service.volumes(server_id=server_id)
@@ -386,10 +390,10 @@ def list_volume(ctx, server_id: str):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--volume-id', required=True, help='Volume identifier.')
 @click.pass_context
-def delete_volume(ctx, server_id: str, volume_id: int, wait: bool):
+def delete_volume(ctx, server_id: ServerId, volume_id: int, wait: bool):
     """Remove a storage volume from a server."""
     server_service = _get_server_serivce(ctx)
     volume_service = server_service.volumes(server_id=server_id)
@@ -402,7 +406,7 @@ def delete_volume(ctx, server_id: str, volume_id: int, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option(
     '--network-id',
     type=str,
@@ -419,7 +423,7 @@ def delete_volume(ctx, server_id: str, volume_id: int, wait: bool):
 )
 @click.pass_context
 def add_nic(
-    ctx, server_id: str, network_id: Optional[NetworkId], bandwidth: Optional[int], wait: bool,
+    ctx, server_id: ServerId, network_id: Optional[NetworkId], bandwidth: Optional[int], wait: bool,
 ):
     """
     Add new network interface to a server.
@@ -442,9 +446,9 @@ def add_nic(
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def list_nic(ctx, server_id: str):
+def list_nic(ctx, server_id: ServerId):
     """Display all network interfaces of a server."""
     server_service = _get_server_serivce(ctx)
     nic_service = server_service.nics(server_id=server_id)
@@ -454,10 +458,10 @@ def list_nic(ctx, server_id: str):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--nic-id', type=int, required=True, help='Network interface identifier.')
 @click.pass_context
-def get_nic(ctx, server_id: str, nic_id: int):
+def get_nic(ctx, server_id: ServerId, nic_id: int):
     """Get information about a network interface."""
     server_service = _get_server_serivce(ctx)
     nic_service = server_service.nics(server_id=server_id)
@@ -470,7 +474,7 @@ def get_nic(ctx, server_id: str, nic_id: int):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--nic-id', type=int, required=True, help='Network interface identifier.')
 @click.option(
     '--bandwidth',
@@ -479,7 +483,7 @@ def get_nic(ctx, server_id: str, nic_id: int):
     help='New public network interface bandwidth in Mbps, must be a multiple of 10 Mbps.',
 )
 @click.pass_context
-def edit_nic(ctx, server_id: str, nic_id: int, bandwidth: int, wait: bool):
+def edit_nic(ctx, server_id: ServerId, nic_id: int, bandwidth: int, wait: bool):
     """Change bandwidth of a network interface."""
     server_service = _get_server_serivce(ctx)
     nic_service = server_service.nics(server_id=server_id)
@@ -492,10 +496,10 @@ def edit_nic(ctx, server_id: str, nic_id: int, bandwidth: int, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--nic-id', type=int, required=True, help='Network interface identifier.')
 @click.pass_context
-def delete_nic(ctx, server_id: str, nic_id: int, wait: bool):
+def delete_nic(ctx, server_id: ServerId, nic_id: int, wait: bool):
     """Remove a network interface from a server."""
     server_service = _get_server_serivce(ctx)
     nic_service = server_service.nics(server_id=server_id)
@@ -506,9 +510,9 @@ def delete_nic(ctx, server_id: str, nic_id: int, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def power_on(ctx, server_id: str, wait: bool):
+def power_on(ctx, server_id: ServerId, wait: bool):
     """Turn a server on."""
     server_service = _get_server_serivce(ctx)
     power_service = server_service.power(server_id=server_id)
@@ -519,7 +523,7 @@ def power_on(ctx, server_id: str, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option(
     '--hard',
     type=bool,
@@ -528,7 +532,7 @@ def power_on(ctx, server_id: str, wait: bool):
     help=_POWER_OFF_HARD_HELP,
 )
 @click.pass_context
-def power_off(ctx, server_id: str, hard: bool, wait: bool):
+def power_off(ctx, server_id: ServerId, hard: bool, wait: bool):
     """Turn a server off."""
     server_service = _get_server_serivce(ctx)
     power_service = server_service.power(server_id=server_id)
@@ -542,9 +546,9 @@ def power_off(ctx, server_id: str, hard: bool, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def shutdown(ctx, server_id: str, wait: bool):
+def shutdown(ctx, server_id: ServerId, wait: bool):
     """Shut a server down through its operating system."""
     power_service = _get_server_serivce(ctx).power(server_id=server_id)
     service_resp = asyncio.run(power_service.shutdown(wait=wait))
@@ -554,7 +558,7 @@ def shutdown(ctx, server_id: str, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option(
     '--hard',
     type=bool,
@@ -563,7 +567,7 @@ def shutdown(ctx, server_id: str, wait: bool):
     help=_REBOOT_HARD_HELP,
 )
 @click.pass_context
-def reboot(ctx, server_id: str, hard: bool, wait: bool):
+def reboot(ctx, server_id: ServerId, hard: bool, wait: bool):
     """Reboot a server."""
     server_service = _get_server_serivce(ctx)
     power_service = server_service.power(server_id=server_id)
@@ -578,9 +582,9 @@ def reboot(ctx, server_id: str, hard: bool, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def reset(ctx, server_id: str, wait: bool):
+def reset(ctx, server_id: ServerId, wait: bool):
     """Reset a server by power, without asking its operating system."""
     power_service = _get_server_serivce(ctx).power(server_id=server_id)
     service_resp = asyncio.run(power_service.reset(wait=wait))
@@ -590,10 +594,10 @@ def reset(ctx, server_id: str, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--name', required=True, help='Name of the snapshot.')
 @click.pass_context
-def create_snapshot(ctx, server_id: str, name: str, wait: bool):
+def create_snapshot(ctx, server_id: ServerId, name: str, wait: bool):
     """Create snapshot of a server."""
     server_service = _get_server_serivce(ctx)
     snapshot_service = server_service.snapshots(server_id=server_id)
@@ -603,9 +607,9 @@ def create_snapshot(ctx, server_id: str, name: str, wait: bool):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
-def list_snapshot(ctx, server_id: str):
+def list_snapshot(ctx, server_id: ServerId):
     """Display all snapshots of a server."""
     server_service = _get_server_serivce(ctx)
     snapshot_service = server_service.snapshots(server_id=server_id)
@@ -615,10 +619,10 @@ def list_snapshot(ctx, server_id: str):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--snapshot-id', type=int, required=True, help='Snapshot identifier.')
 @click.pass_context
-def get_snapshot(ctx, server_id: str, snapshot_id: int):
+def get_snapshot(ctx, server_id: ServerId, snapshot_id: int):
     """Get information about a snapshot of a server."""
     server_service = _get_server_serivce(ctx)
     snapshot_service = server_service.snapshots(server_id=server_id)
@@ -631,10 +635,10 @@ def get_snapshot(ctx, server_id: str, snapshot_id: int):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--snapshot-id', type=int, required=True, help='Snapshot identifier.')
 @click.pass_context
-def rollback_snapshot(ctx, server_id: str, snapshot_id: int, wait: bool):
+def rollback_snapshot(ctx, server_id: ServerId, snapshot_id: int, wait: bool):
     """Rollback a server to a saved snapshot."""
     server_service = _get_server_serivce(ctx)
     snapshot_service = server_service.snapshots(server_id=server_id)
@@ -647,10 +651,10 @@ def rollback_snapshot(ctx, server_id: str, snapshot_id: int, wait: bool):
 @server.command(cls=S2CTLCommand)
 @output_option
 @wait_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--snapshot-id', type=int, required=True, help='Snapshot identifier.')
 @click.pass_context
-def delete_snapshot(ctx, server_id: str, snapshot_id: int, wait: bool):
+def delete_snapshot(ctx, server_id: ServerId, snapshot_id: int, wait: bool):
     """Remove a snapshot of a server."""
     server_service = _get_server_serivce(ctx)
     snapshot_service = server_service.snapshots(server_id=server_id)
@@ -662,10 +666,10 @@ def delete_snapshot(ctx, server_id: str, snapshot_id: int, wait: bool):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--name', required=True, help='Name of tag.')
 @click.pass_context
-def add_tag(ctx, server_id: str, name: str):
+def add_tag(ctx, server_id: ServerId, name: str):
     """Add tag to server."""
     server_service = _get_server_serivce(ctx)
     tag_service = server_service.tags(server_id=server_id)
@@ -675,10 +679,10 @@ def add_tag(ctx, server_id: str, name: str):
 
 @server.command(cls=S2CTLCommand)
 @output_option
-@click.argument(SERVER_ID_ARG, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.option('--name', type=str, required=True, help='Name of tag.')
 @click.pass_context
-def delete_tag(ctx, server_id: str, name: str):
+def delete_tag(ctx, server_id: ServerId, name: str):
     """Remove tag from server."""
     server_service = _get_server_serivce(ctx)
     tag_service = server_service.tags(server_id=server_id)

@@ -156,11 +156,13 @@ Some commands of the previous releases behave differently now:
 
 - `install-autocomplete` writes the line above instead of the completion script it
   used to generate;
-- the commands taking an identifier of an isolated network (`network get`,
-  `network edit`, `network delete`, `network add-tag`, `network delete-tag` and
-  `server add-nic`) reject a malformed identifier themselves — with the expected
-  format and the exit code `2` of a usage error, instead of asking the API and
-  reporting its refusal;
+- the commands taking a composite identifier reject a malformed one themselves —
+  with the expected format and the exit code `2` of a usage error, instead of
+  asking the API and reporting its refusal. That covers the identifier of an
+  isolated network (`network get`, `network edit`, `network delete`,
+  `network add-tag`, `network delete-tag` and `server add-nic`) and the
+  identifier of a vStack server, which every command of the `server` group
+  takes;
 - every deletion the API answers with a task now prints the identifier of that
   task and takes `--wait`: `server delete`, `server delete-volume`,
   `server delete-nic`, `server delete-snapshot`, `network delete`,

@@ -6,6 +6,7 @@ import click
 from ssclient.affinity_group_id import AFFINITY_GROUP_ID_TEMPLATE, AffinityGroupId
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
 from ssclient.network.network_id import NETWORK_ID_TEMPLATE, NetworkId
+from ssclient.server.server_id import SERVER_ID_TEMPLATE, ServerId
 from ssclient.task_id import TaskId, supported_formats_hint
 
 RULES_FILE_HELP = (
@@ -26,6 +27,7 @@ _GATEWAY_ID_HINT = 'gateway id format: {template}'.format(template=GATEWAY_ID_TE
 _GROUP_ID_HINT = 'affinity group id format: {template}'.format(
     template=AFFINITY_GROUP_ID_TEMPLATE,
 )
+_SERVER_ID_HINT = 'server id format: {template}'.format(template=SERVER_ID_TEMPLATE)
 _TASK_ID_HINT = 'supported task id formats: {hint}'.format(hint=supported_formats_hint())
 _RULES_FIELD = 'rules'
 
@@ -50,6 +52,10 @@ def parse_gateway_id(_ctx, _click_param, raw_id: str) -> GatewayId:
 
 def parse_affinity_group_id(_ctx, _click_param, raw_id: str) -> AffinityGroupId:
     return _parsed(AffinityGroupId.try_parse(raw_id), _GROUP_ID_HINT)
+
+
+def parse_server_id(_ctx, _click_param, raw_id: str) -> ServerId:
+    return _parsed(ServerId.try_parse(raw_id), _SERVER_ID_HINT)
 
 
 def parse_task_id(_ctx, _click_param, raw_id: str) -> TaskId:
