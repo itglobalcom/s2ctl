@@ -322,18 +322,25 @@ def add_volume(ctx, server_id: str, volume_name: str, volume_size: int, wait: bo
 @click.option(
     '--volume-size',
     type=SizeType(),
+    required=True,
     help='New size of the volume (e.g. 20480, 20480M or 20G for 20Gb volume). '
     + 'Must be greater than current.',
 )
+@click.option(
+    '--volume-name',
+    help='New name of the volume. Omitted, the name is kept.',
+)
 @click.pass_context
 def edit_volume(
-    ctx, server_id: str, volume_id: int, volume_size: int, wait: bool,
+    ctx, server_id: str, volume_id: int, volume_size: int, volume_name: Optional[str], wait: bool,
 ):
-    """Resize a storage volume."""
+    """Change the size and the name of a storage volume."""
     server_service = _get_server_serivce(ctx)
     volume_service = server_service.volumes(server_id=server_id)
     service_resp = asyncio.run(
-        volume_service.update(volume_id=volume_id, size_mb=volume_size, wait=wait),
+        volume_service.update(
+            volume_id=volume_id, size_mb=volume_size, name=volume_name, wait=wait,
+        ),
     )
     echo(service_resp)
 

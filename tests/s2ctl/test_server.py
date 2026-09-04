@@ -7,12 +7,19 @@ from tests.conftest import FakeRequest
 
 SERVER_ID = 'l1s2'
 
+_USAGE_ERROR_EXIT_CODE = 2
+
 SERVERS_PATH = 'api/v1/servers'
 SERVER_PATH = '{path}/{server_id}'.format(path=SERVERS_PATH, server_id=SERVER_ID)
 PRICE_PATH = '{path}/price'.format(path=SERVERS_PATH)
 
 NIC_ID = 3
 NIC_PATH = '{server_path}/nics/{nic_id}'.format(server_path=SERVER_PATH, nic_id=NIC_ID)
+
+VOLUME_ID = 20210
+VOLUME_PATH = '{server_path}/volumes/{volume_id}'.format(
+    server_path=SERVER_PATH, volume_id=VOLUME_ID,
+)
 
 _PRICE_ARGS = (
     'price',
@@ -99,3 +106,29 @@ def test_price_without_public_networks_sends_null_instead_of_empty_list(cli_http
     # Для publisher'а `null` и `[]` разные: на `null` он считает один публичный интерфейс
     # минимальной ширины локации, на пустой список — конфигурацию вовсе без сети.
     assert cli_http_client.requests[0].payload['networks'] is None
+
+
+def test_edit_volume_sends_both_fields_of_the_contract(cli_http_client):
+    cli_http_client.on('PUT', VOLUME_PATH, {'task_id': 'l1t9'})
+
+    result = _invoke(
+        'edit-volume', SERVER_ID,
+        '--volume-id', str(VOLUME_ID),
+        '--volume-size', '20G',
+        '--volume-name', 'data',
+    )
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.requests == [FakeRequest('PUT', VOLUME_PATH, {
+        'name': 'data',
+        'size_mb': 20480,
+    })]
+
+
+def test_edit_volume_refuses_to_run_without_the_new_size(cli_config):
+    result = _invoke('edit-volume', SERVER_ID, '--volume-id', str(VOLUME_ID))
+
+    # Размер — не-nullable поле операции: без него publisher отвечает 400
+    # `VolumeBadSize`, поэтому команда отказывает до запроса.
+    assert result.exit_code == _USAGE_ERROR_EXIT_CODE
+    assert '--volume-size' in result.output

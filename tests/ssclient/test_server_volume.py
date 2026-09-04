@@ -4,7 +4,7 @@
 """
 from ssclient.server.volume import VolumeService
 from ssclient.task_entities import TaskState
-from tests.conftest import task_response
+from tests.conftest import FakeRequest, task_response
 
 VOLUMES_PATH = 'api/v1/servers/l2s99/volumes'
 VOLUME_PATH = '{path}/20210'.format(path=VOLUMES_PATH)
@@ -51,3 +51,26 @@ async def test_update_with_wait_reads_volume_from_task_resources(fake_http_clien
 
     assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t346', VOLUME_PATH]
     assert volume == VOLUME_ENTITY
+
+
+async def test_update_renames_and_resizes_a_volume_in_one_request(fake_http_client):
+    fake_http_client.on('PUT', VOLUME_PATH, {'task_id': 'l2t347'})
+
+    await VolumeService(fake_http_client, 'l2s99').update(20210, size_mb=51200, name='data')
+
+    # Имя и размер диска publisher меняет одним PUT: `VstackEditVolumeCommand`
+    # несёт оба поля, отдельного маршрута переименования у диска нет.
+    assert fake_http_client.requests == [FakeRequest('PUT', VOLUME_PATH, {
+        'name': 'data',
+        'size_mb': 51200,
+    })]
+
+
+async def test_update_without_name_leaves_the_current_one_to_the_publisher(fake_http_client):
+    fake_http_client.on('PUT', VOLUME_PATH, {'task_id': 'l2t348'})
+
+    await VolumeService(fake_http_client, 'l2s99').update(20210, size_mb=51200)
+
+    # `VstackEditVolumeCommand.Name` необязателен, и на `null` publisher оставляет
+    # диску текущее имя: подставлять его самому не нужно.
+    assert fake_http_client.requests[0].payload == {'name': None, 'size_mb': 51200}

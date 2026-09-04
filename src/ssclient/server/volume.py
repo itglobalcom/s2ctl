@@ -1,4 +1,4 @@
-from typing import ClassVar, List, TypedDict, Union
+from typing import ClassVar, List, Optional, TypedDict, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
@@ -49,12 +49,21 @@ class VolumeService(BaseService):
         return volumes_resp['volumes']
 
     async def update(
-        self, volume_id: int, *, size_mb: int, wait: bool = False,
+        self,
+        volume_id: int,
+        *,
+        size_mb: int,
+        name: Optional[str] = None,
+        wait: bool = False,
     ) -> Union[TaskIDWrap, VolumeEntity]:
         path = self._make_path(str(volume_id))
+        # Размер обязателен: `VstackEditVolumeCommand.SizeMb` — не-nullable `int`
+        # с `[EncodedRange(1, …)]`, и на пропущенном поле publisher отвечает 400.
+        # Имя не передано — publisher оставляет диску текущее.
         task_wrap: TaskIDWrap = await self._http_client.put(
             path=path,
             payload={
+                'name': name,
                 'size_mb': size_mb,
             },
         )

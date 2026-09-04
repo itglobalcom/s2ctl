@@ -161,6 +161,11 @@ Some commands of the previous releases behave differently now:
   `server add-nic`) reject a malformed identifier themselves — with the expected
   format and the exit code `2` of a usage error, instead of asking the API and
   reporting its refusal;
+- `server edit-volume` requires `--volume-size` and accepts `--volume-name`. The
+  size is a non-nullable field of the operation, so a call without it was
+  answered `400 VolumeBadSize` by the API and now stops as a usage error; the
+  name is the second field of the same `PUT`, and left out it keeps the current
+  one — that is how a vStack volume is renamed;
 - an unexpected failure is reported as a message with a non-zero exit code
   wherever it happens, including before the command itself is reached — a
   configuration file that cannot be read used to end in a traceback. Pass
@@ -254,7 +259,7 @@ Commands:
   delete-volume      Remove a storage volume from a server.
   edit               Change only the specified parameters of a server...
   edit-nic           Change bandwidth of a network interface.
-  edit-volume        Resize a storage volume.
+  edit-volume        Change the size and the name of a storage volume.
   get                Get information about a server.
   get-nic            Get information about a network interface.
   get-snapshot       Get information about a snapshot of a server.
