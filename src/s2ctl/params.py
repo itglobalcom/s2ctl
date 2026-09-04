@@ -57,8 +57,14 @@ def parse_task_id(_ctx, _click_param, raw_id: str) -> TaskId:
 
 
 def parse_rules(_ctx, _click_param, rules_file: IO) -> List[Any]:
+    raw_rules = rules_file.read()
+    if not raw_rules.strip():
+        # Набор без правил парная `get-*` печатает пустым выводом, а не `[]`,
+        # поэтому снятый с неё файл пуст: пустой файл и есть пустой набор.
+        return []
+
     try:
-        rules = json.load(rules_file)
+        rules = json.loads(raw_rules)
     except ValueError as exc:
         raise click.BadParameter('file content is not valid JSON') from exc
 

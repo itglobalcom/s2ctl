@@ -29,3 +29,18 @@ def test_rule_set_object_of_the_edge_firewall_is_unwrapped():
 def test_object_without_a_rule_set_is_rejected():
     with pytest.raises(click.BadParameter):
         _parse({'enabled': True})
+
+
+def test_empty_file_is_taken_as_an_empty_rule_set():
+    # Парная `get-*` печатает набор без правил пустым выводом, поэтому файл,
+    # снятый со шлюза без правил, пуст — и round-trip замыкается и на нём.
+    assert parse_rules(None, None, io.StringIO('')) == []
+
+
+def test_file_of_whitespace_is_taken_as_an_empty_rule_set():
+    assert parse_rules(None, None, io.StringIO('\n')) == []
+
+
+def test_file_that_is_not_json_is_rejected():
+    with pytest.raises(click.BadParameter):
+        parse_rules(None, None, io.StringIO('not json'))
