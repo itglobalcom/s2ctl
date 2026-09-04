@@ -376,6 +376,12 @@ Unlike vStack servers, VMware servers have a separate command for every power
 transition: `power-on`, `power-off` (cut the power), `shutdown` (ask the guest
 OS), `reboot` (ask the guest OS) and `reset`.
 
+`vmware server rebuild` does not reinstall a server in place: the contract orders a
+new server from the template and retires the given one, so the command answers with
+a **new** identifier. The old one stays readable in state `deleting` while the
+platform removes the server and answers `object not found` afterwards — a script
+that rebuilds a server has to go on with the identifier the command printed.
+
 The edge gateway of a routed network is managed by the `vmware edge` subgroup —
 its firewall, NAT rules and IPsec VPN tunnels:
 

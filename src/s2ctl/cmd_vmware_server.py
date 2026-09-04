@@ -318,7 +318,13 @@ def copy(ctx, server_id: VmwareServerId, name: str, client_network: Optional[Vmw
 @click.option('--sysprep', 'need_sysprep', is_flag=True, help='Run sysprep for a Windows image.')
 @click.pass_context
 def rebuild(ctx, server_id: VmwareServerId, image: VmwareImageId, need_sysprep: bool, wait: bool):
-    """Recreate a VMware server from an OS template as a new server with a new identifier."""
+    """Recreate a VMware server from an OS template as a new server with a new identifier.
+
+    The operation orders a new server and retires the given one, so the printed resource
+    carries the identifier of the new server, not of the one named in the command. The old
+    identifier stays readable in state "deleting" while the platform removes the server and
+    answers "object not found" afterwards, so a script has to go on with the printed one.
+    """
     service_resp = asyncio.run(_server_service(ctx).rebuild(
         server_id,
         image_id=image,
