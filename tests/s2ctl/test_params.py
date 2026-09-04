@@ -32,8 +32,8 @@ def test_object_without_a_rule_set_is_rejected():
 
 
 def test_empty_file_is_taken_as_an_empty_rule_set():
-    # Парная `get-*` печатает набор без правил пустым выводом, поэтому файл,
-    # снятый со шлюза без правил, пуст — и round-trip замыкается и на нём.
+    # Под `--output table` парная `get-*` печатает набор без правил пустым выводом,
+    # поэтому снятый с неё файл пуст — и round-trip замыкается и на нём.
     assert parse_rules(None, None, io.StringIO('')) == []
 
 

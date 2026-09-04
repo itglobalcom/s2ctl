@@ -826,4 +826,9 @@ Not exercised against the live platform:
 - `server price` of the vStack section: the project is answered 403, the service
   is not available to it;
 - the Windows binary: it was not built, only the Linux one;
+- what was added after that run: `server shutdown` and `server reset`, `--wait`
+  of the seven deletions that return a task, `--volume-name` of
+  `server edit-volume`, and the query filters of `affinity-group list` and
+  `applications`. All of them are covered by tests against the shape of the
+  request of the contract, none by a call to the live platform;
 - operations whose resources the project did not have at the time of the run.
