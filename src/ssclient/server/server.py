@@ -5,8 +5,8 @@ from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.server.nic import NicService
 from ssclient.server.power import ServerPowerService
 from ssclient.server.price import ServerPriceService
-from ssclient.server.snapshot import SnapshotService
 from ssclient.server.server_id import ServerId
+from ssclient.server.snapshot import SnapshotService
 from ssclient.server.tag import TagService
 from ssclient.server.volume import VolumeService
 from ssclient.task_entities import TaskResourceType, task_resource_id
