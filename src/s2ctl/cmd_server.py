@@ -14,6 +14,16 @@ from ssclient.network.network_id import NetworkId
 from ssclient.server.server import ServerService, VolumeCreationData
 
 SERVER_ID_ARG = 'server-id'
+
+_POWER_OFF_HARD_HELP = (
+    'Cut the power instead of asking the operating system. Without the flag the '
+    + 'command does the same as "shutdown"; with it — the only way to the hard '
+    + 'power off of a vStack server, which has no command of its own.'
+)
+_REBOOT_HARD_HELP = (
+    'Reset by power instead of asking the operating system. Deprecated: '
+    + 'use the "reset" command instead.'
+)
 _SERVER_FIELDS_ORDER = (
     'id',
     'name',
@@ -515,7 +525,7 @@ def power_on(ctx, server_id: str, wait: bool):
     type=bool,
     default=False,
     show_default=True,
-    help='If specified shutdown is initiated by hardware otherwise by operation system.',
+    help=_POWER_OFF_HARD_HELP,
 )
 @click.pass_context
 def power_off(ctx, server_id: str, hard: bool, wait: bool):
@@ -533,12 +543,24 @@ def power_off(ctx, server_id: str, hard: bool, wait: bool):
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True)
+@click.pass_context
+def shutdown(ctx, server_id: str, wait: bool):
+    """Shut a server down through its operating system."""
+    power_service = _get_server_serivce(ctx).power(server_id=server_id)
+    service_resp = asyncio.run(power_service.shutdown(wait=wait))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True)
 @click.option(
     '--hard',
     type=bool,
     default=False,
     show_default=True,
-    help='If specified reboot is initiated by hardware otherwise by operation system.',
+    help=_REBOOT_HARD_HELP,
 )
 @click.pass_context
 def reboot(ctx, server_id: str, hard: bool, wait: bool):
@@ -550,6 +572,18 @@ def reboot(ctx, server_id: str, hard: bool, wait: bool):
     else:
         service_resp = asyncio.run(power_service.reboot(wait))
 
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True)
+@click.pass_context
+def reset(ctx, server_id: str, wait: bool):
+    """Reset a server by power, without asking its operating system."""
+    power_service = _get_server_serivce(ctx).power(server_id=server_id)
+    service_resp = asyncio.run(power_service.reset(wait=wait))
     echo(service_resp)
 
 

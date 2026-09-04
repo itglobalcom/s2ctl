@@ -164,3 +164,29 @@ def test_delete_asks_the_publisher_for_the_reference_to_the_task(
     assert result.exit_code == 0, result.output
     assert cli_http_client.paths('DELETE') == [expected_path]
     assert 'l1t9' in result.output
+
+
+# Пять переходов питания — пять маршрутов, и у мягкого выключения и сброса есть
+# своя команда: легаси-флаг `--hard` остаётся вторым путём к тем же двум маршрутам.
+_POWER_COMMANDS = (
+    (('power-on', SERVER_ID), 'on'),
+    (('power-off', SERVER_ID), 'shutdown'),
+    (('power-off', SERVER_ID, '--hard', 'true'), 'off'),
+    (('shutdown', SERVER_ID), 'shutdown'),
+    (('reboot', SERVER_ID), 'reboot'),
+    (('reboot', SERVER_ID, '--hard', 'true'), 'reset'),
+    (('reset', SERVER_ID), 'reset'),
+)
+
+
+@pytest.mark.parametrize('command_args,fragment', _POWER_COMMANDS)
+def test_power_command_hits_its_own_route(cli_http_client, command_args, fragment):
+    expected_path = '{server_path}/power/{fragment}'.format(
+        server_path=SERVER_PATH, fragment=fragment,
+    )
+    cli_http_client.on('POST', expected_path, {'task_id': 'l1t9'})
+
+    result = _invoke(*command_args)
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.requests == [FakeRequest('POST', expected_path, {})]

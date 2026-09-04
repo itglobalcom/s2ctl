@@ -280,8 +280,10 @@ Commands:
   price              Get the monthly price of a server configuration.
   reboot             Reboot a server.
   rename             Change the name of a server.
+  reset              Reset a server by power, without asking its...
   rollback-snapshot  Rollback a server to a saved snapshot.
   set-configuration  Set the whole server configuration: both CPU cores...
+  shutdown           Shut a server down through its operating system.
 ```
 
 Or list of command arguments along with command descirption:
@@ -563,8 +565,11 @@ The mapping is not one-to-one:
 - `server power-off` and `server reboot` cover two operations each, chosen by
   `--hard`: `power/shutdown` and `power/off`, `power/reboot` and `power/reset`.
   These two vStack commands are older than the rule of one command per operation
-  and keep their arguments for compatibility; in the VMware section every power
-  transition has its own command;
+  and keep their arguments for compatibility, so the graceful shutdown and the
+  reset by power are reachable two ways: by `server shutdown` and `server reset`,
+  which is how the VMware section names them, and by the old flag. Prefer the
+  commands — the flag on `reboot` is deprecated, and on `power-off` it stays
+  only because the hard power off has no command of its own;
 - `PUT /api/v1/vmware/networks/{network_id}` changes both the name and the
   bandwidth of a network, so it is split into `vmware network rename` and
   `vmware network set-bandwidth`;
@@ -623,11 +628,11 @@ operation out of scope all fail the tests.
 | `GET /api/v1/servers/{server_id}/nics/{nic_id}` | `s2ctl server get-nic` |
 | `PUT /api/v1/servers/{server_id}/nics/{nic_id}` | `s2ctl server edit-nic` |
 | `DELETE /api/v1/servers/{server_id}/nics/{nic_id}` | `s2ctl server delete-nic` |
-| `POST /api/v1/servers/{server_id}/power/off` | `s2ctl server power-off` |
+| `POST /api/v1/servers/{server_id}/power/off` | `s2ctl server power-off --hard true` |
 | `POST /api/v1/servers/{server_id}/power/on` | `s2ctl server power-on` |
 | `POST /api/v1/servers/{server_id}/power/reboot` | `s2ctl server reboot` |
-| `POST /api/v1/servers/{server_id}/power/reset` | `s2ctl server reboot` |
-| `POST /api/v1/servers/{server_id}/power/shutdown` | `s2ctl server power-off` |
+| `POST /api/v1/servers/{server_id}/power/reset` | `s2ctl server reset`, `s2ctl server reboot --hard true` |
+| `POST /api/v1/servers/{server_id}/power/shutdown` | `s2ctl server shutdown`, `s2ctl server power-off` |
 | `GET /api/v1/servers/{server_id}/snapshots/{snapshot_id}` | `s2ctl server get-snapshot` |
 | `DELETE /api/v1/servers/{server_id}/snapshots/{snapshot_id}` | `s2ctl server delete-snapshot` |
 | `DELETE /api/v1/servers/{server_id}/tags/{tag}` | `s2ctl server delete-tag` |

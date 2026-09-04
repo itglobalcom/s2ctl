@@ -85,8 +85,10 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'price',
     'reboot',
     'rename',
+    'reset',
     'rollback-snapshot',
     'set-configuration',
+    'shutdown',
 })
 
 

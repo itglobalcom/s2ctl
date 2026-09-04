@@ -17,8 +17,10 @@ OPERATIONS_OUT_OF_SCOPE_COUNT = 16
 
 # Соответствие не один-к-одному: одна команда закрывает несколько операций
 # (`task get` — все форматы id задачи, `server power-off` и `server reboot` —
-# по две операции питания), и наоборот — `PUT vmware/networks/{id}` меняет
-# и имя, и полосу, поэтому развёрнут в две команды.
+# по две операции питания, выбирая маршрут флагом `--hard`), и наоборот —
+# `PUT vmware/networks/{id}` меняет и имя, и полосу, поэтому развёрнут в две
+# команды, а мягкое выключение и сброс vStack-сервера достижимы и своей
+# командой (`server shutdown`, `server reset`), и легаси-флагом.
 COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     # 1.2 — задачи
     'GET /api/v1/tasks/{task_id}': ('task get',),
@@ -144,9 +146,9 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'DELETE /api/v1/servers/{server_id}/nics/{nic_id}': ('server delete-nic',),
     'POST /api/v1/servers/{server_id}/power/on': ('server power-on',),
     'POST /api/v1/servers/{server_id}/power/off': ('server power-off',),
-    'POST /api/v1/servers/{server_id}/power/shutdown': ('server power-off',),
+    'POST /api/v1/servers/{server_id}/power/shutdown': ('server power-off', 'server shutdown'),
     'POST /api/v1/servers/{server_id}/power/reboot': ('server reboot',),
-    'POST /api/v1/servers/{server_id}/power/reset': ('server reboot',),
+    'POST /api/v1/servers/{server_id}/power/reset': ('server reboot', 'server reset'),
     'GET /api/v1/servers/{server_id}/volumes': ('server list-volume',),
     'POST /api/v1/servers/{server_id}/volumes': ('server add-volume',),
     'GET /api/v1/servers/{server_id}/volumes/{volume_id}': ('server get-volume',),
