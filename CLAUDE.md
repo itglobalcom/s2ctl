@@ -23,7 +23,8 @@ pyinstaller 6 для бинаря.
 | `src/s2ctl/__init__.py` | реестр состава CLI: группа, не импортированная сюда, в бинарь не попадает |
 | `tests/ssclient/`, `tests/s2ctl/` | тесты клиентского слоя и команд соответственно |
 | `bundle/` | сборка единого бинаря (`build_linux.sh`, `build_win.*`, `bundle.py`) |
-| `docker/` | образы окружения сборки: `Dockerfile.manylinux.py311` (glibc 2.28) и `Dockerfile.win.py311` |
+| `docker/` | образы окружения сборки: `Dockerfile.linux.py311` (glibc 2.28) и `Dockerfile.win.py311` |
+| `.gitlab-ci.yml` | пайплайн проекта: гейты стадии `test`, сборка бинарей на `build` и `prod` |
 
 ## Перед сдачей изменения
 
@@ -31,14 +32,16 @@ pyinstaller 6 для бинаря.
 poetry install
 make test                 # pytest с покрытием src
 poetry run flake8 src     # wemake-python-styleguide, конфиг .flake8
-make pyright              # pyright ./src — тот же гейт есть в шаблоне CI
+make pyright              # pyright ./src — тот же гейт гоняет пайплайн
 make test-tox             # матрица py311, py312, py313
 bash bundle/build_linux.sh
 ```
 
-Пайплайн проекта описан внешним шаблоном `b2c/ci` и со стеком репозитория
-разошёлся — подробности и развилка в `archi.md`, Known legacy deviations.
-Локальный прогон гейтов сейчас единственная проверка.
+Пайплайн лежит в самом репозитории (`.gitlab-ci.yml`, внешних `include` нет)
+и на стадии `test` гоняет те же три гейта — `make test` матрицей по py311,
+py312 и py313, `flake8 src`, `pyright ./src`. Стадия `build` собирает бинарь
+на ветке, `prod` — по тегу `vX.Y.Z`. Windows-часть пайплайна локально
+не воспроизводится: раннера с Windows нет.
 
 ## Конвенции
 
