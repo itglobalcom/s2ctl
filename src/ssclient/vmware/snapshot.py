@@ -21,9 +21,11 @@ class VmwareServerSnapshotService(BaseService):
         super().__init__(http_client, {'server_id': server_id})
 
     async def get(self) -> Optional[VmwareServerSnapshotEntity]:
-        # Сервер без снимка — не ошибка: publisher отвечает 200 и `snapshot: null`.
+        # Сервер без снимка — не ошибка: publisher отвечает 200 и телом без снимка.
+        # Ключ `snapshot` в таком теле не появляется вовсе: null-поля publisher
+        # из ответа выбрасывает (`NullValueHandling.Ignore`), а не отдаёт как null.
         snapshot_resp = await self._http_client.get(self.path)
-        return snapshot_resp['snapshot']
+        return snapshot_resp.get('snapshot')
 
     async def create(
         self, *, name: str, wait: bool = False,

@@ -1,6 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
+from s2ctl.click import FORMATTER_NAMES
 from s2ctl.entrypoint import entry_point
 from tests.conftest import FakeRequest
 from tests.ssclient.vmware.conftest import (
@@ -11,6 +12,7 @@ from tests.ssclient.vmware.conftest import (
     SERVER_PATH,
     SERVERS_PATH,
     SHARED_NICS_PATH,
+    SNAPSHOT_PATH,
     VOLUME_ID,
     VOLUME_PATH,
     VOLUMES_PATH,
@@ -244,6 +246,21 @@ def test_snapshot_commands_take_no_snapshot_id(cli_config, command_name, require
 
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
     assert '--snapshot-id' in result.output
+
+
+@pytest.mark.parametrize('output_format', FORMATTER_NAMES)
+def test_get_snapshot_of_a_server_without_snapshot_prints_nothing(
+    cli_http_client, output_format,
+):
+    # Тело без снимка — фактическая форма ответа живого API: ключа `snapshot` в нём
+    # нет вовсе, null-поля publisher из ответа выбрасывает. Печатать нечего, но это
+    # штатный исход команды, а не отказ.
+    cli_http_client.on('GET', SNAPSHOT_PATH, {})
+
+    result = _invoke('get-snapshot', str(SERVER_ID), '-o', output_format)
+
+    assert result.exit_code == 0, result.output
+    assert not result.output
 
 
 def test_connect_client_network_has_no_shared_flag(cli_config):

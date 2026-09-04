@@ -69,10 +69,16 @@ async def test_each_snapshot_operation_addresses_the_single_snapshot_of_the_serv
     assert operation_resp == expected_result
 
 
-async def test_get_returns_nothing_for_a_server_without_snapshot(fake_http_client):
-    # Сервер без снимка — не ошибка: publisher отвечает 200 и `snapshot: null`
-    # (404 остаётся исходом отсутствующего сервера, и его разбирает http-клиент).
-    fake_http_client.on('GET', SNAPSHOT_PATH, {'snapshot': None})
+@pytest.mark.parametrize(
+    'response', ({}, {'snapshot': None}), ids=('key-omitted', 'explicit-null'),
+)
+async def test_get_returns_nothing_for_a_server_without_snapshot(fake_http_client, response):
+    # Сервер без снимка — не ошибка: publisher отвечает 200 и телом без снимка.
+    # Фактическая форма такого тела — пустой объект: null-поля publisher из ответа
+    # выбрасывает (`NullValueHandling.Ignore`). Форма с явным null проверяется рядом:
+    # от этой настройки publisher'а разбор ответа зависеть не должен.
+    # (404 остаётся исходом отсутствующего сервера, и его разбирает http-клиент.)
+    fake_http_client.on('GET', SNAPSHOT_PATH, response)
 
     snapshot = await _service(fake_http_client).get()
 
