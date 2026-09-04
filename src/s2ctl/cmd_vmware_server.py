@@ -194,7 +194,10 @@ def _order(  # noqa: WPS211
 
 @vmware.group()
 def server():
-    """Manage VMware servers."""
+    """Manage VMware servers.
+
+    Commands take the server id, as printed by "list".
+    """
 
 
 @server.command('list', cls=S2CTLCommand)

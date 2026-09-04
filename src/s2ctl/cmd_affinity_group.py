@@ -8,19 +8,24 @@ from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.params import parse_affinity_group_id
 from ssclient.affinity_group import AffinityGroupService
-from ssclient.affinity_group_id import AffinityGroupId
+from ssclient.affinity_group_id import AFFINITY_GROUP_ID_TEMPLATE, AffinityGroupId
 
 AFFINITY_GROUP_ID_ARG = 'affinity-group-id'
+
+_GROUP_HELP = (
+    'Manage affinity and anti-affinity groups of servers.'
+    + '\n\n'
+    + 'Commands take the group id in the {template} format, as printed by "list".'
+).format(template=AFFINITY_GROUP_ID_TEMPLATE)
 
 
 def _get_affinity_group_service(ctx: Context) -> AffinityGroupService:
     return ctx.obj['affinity_group_service']
 
 
-@entry_point.group('affinity-group')
+@entry_point.group('affinity-group', help=_GROUP_HELP)
 @click.pass_context
 def affinity_group(ctx):
-    """Manage affinity and anti-affinity groups of servers."""
     client = client_factory(ctx)
     ctx.obj['affinity_group_service'] = client.affinity_groups()
 

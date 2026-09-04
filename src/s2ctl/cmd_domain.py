@@ -17,7 +17,11 @@ def _get_domain_serivce(ctx) -> DomainService:
 @entry_point.group()
 @click.pass_context
 def domain(ctx):
-    """Manage dns domains and records."""
+    """Manage dns domains and records.
+
+    Commands address a domain by its own name, as printed by "list" (e.g. "example.com"),
+    and a record inside it by "--record-id" — the plain integer printed by "list-record".
+    """
     client = client_factory(ctx)
     ctx.obj['domain_service'] = client.domains()
 

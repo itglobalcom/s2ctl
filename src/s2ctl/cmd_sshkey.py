@@ -17,7 +17,10 @@ def _get_sshkey_serivce(ctx: Context) -> SshkeyService:
 @entry_point.group()
 @click.pass_context
 def ssh_key(ctx):
-    """SSH keys management."""
+    """SSH keys management.
+
+    Commands take the key id — the plain integer printed by "list".
+    """
     client = client_factory(ctx)
     ctx.obj['sshkeys_service'] = client.sshkeys()
 

@@ -85,7 +85,10 @@ def sort_server_resp(resp: Dict[str, Any]) -> Dict[str, Any]:
 @entry_point.group()
 @click.pass_context
 def server(ctx):
-    """Manage virtual servers inside your project."""
+    """Manage virtual servers inside your project.
+
+    Commands take the server id in the l<location>s<server> format, as printed by "list".
+    """
     client = client_factory(ctx)
     ctx.obj['server_service'] = client.servers()
 

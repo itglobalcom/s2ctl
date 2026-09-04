@@ -8,7 +8,13 @@ from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.params import parse_task_id
 from ssclient.task import TaskService
-from ssclient.task_id import TaskId
+from ssclient.task_id import TaskId, supported_formats_hint
+
+_GET_HELP = (
+    'Get information about a task.'
+    + '\n\n'
+    + 'The prefix of the id says which service created the task: {formats}.'
+).format(formats=supported_formats_hint())
 
 
 def _get_task_serivce(ctx: Context) -> TaskService:
@@ -25,12 +31,11 @@ def task(ctx):
     ctx.obj['tasks_service'] = client.tasks()
 
 
-@task.command(cls=S2CTLCommand)
+@task.command(cls=S2CTLCommand, help=_GET_HELP)
 @output_option
 @click.argument('task_id', required=True, callback=parse_task_id)
 @click.pass_context
 def get(ctx, task_id: TaskId):
-    """Get information about a task."""
     task_service = _get_task_serivce(ctx)
     service_resp = asyncio.run(task_service.get(task_id=task_id))
     echo(service_resp)

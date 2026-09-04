@@ -14,20 +14,25 @@ from s2ctl.params import (
     rules_file_option,
 )
 from ssclient.gateway.gateway import GatewayService
-from ssclient.gateway.gateway_id import GatewayId
+from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
 from ssclient.network.network_id import NetworkId
 
 GATEWAY_ID_ARG = 'gateway-id'
+
+_GROUP_HELP = (
+    'Manage edge gateways connecting isolated networks to the Internet.'
+    + '\n\n'
+    + 'Commands take the gateway id in the {template} format, as printed by "list".'
+).format(template=GATEWAY_ID_TEMPLATE)
 
 
 def _get_gateway_service(ctx: Context) -> GatewayService:
     return ctx.obj['gateway_service']
 
 
-@entry_point.group()
+@entry_point.group(help=_GROUP_HELP)
 @click.pass_context
 def gateway(ctx):
-    """Manage edge gateways connecting isolated networks to the Internet."""
     client = client_factory(ctx)
     ctx.obj['gateway_service'] = client.gateways()
 

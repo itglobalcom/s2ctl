@@ -68,7 +68,10 @@ def _network_id_argument(func):
 @entry_point.group()
 @click.pass_context
 def vmware(ctx):
-    """Manage VMware Cloud resources: catalogs, networks and their edge gateways."""
+    """Manage VMware Cloud resources: catalogs, networks and their edge gateways.
+
+    Ids of VMware resources are plain integers, not the composite ids of the vStack sections.
+    """
     client = client_factory(ctx)
     ctx.obj[_SERVICE_KEY] = client.vmware()
 
@@ -110,7 +113,10 @@ def gpu_models(ctx, location: Optional[VmwareLocationId]):
 
 @vmware.group()
 def network():
-    """Manage VMware networks."""
+    """Manage VMware networks.
+
+    Commands take the network id, as printed by "list".
+    """
 
 
 @network.command('list', cls=S2CTLCommand)
@@ -314,7 +320,11 @@ def connect_servers(
 
 @vmware.group()
 def edge():
-    """Manage the edge gateway of a routed VMware network."""
+    """Manage the edge gateway of a routed VMware network.
+
+    The edge has no id of its own: commands take the id of the network it belongs to,
+    as printed by "vmware network list".
+    """
 
 
 @edge.command('set-bandwidth', cls=S2CTLCommand)
