@@ -218,6 +218,9 @@ Usage: s2ctl server [OPTIONS] COMMAND [ARGS]...
 
   Manage virtual servers inside your project.
 
+  Commands take the server id in the l<location>s<server> format, as printed by
+  "list".
+
 Options:
   -h, --help  Show this message and exit.
 
@@ -260,7 +263,10 @@ Usage: s2ctl server create [OPTIONS]
   Create new virtual server.
 
 Options:
-  -o, --output [yaml|json|table]  [default: yaml]
+  -o, --output [yaml|json|table]  format of the printed result: yaml and json
+                                  are machine-readable, for a script that
+                                  parses the output; table is for reading by a
+                                  human.  [default: yaml]
   --wait                          wait for task to complete.
   --timeout INTEGER RANGE         seconds to wait for the task, 480 by default;
                                   makes sense only together with --wait.  [x>=1]
@@ -316,6 +322,9 @@ their own subgroups.
 Usage: s2ctl vmware [OPTIONS] COMMAND [ARGS]...
 
   Manage VMware Cloud resources: catalogs, networks and their edge gateways.
+
+  Ids of VMware resources are plain integers, not the composite ids of the
+  vStack sections.
 
 Options:
   -h, --help  Show this message and exit.
