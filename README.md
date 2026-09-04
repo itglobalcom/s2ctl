@@ -218,8 +218,8 @@ Usage: s2ctl server [OPTIONS] COMMAND [ARGS]...
 
   Manage virtual servers inside your project.
 
-  Commands take the server id in the l<location>s<server> format, as printed by
-  "list".
+  Commands take the server id in the l<location>s<server> format, as printed
+  by "list".
 
 Options:
   -h, --help  Show this message and exit.
@@ -268,8 +268,9 @@ Options:
                                   parses the output; table is for reading by a
                                   human.  [default: yaml]
   --wait                          wait for task to complete.
-  --timeout INTEGER RANGE         seconds to wait for the task, 480 by default;
-                                  makes sense only together with --wait.  [x>=1]
+  --timeout INTEGER RANGE         seconds to wait for the task, 480 by
+                                  default; makes sense only together with
+                                  --wait.  [x>=1]
   --name TEXT                     Name of new server.  [required]
   --location TEXT                 Where to create a server (see "locations"
                                   command).  [required]
