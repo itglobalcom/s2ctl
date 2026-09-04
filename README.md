@@ -10,7 +10,7 @@
 
 The binary is linked against glibc 2.28, so it runs on RHEL / Rocky / AlmaLinux 8
 and newer, Debian 10 and newer, Ubuntu 18.10 and newer. On an older distribution
-install `s2ctl` from sources (Python 3.10 or newer is required).
+install `s2ctl` from sources (Python 3.11 or newer is required).
 
 1. Download file from Github:
 

@@ -10,9 +10,9 @@ Python-клиент того же контракта `public-api`, что и Go 
 
 ## Стек
 
-Python 3.10+, poetry (lock версии 2.0, группа dev — `[tool.poetry.group.dev.dependencies]`),
+Python 3.11+, poetry (lock версии 2.0, группа dev — `[tool.poetry.group.dev.dependencies]`),
 click 8, aiohttp 3.14, tabulate, PyYAML, keyring + `keyrings.cryptfile`,
-`async-timeout` (пока минимальная версия Python ниже 3.11), pyinstaller 6 для бинаря.
+pyinstaller 6 для бинаря.
 
 ## Структура
 
@@ -23,7 +23,7 @@ click 8, aiohttp 3.14, tabulate, PyYAML, keyring + `keyrings.cryptfile`,
 | `src/s2ctl/__init__.py` | реестр состава CLI: группа, не импортированная сюда, в бинарь не попадает |
 | `tests/ssclient/`, `tests/s2ctl/` | тесты клиентского слоя и команд соответственно |
 | `bundle/` | сборка единого бинаря (`build_linux.sh`, `build_win.*`, `bundle.py`) |
-| `docker/` | образы окружения сборки: `Dockerfile.manylinux.py310` (glibc 2.28) и `Dockerfile.win.py310` |
+| `docker/` | образы окружения сборки: `Dockerfile.manylinux.py311` (glibc 2.28) и `Dockerfile.win.py311` |
 
 ## Перед сдачей изменения
 
@@ -32,7 +32,7 @@ poetry install
 make test                 # pytest с покрытием src
 poetry run flake8 src     # wemake-python-styleguide, конфиг .flake8
 make pyright              # pyright ./src — тот же гейт есть в шаблоне CI
-make test-tox             # матрица py310, py312
+make test-tox             # матрица py311, py312, py313
 bash bundle/build_linux.sh
 ```
 
