@@ -358,7 +358,7 @@ def without_api_key(cli_config, monkeypatch):
 
 @pytest.fixture
 def stub_api(cli_config, monkeypatch, tmp_path):
-    """Каждая группа строит сервис фабрикой клиента — подменяется она во всех модулях команд."""
+    """Сервис команда берёт фабрикой клиента — подменяется она во всех модулях команд."""
     for module_name, module in tuple(sys.modules.items()):
         if module_name.startswith('s2ctl.cmd_') and hasattr(module, 'client_factory'):
             monkeypatch.setattr(module, 'client_factory', lambda _ctx: SSClient(_AnyApi()))
