@@ -8,7 +8,7 @@ test-tox:
 
 .PHONY: test
 test:
-	poetry run pytest --cov=src --color=yes tests
+	poetry run pytest --cov=src --color=yes $(PYTEST_ARGS) tests
 
 .PHONY: pyright
 pyright:

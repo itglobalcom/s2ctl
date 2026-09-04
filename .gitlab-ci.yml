@@ -1,4 +1,157 @@
-include:
-  - project: b2c/ci
-    file: s2ctl/pipeline.yml
-    ref: v1.0.0
+# Пайплайн s2ctl.
+#
+# Живёт в самом репозитории: общий шаблон организации `b2c-devops/ci-template`
+# несёт только .NET-стек, а прежний `b2c/ci` архивирован — реестр его образов
+# вместе с ним. Стадии и артефакты повторяют прежний шаблон:
+# test (гейты) → build (бинари на ветках) → prod (бинари по тегу релиза).
+#
+# Гейты стадии test — те же команды, что и локальные гейты репозитория
+# (`archi.md`, Quality gates): make test, flake8 src, pyright ./src.
+
+stages:
+  - test
+  - build
+  - prod
+
+default:
+  tags:
+    - ds1
+    - docker
+    - linux
+
+variables:
+  POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/poetry"
+  # Нижняя граница поддержки из pyproject (`python = "^3.11"`) и цель pyright
+  # (`[tool.pyright] pythonVersion`): на ней гоняются линтеры и сборка бинаря.
+  # Матрица job'а test переопределяет версию своими значениями.
+  PYTHON_VERSION: "3.11"
+  # poetry 1.8 читает lock-version 2.0 репозитория; та же версия в docker/Dockerfile.*
+  POETRY_VERSION: "1.8.*"
+  # Окружение сборки Linux-бинаря — то же, что в docker/Dockerfile.linux.py311:
+  # glibc базы (2.28) задаёт нижнюю границу совместимости бинаря, а python3.11
+  # этой базы собран с --enable-shared, без чего PyInstaller не работает.
+  LINUX_BUILD_IMAGE: almalinux:8
+
+# Инструменты гейтов — dev-зависимости самого проекта: версии объявлены
+# в pyproject.toml и в пайплайне не дублируются.
+.poetry_env:
+  image: python:$PYTHON_VERSION
+  before_script:
+    - pip install "poetry==$POETRY_VERSION"
+    - poetry install -n --no-ansi
+  cache:
+    # Кэшируется только загруженное poetry, но не окружения: они лежат
+    # в $POETRY_CACHE_DIR/virtualenvs и версией Python не взаимозаменяемы.
+    key:
+      files:
+        - poetry.lock
+      prefix: "py$PYTHON_VERSION"
+    paths:
+      - .cache/poetry/cache
+
+flake8:
+  extends: .poetry_env
+  stage: test
+  script:
+    - poetry run flake8 src
+
+pyright:
+  extends: .poetry_env
+  stage: test
+  script:
+    - make pyright
+
+test:
+  extends: .poetry_env
+  stage: test
+  parallel:
+    matrix:
+      # Тот же набор версий, что гоняет локальный tox: интерпретатор в образе
+      # один, поэтому версии разведены по job'ам, а не по окружениям tox.
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13"]
+  script:
+    - mkdir -p tests/reports
+    - make test PYTEST_ARGS="--junitxml=tests/reports/s2ctl_test_report_py$PYTHON_VERSION.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: tests/reports/s2ctl_test_report_py*.xml
+    expire_in: 1 day
+
+.build_nix:
+  image: $LINUX_BUILD_IMAGE
+  before_script:
+    - dnf -y install python3.11 python3.11-pip
+    - python3.11 -m pip install --no-cache-dir "poetry==$POETRY_VERSION"
+  script:
+    - bash bundle/build_linux.sh
+  after_script:
+    - mv bundle/dist/s2ctl s2ctl
+  artifacts:
+    paths:
+      - s2ctl
+    expire_in: 1 hour
+
+.build_win:
+  tags:
+    - windows
+    - build
+    - am2
+  before_script:
+    - md bundle/dist
+  script:
+    - docker build -t s2ctl-build . -f docker/Dockerfile.win.py311
+    - docker run -v $CI_PROJECT_DIR\bundle\dist:c:\code\bundle\dist --name s2ctl-build-container s2ctl-build
+    - docker container prune -f
+  after_script:
+    - Move-Item -Path bundle/dist/s2ctl.exe -Destination ./s2ctl.exe
+  artifacts:
+    paths:
+      - s2ctl.exe
+    expire_in: 1 hour
+
+build_nix:
+  extends: .build_nix
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "master"
+      when: on_success
+    - when: never
+
+build_windows:
+  extends: .build_win
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "master"
+      when: on_success
+    - when: never
+
+prod_build_nix:
+  extends: .build_nix
+  stage: prod
+  after_script:
+    - mv bundle/dist/s2ctl s2ctl
+    - tar -zcvf s2ctl-$CI_COMMIT_TAG-linux.tar.gz s2ctl
+  artifacts:
+    paths:
+      - s2ctl-$CI_COMMIT_TAG-linux.tar.gz
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
+      when: on_success
+    - when: never
+
+prod_build_windows:
+  extends: .build_win
+  stage: prod
+  after_script:
+    - Move-Item -Path bundle/dist/s2ctl.exe -Destination ./s2ctl.exe
+    - Compress-Archive s2ctl.exe s2ctl-$CI_COMMIT_TAG-windows.zip
+  artifacts:
+    paths:
+      - s2ctl-$CI_COMMIT_TAG-windows.zip
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
+      when: on_success
+    - when: never
