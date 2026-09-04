@@ -2,8 +2,6 @@ import asyncio
 from typing import Any, ClassVar, Dict, Mapping, Optional, TypedDict
 from urllib.parse import urlencode, urljoin
 
-from async_timeout import timeout
-
 from ssclient import errors
 from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskEntity, TaskState, completed_task
@@ -73,7 +71,7 @@ class BaseService(object):
 
         wait_secs = task_timeout_secs() if timeout_secs is None else timeout_secs
         try:
-            async with timeout(wait_secs):
+            async with asyncio.timeout(wait_secs):
                 return await self._poll_task(task_id)
         except asyncio.TimeoutError as exc:
             raise errors.TaskWaitTimeoutError(task_id.value, wait_secs) from exc
