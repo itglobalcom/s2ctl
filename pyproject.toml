@@ -22,7 +22,6 @@ tox = "^4.61"
 flake8 = "^7.3"
 wemake-python-styleguide = "^1.8"
 pytest = "^8.4"
-pytest-xdist = "^3.8"
 pytest-aiohttp = "^1.1"
 pytest-asyncio = "^1.4"
 pytest-cov = "^7.1"
@@ -52,8 +51,3 @@ asyncio_default_fixture_loop_scope = "function"
 include = ["src"]
 pythonVersion = "3.11"
 typeCheckingMode = "standard"
-
-[tool.isort]
-multi_line_output = 3
-line_length = 120
-include_trailing_comma = true
