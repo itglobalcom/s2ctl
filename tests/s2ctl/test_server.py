@@ -152,8 +152,7 @@ _VOLUME_COMMANDS_BY_ID = (
 def test_volume_id_of_the_contract_is_a_number(cli_http_client, command_args):
     result = _invoke(*command_args)
 
-    # Id тома у publisher'а числовой: нечисловое значение отсекается до запроса,
-    # как и у соседних `--nic-id` и `--snapshot-id`.
+    # Id тома у publisher'а числовой: нечисловое значение отсекается до запроса.
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
     assert '--volume-id' in result.output
     assert cli_http_client.requests == []
