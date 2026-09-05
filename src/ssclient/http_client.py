@@ -66,7 +66,9 @@ class HttpClient(object):  # noqa: WPS214
         try:
             resp.raise_for_status()
         except ClientResponseError as exc:
-            raise errors.HttpClientResponseError(exc.status, _error_message(msg, exc.message))
+            raise errors.HttpClientResponseError(
+                exc.status, _error_message(msg, exc.message),
+            ) from exc
         return msg
 
     async def _read_body(self, resp: ClientResponse) -> Any:
