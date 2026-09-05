@@ -7,12 +7,7 @@ from click.core import Context
 from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
-from s2ctl.params import (
-    parse_gateway_id,
-    parse_network_id,
-    parse_network_ids,
-    rules_file_option,
-)
+from s2ctl.params import parse_gateway_id, parse_network_id, parse_network_ids, rules_file_option
 from ssclient.gateway.gateway import GatewayService
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
 from ssclient.network.network_id import NetworkId

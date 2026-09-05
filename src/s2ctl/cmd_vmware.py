@@ -9,13 +9,7 @@ from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.params import rules_file_option
 from ssclient.vmware.edge import VmwareEdgeService
-from ssclient.vmware.ids import (
-    VmwareLocationId,
-    VmwareNatRuleId,
-    VmwareNetworkId,
-    VmwareServerId,
-    VmwareVpnTunnelId,
-)
+from ssclient.vmware.ids import VmwareLocationId, VmwareNatRuleId, VmwareNetworkId, VmwareServerId, VmwareVpnTunnelId
 from ssclient.vmware.network import VmwareNetworkService, VmwareServerNic
 from ssclient.vmware.vmware import VmwareService
 

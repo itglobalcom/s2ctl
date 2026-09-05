@@ -1,12 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, TypedDict
 
-from ssclient.vmware.ids import (
-    VmwareGpuModelId,
-    VmwareImageId,
-    VmwareLocationId,
-    VmwareNetworkId,
-)
+from ssclient.vmware.ids import VmwareGpuModelId, VmwareImageId, VmwareLocationId, VmwareNetworkId
 
 
 class VmwareServerGpuEntity(TypedDict):

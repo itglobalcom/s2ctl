@@ -1,9 +1,5 @@
 from ssclient.ports import HttpClientPort
-from ssclient.vmware.metainfo import (
-    VmwareGpuModelsService,
-    VmwareImagesService,
-    VmwareLocationsService,
-)
+from ssclient.vmware.metainfo import VmwareGpuModelsService, VmwareImagesService, VmwareLocationsService
 from ssclient.vmware.network import VmwareNetworkService
 from ssclient.vmware.server import VmwareServerService
 

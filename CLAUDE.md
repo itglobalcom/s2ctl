@@ -31,7 +31,8 @@ pyinstaller 6 для бинаря.
 ```sh
 poetry install
 make test                 # pytest с покрытием src
-poetry run flake8 src     # wemake-python-styleguide, конфиг .flake8
+poetry run flake8 src     # wemake-python-styleguide + порядок импортов (isort),
+                          # конфиг .flake8 и [tool.isort] в pyproject.toml
 make pyright              # pyright ./src — тот же гейт гоняет пайплайн
 make test-tox             # матрица py311, py312, py313
 bash bundle/build_linux.sh

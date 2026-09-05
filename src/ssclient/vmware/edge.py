@@ -2,13 +2,13 @@ from typing import ClassVar, List, Optional, Sequence, Union
 
 from ssclient.base import BaseService, TaskIDWrap
 from ssclient.ports import HttpClientPort
-from ssclient.vmware.ids import VmwareNatRuleId, VmwareNetworkId, VmwareVpnTunnelId
 from ssclient.vmware.edge_entities import (
     VmwareEdgeFirewallEntity,
     VmwareEdgeFirewallRuleEntity,
     VmwareEdgeNatRuleEntity,
     VmwareEdgeVpnEntity,
 )
+from ssclient.vmware.ids import VmwareNatRuleId, VmwareNetworkId, VmwareVpnTunnelId
 
 EDGE_PATH = 'api/v1/vmware/networks/{network_id}/edge'
 
