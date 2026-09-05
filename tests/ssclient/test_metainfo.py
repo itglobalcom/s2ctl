@@ -50,6 +50,15 @@ async def test_images_catalog_is_unwrapped(fake_http_client):
     assert images == [IMAGE_ENTITY]
 
 
+async def test_images_catalog_is_filtered_by_the_location_of_the_contract(fake_http_client):
+    expected_path = '{path}?location_id=ds1'.format(path=IMAGES_PATH)
+    fake_http_client.on('GET', expected_path, {'images': [IMAGE_ENTITY]})
+
+    await ImagesService(fake_http_client).get(location_id='ds1')
+
+    assert fake_http_client.paths('GET') == [expected_path]
+
+
 APPLICATION_ENTITY = {
     'id': 'docker',
     'location_id': 'am2',

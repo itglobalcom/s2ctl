@@ -41,8 +41,9 @@ class LocationsService(BaseService):
 class ImagesService(BaseService):
     _path = 'api/v1/images'
 
-    async def get(self) -> List[ImageEntity]:
-        images_resp = await self._http_client.get(self.path)
+    async def get(self, location_id: Optional[str] = None) -> List[ImageEntity]:
+        path = with_filters(self.path, {'location_id': location_id})
+        images_resp = await self._http_client.get(path)
         return images_resp['images']
 
 

@@ -66,6 +66,16 @@ def test_catalog_keeps_the_value_types_of_the_contract_in_yaml(
     assert yaml.safe_load(result.output) == {entity['id']: entity}
 
 
+def test_images_passes_its_location_to_the_query_of_the_contract(cli_http_client):
+    expected_path = 'api/v1/images?location_id=ds1'
+    cli_http_client.on('GET', expected_path, {'images': []})
+
+    result = CliRunner().invoke(entry_point, ('-k', APIKEY, 'images', '--location', 'ds1'))
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('GET') == [expected_path]
+
+
 # Каталог приложений фильтруется тремя параметрами запроса, и у каждого своя опция:
 # имена опций и имена параметров контракта расходятся (`--application` кладётся
 # в `application_id`).

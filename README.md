@@ -438,9 +438,9 @@ anti-affinity group spreads them over different hosts:
 
 Reading commands that the API filters server-side take the filter as an option
 instead of leaving it to `grep`: `--location` of `affinity-group list`,
-`gateway list`, `vmware network list`, `vmware server list`, `vmware images` and
-`applications`, `--type` of `vmware network list`, `--gpu` of `vmware images`,
-and `--application` with `--image` of `applications`:
+`gateway list`, `images`, `vmware network list`, `vmware server list`,
+`vmware images` and `applications`, `--type` of `vmware network list`, `--gpu`
+of `vmware images`, and `--application` with `--image` of `applications`:
 
 ```
 >s2ctl applications --location am2 --image ubuntu-22-04

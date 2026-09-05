@@ -25,8 +25,9 @@ def locations(ctx):
 
 @entry_point.command(cls=S2CTLCommand)
 @output_option
+@click.option('--location', help='Show only images of the location (see "locations" command).')
 @click.pass_context
-def images(ctx):
+def images(ctx, location: Optional[str]):
     """List of OS images which you can use for your server.
 
     An image belongs to a single location ("location_id") and is offered
@@ -34,7 +35,7 @@ def images(ctx):
     """
     client = client_factory(ctx)
 
-    echo(asyncio.run(client.images().get()))
+    echo(asyncio.run(client.images().get(location_id=location)))
 
 
 @entry_point.command(cls=S2CTLCommand)
