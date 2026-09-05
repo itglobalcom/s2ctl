@@ -508,10 +508,14 @@ CLI has nowhere to send them. In the other three pairs the set comes back as it
 was printed.
 
 In a rule of `gateway replace-firewall` and `gateway replace-nat` every field
-has to be written out. A field left out is not "keep it as it is": the API reads
-a missing `action`, `direction`, `protocol` or `type` as the first value of its
-dictionary — `Allow`, `In`, `ICMP` and `SNAT` — and accepts such a rule without
-a word. The file goes to the API as it is, `s2ctl` fills nothing in.
+has to be written out. A field left out is not "keep it as it is": the API
+refuses the whole set with `400`, naming the missing `action`, `direction`,
+`protocol` or `type` and the index of the rule it belongs to, so nothing of the
+set is applied until the rule is complete. On a platform older than that check a
+missing field is read as the first value of its dictionary — `Allow`, `In`,
+`ICMP` and `SNAT` — and the rule is applied without a word, which is the reason
+to write every field out rather than to rely on the refusal. The file goes to
+the API as it is, `s2ctl` fills nothing in.
 
 A set with no rules in it is printed as a document of the chosen format: `[]`
 with `--output json`, `{}` with `--output yaml`, and empty output with

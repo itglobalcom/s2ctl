@@ -17,9 +17,11 @@ RULES_FILE_HELP = (
     + 'has no per-rule "enabled" and "description", so these two fields of a rule printed '
     + 'by "get-firewall" are dropped. '
     + 'For "gateway replace-firewall" and "gateway replace-nat" a field left out of a rule '
-    + 'does not mean "keep it as it is": the API reads a missing "action", "direction", '
-    + '"protocol" or "type" as the first value of its dictionary — "Allow", "In", "ICMP" '
-    + 'and "SNAT" — so every field of every rule belongs in the file.'
+    + 'does not mean "keep it as it is": the API refuses the whole set with "400", naming '
+    + 'the missing "action", "direction", "protocol" or "type" and the index of the rule '
+    + 'it belongs to, so every field of every rule belongs in the file. A platform older '
+    + 'than that check reads a missing field as the first value of its dictionary — '
+    + '"Allow", "In", "ICMP" and "SNAT" — and applies such a rule without a word.'
 )
 
 _NETWORK_ID_HINT = 'network id format: {template}'.format(template=NETWORK_ID_TEMPLATE)
