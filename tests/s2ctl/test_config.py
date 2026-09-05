@@ -11,7 +11,7 @@ from s2ctl.config import KEYRING_FILE_NAME, ConfigManager, generate_password
 from s2ctl.entrypoint import entry_point
 from tests.s2ctl.conftest import APIKEY
 
-_STAND_CONFIG = 'host: https://api.ss4test.com\n'
+_STAND_CONFIG = 'host: https://api.stand.example\n'
 # Ключ, сгенерированный прошлым релизом: тот же алфавит, только источник случайности
 # у него был `random`.
 _KEY_OF_A_PREVIOUS_RELEASE = "'$]z2GZ&*.'"

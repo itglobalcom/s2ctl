@@ -7,7 +7,7 @@ import click
 import pytest
 from click.testing import CliRunner
 
-from s2ctl import entrypoint, params
+from s2ctl import context, entrypoint, params
 from s2ctl.entrypoint import entry_point
 from ssclient.client import SSClient
 from tests.s2ctl.conftest import APIKEY
@@ -359,9 +359,35 @@ def without_api_key(cli_config, monkeypatch):
     monkeypatch.setattr(entrypoint, 'ContextManager', _EmptyContextManager)
 
 
+class _MemoryKeyring(object):
+    """Keyring контекстов без argon2.
+
+    Ключ шифрования настоящего `CryptFileKeyring` разворачивается argon2 в конструкторе
+    `ContextManager`, а тот создаётся на каждый вызов CLI: обход всего дерева команд
+    стоил бы полутора минут на одном тесте. Ключи проектов при этом остаются
+    настоящими — хранятся в памяти на один вызов.
+    """
+
+    file_path = ''
+    keyring_key = ''
+
+    def __init__(self) -> None:
+        self._passwords = {}
+
+    def set_password(self, service: str, name: str, password: str) -> None:
+        self._passwords[(service, name)] = password
+
+    def get_password(self, service: str, name: str):
+        return self._passwords.get((service, name))
+
+    def delete_password(self, service: str, name: str) -> None:
+        self._passwords.pop((service, name), None)
+
+
 @pytest.fixture
 def stub_api(cli_config, monkeypatch, tmp_path):
     """Сервис команда берёт фабрикой клиента — подменяется она во всех модулях команд."""
+    monkeypatch.setattr(context, 'CryptFileKeyring', _MemoryKeyring)
     for module_name, module in tuple(sys.modules.items()):
         if module_name.startswith('s2ctl.cmd_') and hasattr(module, 'client_factory'):
             monkeypatch.setattr(module, 'client_factory', lambda _ctx: SSClient(_AnyApi()))
