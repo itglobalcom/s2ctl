@@ -4,7 +4,7 @@ from ssclient.gateway.firewall import FirewallService
 from ssclient.gateway.nat import NatService
 from ssclient.task_entities import TaskState
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.gateway.conftest import GATEWAY_PATH
+from tests.ssclient.gateway.coordinates import GATEWAY_PATH
 
 FIREWALL_RULE = {
     'action': 'allow',

@@ -7,7 +7,7 @@ from ssclient.vmware.edge import (
     VmwareEdgeVpnService,
 )
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import EDGE_PATH, NETWORK_ID
+from tests.ssclient.vmware.coordinates import EDGE_PATH, NETWORK_ID
 
 BANDWIDTH_PATH = '{edge}/bandwidth'.format(edge=EDGE_PATH)
 FIREWALL_PATH = '{edge}/firewall'.format(edge=EDGE_PATH)

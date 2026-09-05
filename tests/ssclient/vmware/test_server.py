@@ -4,7 +4,7 @@ from ssclient.task_entities import TaskState
 from ssclient.vmware.server import VmwareServerService
 from ssclient.vmware.server_entities import VmwareServerGpu, VmwareServerOrder
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import SERVER_ID, SERVER_PATH, SERVERS_PATH
+from tests.ssclient.vmware.coordinates import SERVER_ID, SERVER_PATH, SERVERS_PATH
 
 NEW_SERVER_ID = 777
 NEW_SERVER_PATH = '{path}/{server_id}'.format(path=SERVERS_PATH, server_id=NEW_SERVER_ID)

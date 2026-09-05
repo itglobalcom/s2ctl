@@ -6,7 +6,7 @@ from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE
 from ssclient.network.network_id import NETWORK_ID_TEMPLATE
 from tests.conftest import FakeRequest
 from tests.s2ctl.conftest import APIKEY
-from tests.ssclient.gateway.conftest import GATEWAY_PATH, GATEWAYS_PATH, RAW_GATEWAY_ID
+from tests.ssclient.gateway.coordinates import GATEWAY_PATH, GATEWAYS_PATH, RAW_GATEWAY_ID
 
 _USAGE_ERROR_EXIT_CODE = 2
 

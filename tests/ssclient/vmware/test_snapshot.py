@@ -3,7 +3,7 @@ import pytest
 from ssclient.task_entities import TaskState
 from ssclient.vmware.snapshot import VmwareServerSnapshotService
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import SERVER_ID, SNAPSHOT_PATH
+from tests.ssclient.vmware.coordinates import SERVER_ID, SNAPSHOT_PATH
 
 RESTORE_PATH = '{path}/restore'.format(path=SNAPSHOT_PATH)
 

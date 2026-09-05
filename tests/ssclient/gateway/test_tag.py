@@ -2,7 +2,7 @@ import pytest
 
 from ssclient.gateway.tag import TagService
 from tests.conftest import FakeRequest
-from tests.ssclient.gateway.conftest import GATEWAY_PATH
+from tests.ssclient.gateway.coordinates import GATEWAY_PATH
 
 TAGS_PATH = '{gateway_path}/tags'.format(gateway_path=GATEWAY_PATH)
 

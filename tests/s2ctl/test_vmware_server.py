@@ -5,7 +5,7 @@ from s2ctl.click import FORMATTER_NAMES
 from s2ctl.entrypoint import entry_point
 from tests.conftest import FakeRequest
 from tests.s2ctl.conftest import APIKEY
-from tests.ssclient.vmware.conftest import (
+from tests.ssclient.vmware.coordinates import (
     NIC_ID,
     NIC_PATH,
     NICS_PATH,

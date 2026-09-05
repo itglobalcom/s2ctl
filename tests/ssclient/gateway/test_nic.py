@@ -2,7 +2,7 @@ from ssclient.gateway.nic import GatewayNicService
 from ssclient.network.network_id import NetworkId
 from ssclient.task_entities import TaskState
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.gateway.conftest import GATEWAY_PATH
+from tests.ssclient.gateway.coordinates import GATEWAY_PATH
 
 NICS_PATH = '{gateway_path}/nics'.format(gateway_path=GATEWAY_PATH)
 NIC_PATH = '{nics_path}/7'.format(nics_path=NICS_PATH)

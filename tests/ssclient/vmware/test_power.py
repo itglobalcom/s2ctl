@@ -3,7 +3,7 @@ import pytest
 from ssclient.task_entities import TaskState
 from ssclient.vmware.power import VmwareServerPowerService
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import SERVER_ID, SERVER_PATH
+from tests.ssclient.vmware.coordinates import SERVER_ID, SERVER_PATH
 
 POWER_PATH = '{server_path}/power'.format(server_path=SERVER_PATH)
 

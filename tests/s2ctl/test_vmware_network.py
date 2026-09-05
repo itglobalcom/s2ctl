@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from s2ctl.entrypoint import entry_point
 from tests.conftest import FakeRequest
 from tests.s2ctl.conftest import APIKEY
-from tests.ssclient.vmware.conftest import (
+from tests.ssclient.vmware.coordinates import (
     EDIT_NETWORK_REQUIRED_FIELDS,
     EDGE_PATH,
     NETWORK_ENTITY,

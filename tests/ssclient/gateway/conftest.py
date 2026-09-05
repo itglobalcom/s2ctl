@@ -1,10 +1,7 @@
 import pytest
 
 from ssclient.gateway.gateway_id import GatewayId
-
-RAW_GATEWAY_ID = 'l1e2'
-GATEWAYS_PATH = 'api/v1/gateways'
-GATEWAY_PATH = '{path}/{gateway_id}'.format(path=GATEWAYS_PATH, gateway_id=RAW_GATEWAY_ID)
+from tests.ssclient.gateway.coordinates import RAW_GATEWAY_ID
 
 
 @pytest.fixture

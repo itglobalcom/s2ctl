@@ -3,7 +3,7 @@ import pytest
 from ssclient.gateway.power import GatewayPowerService
 from ssclient.task_entities import TaskState
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.gateway.conftest import GATEWAY_PATH
+from tests.ssclient.gateway.coordinates import GATEWAY_PATH
 
 # Три состояния питания — три отдельных маршрута publisher'а. Склейки вида
 # «stop с флагом hard» в контракте нет: флаг режима превратил бы три юзкейса в один.

@@ -3,7 +3,7 @@ import pytest
 from ssclient.task_entities import TaskState
 from ssclient.vmware.network import VmwareNetworkService, VmwareServerNic
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import (
+from tests.ssclient.vmware.coordinates import (
     EDIT_NETWORK_REQUIRED_FIELDS,
     NETWORK_ENTITY,
     NETWORK_ID,

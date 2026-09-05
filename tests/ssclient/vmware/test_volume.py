@@ -3,7 +3,7 @@ import pytest
 from ssclient.task_entities import TaskState
 from ssclient.vmware.volume import VmwareServerVolumeService
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import (
+from tests.ssclient.vmware.coordinates import (
     SERVER_ID,
     VOLUME_ID,
     VOLUME_PATH,

@@ -3,7 +3,7 @@ import pytest
 from ssclient.task_entities import TaskState
 from ssclient.vmware.nic import VmwareServerNicService
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.vmware.conftest import (
+from tests.ssclient.vmware.coordinates import (
     NIC_ID,
     NIC_PATH,
     NICS_PATH,

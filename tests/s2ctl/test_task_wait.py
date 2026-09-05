@@ -11,7 +11,7 @@ from s2ctl.entrypoint import entry_point
 from ssclient.task_entities import TaskState
 from tests.conftest import task_response
 from tests.s2ctl.conftest import APIKEY
-from tests.ssclient.vmware.conftest import SERVER_ID
+from tests.ssclient.vmware.coordinates import SERVER_ID
 
 _USAGE_ERROR_EXIT_CODE = 2
 

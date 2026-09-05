@@ -4,7 +4,7 @@ from ssclient.gateway.gateway import GatewayService
 from ssclient.network.network_id import NetworkId
 from ssclient.task_entities import TaskState
 from tests.conftest import FakeRequest, task_response
-from tests.ssclient.gateway.conftest import GATEWAY_PATH, GATEWAYS_PATH
+from tests.ssclient.gateway.coordinates import GATEWAY_PATH, GATEWAYS_PATH
 
 BANDWIDTH_PATH = '{gateway_path}/bandwidth'.format(gateway_path=GATEWAY_PATH)
 
