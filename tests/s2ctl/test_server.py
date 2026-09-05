@@ -141,6 +141,24 @@ def test_edit_volume_refuses_to_run_without_the_new_size(cli_config):
     assert '--volume-size' in result.output
 
 
+_VOLUME_COMMANDS_BY_ID = (
+    ('get-volume', SERVER_ID, '--volume-id', 'boot'),
+    ('delete-volume', SERVER_ID, '--volume-id', 'boot'),
+    ('edit-volume', SERVER_ID, '--volume-id', 'boot', '--volume-size', '20G'),
+)
+
+
+@pytest.mark.parametrize('command_args', _VOLUME_COMMANDS_BY_ID)
+def test_volume_id_of_the_contract_is_a_number(cli_http_client, command_args):
+    result = _invoke(*command_args)
+
+    # Id тома у publisher'а числовой: нечисловое значение отсекается до запроса,
+    # как и у соседних `--nic-id` и `--snapshot-id`.
+    assert result.exit_code == _USAGE_ERROR_EXIT_CODE
+    assert '--volume-id' in result.output
+    assert cli_http_client.requests == []
+
+
 # Каждое удаление раздела спрашивает у publisher'а ссылку на задачу: без
 # `return_task=true` ответ пуст, id задачи скрипту недоступен и `--wait` нечего ждать.
 _DELETE_COMMANDS = (

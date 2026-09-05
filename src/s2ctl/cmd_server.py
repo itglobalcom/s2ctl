@@ -328,7 +328,7 @@ def add_volume(ctx, server_id: ServerId, volume_name: str, volume_size: int, wai
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
-@click.option('--volume-id', required=True, help='Volume identifier.')
+@click.option('--volume-id', type=int, required=True, help='Volume identifier.')
 @click.option(
     '--volume-size',
     type=SizeType(),
@@ -358,7 +358,7 @@ def edit_volume(
 @server.command(cls=S2CTLCommand)
 @output_option
 @click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
-@click.option('--volume-id', required=True, help='Volume identifier.')
+@click.option('--volume-id', type=int, required=True, help='Volume identifier.')
 @click.pass_context
 def get_volume(ctx, server_id: ServerId, volume_id: int):
     """Get information about a storage volume."""
@@ -386,7 +386,7 @@ def list_volume(ctx, server_id: ServerId):
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
-@click.option('--volume-id', required=True, help='Volume identifier.')
+@click.option('--volume-id', type=int, required=True, help='Volume identifier.')
 @click.pass_context
 def delete_volume(ctx, server_id: ServerId, volume_id: int, wait: bool):
     """Remove a storage volume from a server."""
