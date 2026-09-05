@@ -491,11 +491,14 @@ outside the contract before the first rule can be written.
 pass it in `S2CTL_VPN_SHARED_KEY` instead of `--shared-key`, so that the secret
 stays out of `ps`, of the shell history and of the log of a CI job.
 
-`vmware edge set-bandwidth` does not change the bandwidth: the platform accepts
-the task and completes it successfully, while the network keeps its previous
-value — the operation applies nothing on the platform side. Use
-`vmware network set-bandwidth`, which writes the bandwidth of the same network
-through `PUT /api/v1/vmware/networks/{network_id}`.
+`vmware edge set-bandwidth` writes the uplink bandwidth of the edge and checks the
+value against the bandwidth policy of the location — the same rule
+`vmware network set-bandwidth` is checked by, because the uplink of the edge and
+the bandwidth of the routed network behind it are one value. On a platform older
+than that check the task completes successfully while the network keeps its
+previous value, and the bandwidth has to be written with
+`vmware network set-bandwidth`, which sends it through
+`PUT /api/v1/vmware/networks/{network_id}`.
 
 ### Rule sets
 

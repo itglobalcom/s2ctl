@@ -326,9 +326,10 @@ def edge():
 def edge_set_bandwidth(ctx, network_id: VmwareNetworkId, bandwidth: int, wait: bool):
     """Set the uplink bandwidth of the edge gateway of a network.
 
-    The platform accepts the task and completes it successfully, but the bandwidth
-    of the network keeps its previous value: the operation applies nothing.
-    Use "s2ctl vmware network set-bandwidth" to change the bandwidth for real.
+    The value is checked against the bandwidth policy of the location. On a platform
+    older than that check the task completes successfully while the bandwidth of the
+    network keeps its previous value — there "s2ctl vmware network set-bandwidth"
+    writes the same value instead.
     """
     service_resp = asyncio.run(_edge_service(ctx, network_id).set_bandwidth(
         bandwidth_mbps=bandwidth, wait=wait,
@@ -424,8 +425,8 @@ def get_nat(ctx, network_id: VmwareNetworkId):
 @click.option(
     '--enabled/--disabled',
     default=None,
-    help='Whether the rule carries traffic. Omitted, the rule ends up enabled — on a change '
-    + 'of an existing rule as well, so pass "--disabled" to keep a disabled rule off.',
+    help='Whether the rule carries traffic. Omitted, an existing rule keeps the state it has '
+    + 'and a new rule is created enabled.',
 )
 @click.pass_context
 def upsert_nat_rule(
@@ -515,16 +516,15 @@ def get_vpn(ctx, network_id: VmwareNetworkId):
 @click.option(
     '--enabled/--disabled',
     default=None,
-    help='Whether the tunnel carries traffic. Omitted, the tunnel ends up enabled — on a '
-    + 'change of an existing tunnel as well, so pass "--disabled" to keep a disabled '
-    + 'tunnel off.',
+    help='Whether the tunnel carries traffic. Omitted, an existing tunnel keeps the state '
+    + 'it has and a new tunnel is created enabled.',
 )
 @click.option(
     '--pfs/--no-pfs',
     'perfect_forward_secrecy',
     default=None,
-    help='Whether Perfect Forward Secrecy is on. Omitted, it ends up on — on a change of an '
-    + 'existing tunnel as well, so pass "--no-pfs" to keep it off.',
+    help='Whether Perfect Forward Secrecy is on. Omitted, an existing tunnel keeps the state '
+    + 'it has and a new tunnel is created with it on.',
 )
 @click.pass_context
 def upsert_vpn_tunnel(
