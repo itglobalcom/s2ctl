@@ -2,16 +2,20 @@ from typing import Optional
 
 import pytest
 
-from ssclient import errors, task_wait
+from ssclient import base, errors, task_wait
 from ssclient.base import TASKS_PATH, BaseService
 from ssclient.task import TaskService
 from ssclient.task_entities import TaskState
 from ssclient.task_id import TaskId
 from tests.conftest import task_response
 
-# Опрос идёт раз в секунду, поэтому ожидание в тестах ограничено парой опросов:
-# сломанное условие терминального статуса упирается в таймаут, а не висит минуту.
+# Первый опрос идёт сразу, второй — через секунду, поэтому ожидание в тестах
+# ограничено парой опросов: сломанное условие терминального статуса упирается
+# в таймаут, а не висит минуту.
 WAIT_TIMEOUT_SECS = 2
+
+# Интервалы опроса до предела: растут от первой секунды удвоением.
+GROWING_POLL_INTERVALS = [1, 2, 4, 8, 15, 15]
 
 # Замер на проде: пересборка VMware-сервера шла 296 с — самая долгая из замеренных
 # операций контракта (заказ сервера — 213 с, копия — 134 с). Дефолт ожидания обязан
@@ -65,6 +69,27 @@ async def test_wait_polls_until_task_is_completed(fake_http_client):
     assert task['is_completed'] == TaskState.completed.value
     assert task['resources'] == [{'type': 'server', 'id': 'l2s99'}]
     assert len(fake_http_client.paths('GET')) == 2
+
+
+async def test_poll_interval_grows_up_to_the_limit(monkeypatch, fake_http_client):
+    slept = []
+
+    async def record_sleep(secs):
+        slept.append(secs)
+
+    monkeypatch.setattr(base.asyncio, 'sleep', record_sleep)
+    in_progress = task_response('l2t345', TaskState.in_progress)
+    fake_http_client.on(
+        'GET', _task_path('l2t345'),
+        *[in_progress] * len(GROWING_POLL_INTERVALS),
+        task_response('l2t345', TaskState.completed),
+    )
+
+    await _TaskWaiter(fake_http_client).wait('l2t345', timeout_secs=None)
+
+    # Опрос раз в секунду стоил бы сотен полных TLS-рукопожатий на одном `--wait`:
+    # сессия у клиента живёт один запрос, а задача платформы идёт минуты.
+    assert slept == GROWING_POLL_INTERVALS
 
 
 @pytest.mark.parametrize('state', [TaskState.failed, TaskState.canceled])

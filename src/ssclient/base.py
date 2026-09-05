@@ -12,7 +12,13 @@ URLFields = Dict[str, Any]
 Payload = Dict[str, Any]
 
 TASKS_PATH = 'api/v1/tasks'
+# Каждый опрос задачи — отдельный запрос с полным TLS-рукопожатием: сессия живёт
+# один вызов `make_request`. Короткая операция платформы укладывается в первые
+# секунды, длинная идёт минуты, поэтому интервал растёт от секунды до предела —
+# иначе одно `--wait` стоит платформе сотен рукопожатий.
 _POLL_INTERVAL_SECS = 1
+_POLL_INTERVAL_FACTOR = 2
+_POLL_INTERVAL_LIMIT_SECS = 15
 _FAILURE_STATES = frozenset((TaskState.failed, TaskState.canceled))
 _RETURN_TASK_QUERY = 'return_task=true'
 
@@ -77,6 +83,7 @@ class BaseService(object):
             raise errors.TaskWaitTimeoutError(task_id.value, wait_secs) from exc
 
     async def _poll_task(self, task_id: TaskId) -> TaskEntity:
+        interval_secs = _POLL_INTERVAL_SECS
         while True:
             task_resp = await self._http_client.get(task_path(task_id))
             task_data = task_resp['task']
@@ -85,4 +92,5 @@ class BaseService(object):
                 return task_data
             elif state in _FAILURE_STATES:
                 raise errors.TaskFailedError(task_id.value, state.value)
-            await asyncio.sleep(_POLL_INTERVAL_SECS)
+            await asyncio.sleep(interval_secs)
+            interval_secs = min(interval_secs * _POLL_INTERVAL_FACTOR, _POLL_INTERVAL_LIMIT_SECS)
