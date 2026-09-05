@@ -19,6 +19,7 @@ NETWORK_ENTITY = {
     'address': '10.0.0.0',
     'mask': 24,
     'gateway': '10.0.0.1',
+    'edge_external_ip': '198.51.100.10',
     'bandwidth_mbps': 100,
     'is_dhcp': False,
     'shared': False,

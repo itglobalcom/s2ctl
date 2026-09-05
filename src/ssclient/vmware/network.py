@@ -16,6 +16,8 @@ class VmwareNetworkEntity(TypedDict):
     address: str
     mask: int
     gateway: str
+    # Внешний адрес шлюза сети: у сети без edge поле в теле ответа отсутствует.
+    edge_external_ip: str
     bandwidth_mbps: int
     is_dhcp: bool
     shared: bool
