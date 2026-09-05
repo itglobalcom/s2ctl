@@ -6,6 +6,11 @@ from tabulate import tabulate
 
 INNER_FIELDS_ORDER = ('id', 'name')
 
+# Скаляры JSON: их yaml печатает своим типом, как и json, — число числом,
+# булево булевым, `null` пустотой. Всё остальное yaml пометил бы тегом
+# `!!python/...`, поэтому такое значение печатается строкой.
+_JSON_SCALAR_TYPES = (str, int, float, bool)
+
 SorterType = Callable[[Any], Any]
 AnyDict = Dict[Any, Any]
 
@@ -67,7 +72,7 @@ class YAMLFormatter(object):
 
     def _prepare_obj(self, raw_obj: Any) -> Any:
         if not isinstance(raw_obj, (dict, List)):
-            return str(raw_obj)
+            return self._prepare_scalar(raw_obj)
 
         if isinstance(raw_obj, list):
             if self._is_list_has_only_dicts(raw_obj):
@@ -82,6 +87,11 @@ class YAMLFormatter(object):
             return prepared_dict
 
         return raw_obj
+
+    def _prepare_scalar(self, raw_scalar: Any) -> Any:
+        if raw_scalar is None or isinstance(raw_scalar, _JSON_SCALAR_TYPES):
+            return raw_scalar
+        return str(raw_scalar)
 
     def _is_list_has_only_dicts(self, raw_obj: List[Any]) -> bool:
         for list_item in raw_obj:

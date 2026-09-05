@@ -1,6 +1,7 @@
 import json
 
 import pytest
+import yaml
 from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
@@ -48,6 +49,21 @@ def test_catalog_prints_the_entity_of_the_contract_whole(
     assert result.exit_code == 0, result.output
     assert cli_http_client.paths('GET') == [path]
     assert json.loads(result.output) == [entity]
+
+
+# Машинный формат отдаёт значение типом контракта: число числом, булево булевым.
+# Иначе `yaml.safe_load` вернёт строку там, где контракт даёт число, и разбор
+# yaml-вывода разойдётся с разбором того же ответа в json.
+@pytest.mark.parametrize('command,path,envelope,entity', _CATALOG_CASES)
+def test_catalog_keeps_the_value_types_of_the_contract_in_yaml(
+    cli_http_client, command, path, envelope, entity,
+):
+    cli_http_client.on('GET', path, {envelope: [entity]})
+
+    result = CliRunner().invoke(entry_point, ('-k', APIKEY, command, '--output=yaml'))
+
+    assert result.exit_code == 0, result.output
+    assert yaml.safe_load(result.output) == {entity['id']: entity}
 
 
 # Каталог приложений фильтруется тремя параметрами запроса, и у каждого своя опция:

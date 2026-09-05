@@ -211,7 +211,13 @@ Some commands of the previous releases behave differently now:
   output of the previous releases, so `gateway get-firewall`, `gateway get-nat`,
   `server list` and any other reading command give a script something to parse
   when the project has none of the resources yet. With `--output table` an empty
-  collection still prints nothing: that is what an empty table looks like.
+  collection still prints nothing: that is what an empty table looks like;
+- `--output yaml` keeps the type every value has in the response: a number stays
+  a number, a boolean stays a boolean and a missing value is printed as `null`.
+  The previous releases quoted every scalar into a string
+  (`system_volume_min: '25600'`) while leaving the numbers inside a list as they
+  were, so the output disagreed with itself and with `--output json`. Both
+  machine formats now parse into the same types.
 
 ## Usage
 
