@@ -69,7 +69,7 @@ APPLICATION_ENTITY = {
 async def test_applications_catalog_is_unwrapped(fake_http_client):
     fake_http_client.on('GET', APPLICATIONS_PATH, {'applications': [APPLICATION_ENTITY]})
 
-    applications = await ApplicationsService(fake_http_client).get()
+    applications = await ApplicationsService(fake_http_client).list()
 
     assert fake_http_client.paths('GET') == [APPLICATIONS_PATH]
     assert applications == [APPLICATION_ENTITY]
@@ -92,6 +92,6 @@ async def test_applications_catalog_is_filtered_by_the_query_of_the_contract(
 ):
     fake_http_client.on('GET', expected_path, {'applications': [APPLICATION_ENTITY]})
 
-    await ApplicationsService(fake_http_client).get(**filters)
+    await ApplicationsService(fake_http_client).list(**filters)
 
     assert fake_http_client.paths('GET') == [expected_path]

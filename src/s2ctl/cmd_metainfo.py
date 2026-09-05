@@ -49,7 +49,7 @@ def applications(
 ):
     """List of applications which you can install on your server."""
     client = client_factory(ctx)
-    applications_resp = asyncio.run(client.applications().get(
+    applications_resp = asyncio.run(client.applications().list(
         location_id=location, application_id=application, image_id=image,
     ))
 

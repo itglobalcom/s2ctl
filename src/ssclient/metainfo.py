@@ -50,7 +50,7 @@ class ImagesService(BaseService):
 class ApplicationsService(BaseService):
     _path = 'api/v1/applications'
 
-    async def get(
+    async def list(
         self,
         location_id: Optional[str] = None,
         application_id: Optional[str] = None,
