@@ -22,15 +22,6 @@ _GROUP_HELP = (
     + 'Commands take the server id in the {template} format, as printed by "list".'
 ).format(template=SERVER_ID_TEMPLATE)
 
-_POWER_OFF_HARD_HELP = (
-    'Cut the power instead of asking the operating system. Without the flag the '
-    + 'command does the same as "shutdown"; with it — the only way to the hard '
-    + 'power off of a vStack server, which has no command of its own.'
-)
-_REBOOT_HARD_HELP = (
-    'Reset by power instead of asking the operating system. Deprecated: '
-    + 'use the "reset" command instead.'
-)
 _SERVER_FIELDS_ORDER = (
     'id',
     'name',
@@ -513,10 +504,9 @@ def delete_nic(ctx, server_id: ServerId, nic_id: int, wait: bool):
 @click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
 @click.pass_context
 def power_on(ctx, server_id: ServerId, wait: bool):
-    """Turn a server on."""
-    server_service = _get_server_serivce(ctx)
-    power_service = server_service.power(server_id=server_id)
-    service_resp = asyncio.run(power_service.power_on(wait))
+    """Power a server on."""
+    power_service = _get_server_serivce(ctx).power(server_id=server_id)
+    service_resp = asyncio.run(power_service.power_on(wait=wait))
     echo(service_resp)
 
 
@@ -524,22 +514,11 @@ def power_on(ctx, server_id: ServerId, wait: bool):
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
-@click.option(
-    '--hard',
-    type=bool,
-    default=False,
-    show_default=True,
-    help=_POWER_OFF_HARD_HELP,
-)
 @click.pass_context
-def power_off(ctx, server_id: ServerId, hard: bool, wait: bool):
-    """Turn a server off."""
-    server_service = _get_server_serivce(ctx)
-    power_service = server_service.power(server_id=server_id)
-    if hard:
-        service_resp = asyncio.run(power_service.power_off(wait=wait))
-    else:
-        service_resp = asyncio.run(power_service.shutdown(wait=wait))
+def power_off(ctx, server_id: ServerId, wait: bool):
+    """Cut the power of a server without shutting its operating system down."""
+    power_service = _get_server_serivce(ctx).power(server_id=server_id)
+    service_resp = asyncio.run(power_service.power_off(wait=wait))
     echo(service_resp)
 
 
@@ -559,23 +538,11 @@ def shutdown(ctx, server_id: ServerId, wait: bool):
 @output_option
 @wait_option
 @click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
-@click.option(
-    '--hard',
-    type=bool,
-    default=False,
-    show_default=True,
-    help=_REBOOT_HARD_HELP,
-)
 @click.pass_context
-def reboot(ctx, server_id: ServerId, hard: bool, wait: bool):
-    """Reboot a server."""
-    server_service = _get_server_serivce(ctx)
-    power_service = server_service.power(server_id=server_id)
-    if hard:
-        service_resp = asyncio.run(power_service.reset(wait))
-    else:
-        service_resp = asyncio.run(power_service.reboot(wait))
-
+def reboot(ctx, server_id: ServerId, wait: bool):
+    """Reboot a server through its operating system."""
+    power_service = _get_server_serivce(ctx).power(server_id=server_id)
+    service_resp = asyncio.run(power_service.reboot(wait=wait))
     echo(service_resp)
 
 

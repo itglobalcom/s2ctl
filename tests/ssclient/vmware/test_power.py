@@ -7,9 +7,7 @@ from tests.ssclient.vmware.conftest import SERVER_ID, SERVER_PATH
 
 POWER_PATH = '{server_path}/power'.format(server_path=SERVER_PATH)
 
-# Пять переходов питания — пять маршрутов publisher'а, по методу на каждый. Склейки
-# «off с флагом hard», как у легаси-раздела vStack, здесь нет и быть не должно:
-# флаг режима превратил бы два юзкейса (обесточить и погасить гостевую ОС) в один.
+# Пять переходов питания — пять маршрутов publisher'а, по методу на каждый.
 POWER_OPERATIONS = (
     ('power_on', '{path}/on'.format(path=POWER_PATH)),
     ('power_off', '{path}/off'.format(path=POWER_PATH)),

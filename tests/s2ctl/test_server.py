@@ -168,30 +168,37 @@ def test_delete_asks_the_publisher_for_the_reference_to_the_task(
     assert 'l1t9' in result.output
 
 
-# Пять переходов питания — пять маршрутов, и у мягкого выключения и сброса есть
-# своя команда: легаси-флаг `--hard` остаётся вторым путём к тем же двум маршрутам.
+# Пять переходов питания — пять команд и пять маршрутов.
 _POWER_COMMANDS = (
-    (('power-on', SERVER_ID), 'on'),
-    (('power-off', SERVER_ID), 'shutdown'),
-    (('power-off', SERVER_ID, '--hard', 'true'), 'off'),
-    (('shutdown', SERVER_ID), 'shutdown'),
-    (('reboot', SERVER_ID), 'reboot'),
-    (('reboot', SERVER_ID, '--hard', 'true'), 'reset'),
-    (('reset', SERVER_ID), 'reset'),
+    ('power-on', 'on'),
+    ('power-off', 'off'),
+    ('shutdown', 'shutdown'),
+    ('reboot', 'reboot'),
+    ('reset', 'reset'),
 )
 
 
-@pytest.mark.parametrize('command_args,fragment', _POWER_COMMANDS)
-def test_power_command_hits_its_own_route(cli_http_client, command_args, fragment):
+@pytest.mark.parametrize('command_name,fragment', _POWER_COMMANDS)
+def test_power_command_hits_its_own_route(cli_http_client, command_name, fragment):
     expected_path = '{server_path}/power/{fragment}'.format(
         server_path=SERVER_PATH, fragment=fragment,
     )
     cli_http_client.on('POST', expected_path, {'task_id': 'l1t9'})
 
-    result = _invoke(*command_args)
+    result = _invoke(command_name, SERVER_ID)
 
     assert result.exit_code == 0, result.output
     assert cli_http_client.requests == [FakeRequest('POST', expected_path, {})]
+
+
+@pytest.mark.parametrize('command_name', ('power-off', 'reboot'))
+def test_power_commands_have_no_hard_flag(cli_config, command_name):
+    result = _invoke(command_name, SERVER_ID, '--hard')
+
+    # Обесточить и погасить операционную систему — разные команды, а не одна с признаком
+    # жёсткости: маршрут выбирается именем команды.
+    assert result.exit_code == _USAGE_ERROR_EXIT_CODE
+    assert '--hard' in result.output
 
 
 def test_malformed_server_id_is_reported_as_bad_parameter(cli_config):

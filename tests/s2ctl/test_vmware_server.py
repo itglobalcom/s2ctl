@@ -37,8 +37,7 @@ _USAGE_ERROR_EXIT_CODE = 2
 
 POWER_PATH = '{server_path}/power'.format(server_path=SERVER_PATH)
 
-# Каждый переход питания — своя команда: пять команд бьют в пять маршрутов. Легаси-раздел
-# vStack склеивает пары флагом `--hard`, здесь такой склейки нет и заводить её нельзя.
+# Каждый переход питания — своя команда: пять команд бьют в пять маршрутов.
 POWER_COMMANDS = (
     ('power-on', '{path}/on'.format(path=POWER_PATH)),
     ('power-off', '{path}/off'.format(path=POWER_PATH)),
