@@ -68,9 +68,10 @@ class BaseVmwareNetworkService(BaseService):
     async def set_bandwidth(
         self, network_id: VmwareNetworkId, *, bandwidth_mbps: int, wait: bool = False,
     ) -> Union[TaskIDWrap, VmwareNetworkEntity, None]:
-        # Имя требует доменная команда правки publisher'а, а не модель запроса: без него
-        # приходит 400, и своё текущее publisher не подставляет — чтобы сменить одну
-        # полосу, актуальное имя сети приходится донести самому.
+        # Имя обязательно доменной команде правки publisher'а, а не модели запроса.
+        # Своё текущее имя publisher подставляет только начиная с версии, где правка
+        # собирается из request-модели; на платформе постарше запрос с одной полосой
+        # отвечает 400, поэтому актуальное имя команда доносит сама.
         network = await self.get(network_id)
         return await self._edit(
             network_id,

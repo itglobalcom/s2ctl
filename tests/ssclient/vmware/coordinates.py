@@ -6,9 +6,11 @@ NETWORKS_PATH = 'api/v1/vmware/networks'
 NETWORK_PATH = '{path}/{network_id}'.format(path=NETWORKS_PATH, network_id=NETWORK_ID)
 EDGE_PATH = '{network_path}/edge'.format(network_path=NETWORK_PATH)
 
-# Поля, без которых `PUT /api/v1/vmware/networks/{network_id}` отвечает 400: обязательным
-# имя делает доменная команда правки publisher'а, а не модель запроса — та не помечает
-# обязательным ничего. Своё текущее имя publisher в запрос не подставляет.
+# Поля, которые тело правки `PUT /api/v1/vmware/networks/{network_id}` несёт всегда:
+# обязательным имя делает доменная команда правки publisher'а, а не модель запроса —
+# та не помечает обязательным ничего. Своё текущее имя publisher подставляет только
+# начиная с версии, где правка собирается из request-модели; на платформе постарше
+# запрос без имени отвечает 400.
 EDIT_NETWORK_REQUIRED_FIELDS = frozenset(('name',))
 
 NETWORK_ENTITY = {
