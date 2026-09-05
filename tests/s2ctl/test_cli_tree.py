@@ -157,8 +157,8 @@ EXPECTED_VMWARE_EDGE_COMMANDS = frozenset({
     'get-firewall',
     'get-nat',
     'get-vpn',
+    'replace-firewall',
     'set-bandwidth',
-    'update-firewall',
     'upsert-nat-rule',
     'upsert-vpn-tunnel',
 })

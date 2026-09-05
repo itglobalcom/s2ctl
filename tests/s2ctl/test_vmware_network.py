@@ -255,13 +255,13 @@ def test_edge_command_options_reach_the_fields_of_the_contract(
 
 
 @pytest.mark.parametrize('state_args,expected_state', _FIREWALL_STATE_CASES)
-def test_update_firewall_leaves_the_state_untouched_unless_it_is_given(
+def test_replace_firewall_leaves_the_state_untouched_unless_it_is_given(
     cli_http_client, rules_file, state_args, expected_state,
 ):
     cli_http_client.on('PUT', EDGE_FIREWALL_PATH, {'task_id': 'vmw15'})
 
     result = _invoke(
-        'edge', 'update-firewall', str(NETWORK_ID),
+        'edge', 'replace-firewall', str(NETWORK_ID),
         '--rules-file', rules_file([FIREWALL_RULE]), *state_args,
     )
 

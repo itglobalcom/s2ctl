@@ -367,7 +367,7 @@ def get_firewall(ctx, network_id: VmwareNetworkId):
     echo(service_resp)
 
 
-@edge.command('update-firewall', cls=S2CTLCommand)
+@edge.command('replace-firewall', cls=S2CTLCommand)
 @output_option
 @wait_option
 @rules_file_option
@@ -385,7 +385,7 @@ def get_firewall(ctx, network_id: VmwareNetworkId):
     + 'and the API rejects the request without it.',
 )
 @click.pass_context
-def update_firewall(
+def replace_firewall(
     ctx,
     network_id: VmwareNetworkId,
     rules: Sequence[Any],
@@ -393,7 +393,11 @@ def update_firewall(
     default_action: Optional[str],
     wait: bool,
 ):
-    """Replace the whole firewall rule set of the edge gateway of a network."""
+    """Replace the whole firewall of the edge gateway of a network.
+
+    The operation carries the state of the firewall itself as well as its rules:
+    "--enabled/--disabled" and "--default-action" go in the same request.
+    """
     service_resp = asyncio.run(_edge_service(ctx, network_id).firewall().update(
         rules=rules,
         enabled=enabled,

@@ -517,7 +517,7 @@ same holds for the firewall of a VMware server and of a VMware edge gateway.
 state of the firewall itself; `--rules-file` accepts that object as it is and
 takes the rules out of it.
 
-The round trip is lossy in one pair of the four: `vmware edge update-firewall`.
+The round trip is lossy in one pair of the four: `vmware edge replace-firewall`.
 The request of the API declares neither `enabled` nor `description` of a rule,
 while `get-firewall` prints both, so these two fields of the file are dropped —
 CLI has nowhere to send them. In the other three pairs the set comes back as it
@@ -768,7 +768,7 @@ tests.
 | `POST /api/v1/vmware/networks/{network_id}/servers` | `s2ctl vmware network connect-servers` |
 | `PUT /api/v1/vmware/networks/{network_id}/edge/bandwidth` | `s2ctl vmware edge set-bandwidth` |
 | `GET /api/v1/vmware/networks/{network_id}/edge/firewall` | `s2ctl vmware edge get-firewall` |
-| `PUT /api/v1/vmware/networks/{network_id}/edge/firewall` | `s2ctl vmware edge update-firewall` |
+| `PUT /api/v1/vmware/networks/{network_id}/edge/firewall` | `s2ctl vmware edge replace-firewall` |
 | `GET /api/v1/vmware/networks/{network_id}/edge/nat` | `s2ctl vmware edge get-nat` |
 | `POST /api/v1/vmware/networks/{network_id}/edge/nat` | `s2ctl vmware edge upsert-nat-rule` |
 | `GET /api/v1/vmware/networks/{network_id}/edge/vpn` | `s2ctl vmware edge get-vpn` |

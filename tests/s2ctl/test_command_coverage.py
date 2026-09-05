@@ -70,7 +70,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'POST /api/v1/vmware/networks/{network_id}/servers': ('vmware network connect-servers',),
     'PUT /api/v1/vmware/networks/{network_id}/edge/bandwidth': ('vmware edge set-bandwidth',),
     'GET /api/v1/vmware/networks/{network_id}/edge/firewall': ('vmware edge get-firewall',),
-    'PUT /api/v1/vmware/networks/{network_id}/edge/firewall': ('vmware edge update-firewall',),
+    'PUT /api/v1/vmware/networks/{network_id}/edge/firewall': ('vmware edge replace-firewall',),
     'GET /api/v1/vmware/networks/{network_id}/edge/nat': ('vmware edge get-nat',),
     'POST /api/v1/vmware/networks/{network_id}/edge/nat': ('vmware edge upsert-nat-rule',),
     'DELETE /api/v1/vmware/networks/{network_id}/edge/nat/{rule_id}': ('vmware edge delete-nat-rule',),
