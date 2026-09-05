@@ -1,20 +1,11 @@
-from typing import ClassVar, List, Optional, TypedDict, Union
+from typing import ClassVar, List, Optional, Union
 
 from ssclient.base import BaseService, Payload, TaskIDWrap
 from ssclient.ports import HttpClientPort
 from ssclient.vmware.ids import VmwareNetworkId, VmwareNicId, VmwareServerId
+from ssclient.vmware.server_entities import VmwareServerNicEntity
 
 _SHARED_FRAGMENT = 'shared'
-
-
-class VmwareServerNicEntity(TypedDict):
-    id: int
-    number: int
-    is_primary: bool
-    network_id: int
-    ip: str
-    mac: str
-    bandwidth_mbps: int
 
 
 class VmwareServerNicService(BaseService):
