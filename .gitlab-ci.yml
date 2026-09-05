@@ -6,7 +6,7 @@
 # test (гейты) → build (бинарь на ветках) → prod (бинарь по тегу релиза).
 #
 # Гейты стадии test — те же команды, что и локальные гейты репозитория
-# (`archi.md`, Quality gates): make test, flake8 src, pyright ./src.
+# (`archi.md`, Quality gates): make test, make lint, make pyright.
 
 stages:
   - test

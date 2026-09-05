@@ -31,7 +31,7 @@ pytest-cov = "^7.1"
 pyright = "^1.1"
 # верхняя граница Python — от самого pyinstaller (<3.16), без маркера lock не решается
 pyinstaller = {version = "^6.22", python = ">=3.11,<3.16"}
-# flake8-isort: порядок импортов проверяет гейт `flake8 src`; в wemake-python-styleguide 1.x
+# flake8-isort: порядок импортов проверяет гейт `make lint`; в wemake-python-styleguide 1.x
 # плагин больше не входит, конфигурация самого isort — секция `[tool.isort]` ниже
 flake8-isort = "^6.1"
 
@@ -58,7 +58,7 @@ pythonVersion = "3.11"
 typeCheckingMode = "standard"
 
 [tool.isort]
-# Читается плагином flake8-isort в гейте `flake8 src`; длина строки — та же, что в `.flake8`.
+# Читается плагином flake8-isort в гейте `make lint`; длина строки — та же, что в `.flake8`.
 line_length = 120
 multi_line_output = 3
 include_trailing_comma = true
