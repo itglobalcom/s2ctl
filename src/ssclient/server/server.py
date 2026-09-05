@@ -10,7 +10,6 @@ from ssclient.server.snapshot import SnapshotService
 from ssclient.server.tag import TagService
 from ssclient.server.volume import VolumeService
 from ssclient.task_entities import TaskResourceType, task_resource_id
-from ssclient.task_id import TaskId
 
 
 class ServerVolumeEntity(TypedDict):
@@ -85,7 +84,7 @@ class BaseServerService(BaseService):  # noqa: WPS214
             },
         )
         if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            task = await self._wait_task_completion(self._task_id(task_wrap))
             return await self._read(task_resource_id(task, TaskResourceType.server))
         return task_wrap
 
@@ -118,7 +117,7 @@ class BaseServerService(BaseService):  # noqa: WPS214
             payload=payload,
         )
         if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            task = await self._wait_task_completion(self._task_id(task_wrap))
             return await self._read(task_resource_id(task, TaskResourceType.server))
         return task_wrap
 

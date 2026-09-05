@@ -4,7 +4,6 @@ from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.domain.record import RecordService
 from ssclient.domain.record_entities import AnyRecord
 from ssclient.task_entities import TaskResourceType, task_resource_id
-from ssclient.task_id import TaskId
 
 DOMAIN_CREATION_TIMEOUT = 60 * 3  # 3 min
 
@@ -34,7 +33,7 @@ class BaseDomainService(BaseService):
         )
         if wait:
             task = await self._wait_task_completion(
-                TaskId.parse(task_wrap['task_id']), DOMAIN_CREATION_TIMEOUT,
+                self._task_id(task_wrap), DOMAIN_CREATION_TIMEOUT,
             )
             return await self.get(task_resource_id(task, TaskResourceType.domain))
         return task_wrap

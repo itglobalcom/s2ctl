@@ -5,7 +5,6 @@ from ssclient.network.network_id import NetworkId
 from ssclient.ports import HttpClientPort
 from ssclient.server.server_id import ServerId
 from ssclient.task_entities import TaskResourceType, task_resource_id
-from ssclient.task_id import TaskId
 
 
 class NicEntity(TypedDict):
@@ -34,7 +33,7 @@ class NicService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            task = await self._wait_task_completion(self._task_id(task_wrap))
             return await self.get(int(task_resource_id(task, TaskResourceType.nic)))
 
         return task_wrap

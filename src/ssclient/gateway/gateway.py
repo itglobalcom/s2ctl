@@ -9,7 +9,6 @@ from ssclient.gateway.power import GatewayPowerService
 from ssclient.gateway.tag import TagService
 from ssclient.network.network_id import NetworkId
 from ssclient.task_entities import TaskResourceType, task_resource_id
-from ssclient.task_id import TaskId
 
 
 class GatewayEntity(TypedDict):
@@ -47,7 +46,7 @@ class BaseGatewayService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            task = await self._wait_task_completion(self._task_id(task_wrap))
             return await self._read(task_resource_id(task, TaskResourceType.gateway))
         return task_wrap
 

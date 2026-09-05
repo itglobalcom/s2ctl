@@ -4,7 +4,6 @@ from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.network.network_id import NetworkId
 from ssclient.network.tag import TagService
 from ssclient.task_entities import TaskResourceType, task_resource_id
-from ssclient.task_id import TaskId
 
 
 class NetworkEntity(TypedDict):
@@ -44,7 +43,7 @@ class BaseNetworkService(BaseService):
             },
         )
         if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            task = await self._wait_task_completion(self._task_id(task_wrap))
             return await self._read(task_resource_id(task, TaskResourceType.network))
         return task_wrap
 

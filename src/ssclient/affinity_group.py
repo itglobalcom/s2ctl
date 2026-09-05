@@ -2,7 +2,6 @@ from typing import ClassVar, List, Optional, TypedDict
 
 from ssclient.affinity_group_id import AffinityGroupId
 from ssclient.base import BaseService, TaskIDWrap, with_filters, with_return_task
-from ssclient.task_id import TaskId
 
 
 class AffinityGroupEntity(TypedDict):
@@ -47,6 +46,6 @@ class AffinityGroupService(BaseService):
         path = with_return_task(self._make_path(group_id.value))
         task_wrap: TaskIDWrap = await self._http_client.delete(path)
         if wait:
-            await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+            await self._wait_task_completion(self._task_id(task_wrap))
             return None
         return task_wrap
