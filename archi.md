@@ -68,7 +68,8 @@
   справки не проверяется, тестов на форматтеры не создавать.
 - Gates: `poetry install`; `make test` (pytest, покрытие `src`; тот же прогон
   несёт тест покрытия контракта и инварианты дерева команд); `flake8 src`
-  (wemake-python-styleguide, конфиг `.flake8`); `make pyright`
+  (wemake-python-styleguide, конфиг `.flake8`; порядок импортов — плагином
+  `flake8-isort`, конфиг `[tool.isort]` в `pyproject.toml`); `make pyright`
   (`pyright ./src`, конфиг `[tool.pyright]` в `pyproject.toml`);
   `make test-tox` (матрица py311, py312, py313);
   `bash bundle/build_linux.sh` (единый бинарь).
