@@ -53,7 +53,7 @@ flake8:
   extends: .poetry_env
   stage: test
   script:
-    - poetry run flake8 src
+    - make lint
 
 pyright:
   extends: .poetry_env

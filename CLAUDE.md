@@ -31,16 +31,17 @@ pyinstaller 6 для бинаря.
 ```sh
 poetry install
 make test                 # pytest с покрытием src
-poetry run flake8 src     # wemake-python-styleguide + порядок импортов (isort),
-                          # конфиг .flake8 и [tool.isort] в pyproject.toml
+make lint                 # flake8 src tools: wemake-python-styleguide + порядок
+                          # импортов (isort), конфиг .flake8 и [tool.isort]
+                          # в pyproject.toml
 make pyright              # pyright ./src — тот же гейт гоняет пайплайн
 make test-tox             # матрица py311, py312, py313
 bash bundle/build_linux.sh
 ```
 
 Пайплайн лежит в самом репозитории (`.gitlab-ci.yml`, внешних `include` нет)
-и на стадии `test` гоняет те же три гейта — `make test` матрицей по py311,
-py312 и py313, `flake8 src`, `pyright ./src`. Стадия `build` собирает бинарь
+и на стадии `test` гоняет те же три гейта целями `Makefile` — `make test`
+матрицей по py311, py312 и py313, `make lint`, `make pyright`. Стадия `build` собирает бинарь
 на ветке, `prod` — по тегу `vX.Y.Z`.
 
 ## Конвенции
@@ -127,6 +128,8 @@ py312 и py313, `flake8 src`, `pyright ./src`. Стадия `build` собира
   у CLI нет, поэтому переименование команды или опции — обычное изменение,
   а не эскалация; каждое такое изменение попадает в README, в раздел
   «Some commands of the previous releases behave differently now».
+- **Гейт стиля покрывает и `tools/`:** инструменты сопровождения — часть
+  контекста, и `make lint` гоняет `flake8 src tools`.
 - **Новое подавление в `.flake8` или `pyright` — с обоснованием рядом**, в том же
   комментарии, что и остальные записи `per-file-ignores`. Исключение —
   построчные `# noqa: WPS110` в `ssclient/**`: поле `value` доменных обёрток

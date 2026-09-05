@@ -13,6 +13,8 @@
 import argparse
 import pathlib
 import re
+# S404: ревизию publisher'а даёт только его git — инструмент сопровождения зовёт
+# его локально, в бинарь CLI этот модуль не входит.
 import subprocess  # noqa: S404
 import sys
 from typing import Dict, Iterator, List, Optional, Tuple
@@ -180,6 +182,9 @@ def dump_operations(publisher: pathlib.Path) -> List[str]:
 
 
 def _revision(publisher: pathlib.Path) -> str:
+    # S603: команда собрана здесь списком, без оболочки, и снаружи в неё приходит
+    # только путь к рабочей копии. S607: git берётся из PATH — своего пути к нему
+    # у рабочей копии разработчика нет.
     revision = subprocess.run(  # noqa: S603
         ['git', '-C', str(publisher), 'rev-parse', 'HEAD'],  # noqa: S607
         capture_output=True,

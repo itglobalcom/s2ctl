@@ -18,6 +18,11 @@ ignore =
 # идентификатора контракта — число членов задано числом типов, а не сложностью кода.
 # WPS202 в `ssclient/domain/record_entities.py`: по `TypedDict` на каждый тип записи DNS —
 # число членов задано словарём контракта, а не сложностью кода.
+# `tools/dump_contract_operations.py` — построчный разбор исходников publisher'а
+# регулярными выражениями: число членов модуля (WPS202) и локальных переменных (WPS210),
+# сложность строки (WPS221), повтор литерала (WPS226), сборка регулярного выражения
+# конкатенацией (WPS336, WPS342), таблица глаголов HTTP модульной константой (WPS407)
+# и поиск константы по двум именам (WPS529) заданы формой разбираемого текста.
 per-file-ignores =
     src/s2ctl/__init__.py: WPS235, WPS412
     src/s2ctl/click.py: WPS202
@@ -33,6 +38,7 @@ per-file-ignores =
     src/s2ctl/cmd_vmware.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/s2ctl/cmd_vmware_server.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/ssclient/domain/record_entities.py: WPS202
+    tools/dump_contract_operations.py: WPS202, WPS210, WPS221, WPS226, WPS336, WPS342, WPS407, WPS529
 
 exclude =
     .git,

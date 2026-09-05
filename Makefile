@@ -10,6 +10,10 @@ test-tox:
 test:
 	poetry run pytest --cov=src --color=yes $(PYTEST_ARGS) tests
 
+.PHONY: lint
+lint:
+	poetry run flake8 src tools
+
 .PHONY: pyright
 pyright:
 	poetry run pyright ./src

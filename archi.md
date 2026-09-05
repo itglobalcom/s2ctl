@@ -67,15 +67,17 @@
   перечислением, поэтому новая команда попадает под них сама; сам текст
   справки не проверяется, тестов на форматтеры не создавать.
 - Gates: `poetry install`; `make test` (pytest, покрытие `src`; тот же прогон
-  несёт тест покрытия контракта и инварианты дерева команд); `flake8 src`
-  (wemake-python-styleguide, конфиг `.flake8`; порядок импортов — плагином
-  `flake8-isort`, конфиг `[tool.isort]` в `pyproject.toml`); `make pyright`
+  несёт тест покрытия контракта и инварианты дерева команд); `make lint`
+  (`flake8 src tools` — wemake-python-styleguide, конфиг `.flake8`; порядок
+  импортов — плагином `flake8-isort`, конфиг `[tool.isort]` в `pyproject.toml`;
+  инструменты сопровождения из Code paths гейт покрывает наравне с `src`);
+  `make pyright`
   (`pyright ./src`, конфиг `[tool.pyright]` в `pyproject.toml`);
   `make test-tox` (матрица py311, py312, py313);
   `bash bundle/build_linux.sh` (единый бинарь).
 - Pipeline: `.gitlab-ci.yml` репозитория (внешних `include` нет). Стадия `test`
-  гоняет те же команды, что и локальные гейты — `make test`, `flake8 src`,
-  `pyright ./src`; версии инструментов берутся из dev-зависимостей проекта,
+  гоняет те же цели `Makefile`, что и локальные гейты — `make test`, `make lint`,
+  `make pyright`; версии инструментов берутся из dev-зависимостей проекта,
   в пайплайне не дублируются. `make test` идёт матрицей по версиям из `tox.ini`
   (py311, py312, py313) и отдаёт junit-отчёт GitLab. Стадии `build` (ветки)
   и `prod` (тег `vX.Y.Z`) собирают Linux-бинарь тем же
