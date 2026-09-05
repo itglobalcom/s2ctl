@@ -166,6 +166,18 @@ async def test_upsert_nat_rule_posts_whole_rule(
     assert task_wrap == {'task_id': 'vmw912'}
 
 
+async def test_upsert_nat_rule_leaves_the_address_of_the_platform_to_the_platform(fake_http_client):
+    fake_http_client.on('POST', NAT_PATH, {'task_id': 'vmw914'})
+
+    await _edge(fake_http_client).nat().upsert_rule(
+        rule_type='DNAT', protocol='Tcp', translated_ip='10.0.0.1',
+    )
+
+    # Пустой адрес publisher не принимает, а `any` для него — «подставь сам»: в original_ip
+    # DNAT-правила он всё равно запишет внешний адрес edge.
+    assert fake_http_client.requests[-1].payload['original_ip'] == 'any'
+
+
 async def test_get_vpn_unwraps_vpn(fake_http_client):
     fake_http_client.on('GET', VPN_PATH, {'vpn': VPN_ENTITY})
 

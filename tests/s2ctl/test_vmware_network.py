@@ -19,6 +19,8 @@ from tests.ssclient.vmware.conftest import (
     NETWORKS_PATH,
 )
 
+_USAGE_ERROR_EXIT_CODE = 2
+
 CONNECT_SERVERS_PATH = '{network_path}/servers'.format(network_path=NETWORK_PATH)
 
 EDGE_BANDWIDTH_PATH = '{edge_path}/bandwidth'.format(edge_path=EDGE_PATH)
@@ -155,6 +157,23 @@ _EDGE_CASES = (
         }),
     ),
     (
+        (
+            'upsert-nat-rule', str(NETWORK_ID),
+            '--type', 'DNAT', '--protocol', 'Tcp', '--translated-ip', '10.0.0.1',
+        ),
+        FakeRequest('POST', EDGE_NAT_PATH, {
+            'rule_id': None,
+            'type': 'DNAT',
+            'description': None,
+            'protocol': 'Tcp',
+            'original_ip': 'any',
+            'original_port': None,
+            'translated_ip': '10.0.0.1',
+            'translated_port': None,
+            'enabled': None,
+        }),
+    ),
+    (
         ('upsert-vpn-tunnel', str(NETWORK_ID)) + _VPN_ARGS,
         FakeRequest('POST', EDGE_VPN_PATH, dict(_VPN_PAYLOAD, tunnel_id=None)),
     ),
@@ -162,6 +181,13 @@ _EDGE_CASES = (
         ('upsert-vpn-tunnel', str(NETWORK_ID), '--tunnel-id', '3') + _VPN_ARGS,
         FakeRequest('POST', EDGE_VPN_PATH, dict(_VPN_PAYLOAD, tunnel_id=3)),
     ),
+)
+
+# Второй адрес правила платформа за пользователя не подставляет: у SNAT это original_ip,
+# у DNAT — translated_ip.
+_MISSING_ADDRESS_CASES = (
+    (('--type', 'SNAT', '--translated-ip', '203.0.113.1'), '--original-ip'),
+    (('--type', 'DNAT', '--original-ip', '203.0.113.1'), '--translated-ip'),
 )
 
 _FIREWALL_STATE_CASES = (
@@ -243,3 +269,16 @@ def test_update_firewall_leaves_the_state_untouched_unless_it_is_given(
     assert cli_http_client.requests == [FakeRequest('PUT', EDGE_FIREWALL_PATH, dict(
         expected_state, rules=[FIREWALL_RULE],
     ))]
+
+
+@pytest.mark.parametrize('rule_args,named_option', _MISSING_ADDRESS_CASES)
+def test_nat_rule_without_the_address_the_platform_never_supplies_is_refused(
+    cli_http_client, rule_args, named_option,
+):
+    result = _invoke('edge', 'upsert-nat-rule', str(NETWORK_ID), '--protocol', 'Tcp', *rule_args)
+
+    assert result.exit_code == _USAGE_ERROR_EXIT_CODE
+    # Отказывает сама команда, а не click отсутствующей опцией: адрес обязателен
+    # у одного типа правила и не нужен у другого.
+    assert '{option} is required'.format(option=named_option) in result.output
+    assert cli_http_client.requests == []

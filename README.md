@@ -476,16 +476,23 @@ its firewall, NAT rules and IPsec VPN tunnels:
 ```
 >s2ctl vmware edge get-nat 77 --output json
 >s2ctl vmware edge upsert-nat-rule 77 --type DNAT --protocol TCP \
-    --original-ip 203.0.113.10 --original-port 443 --translated-ip 10.0.0.5 --translated-port 443 --wait
+    --original-port 443 --translated-ip 10.0.0.5 --translated-port 443 --wait
 >s2ctl vmware edge delete-nat-rule 77 --rule-id 3 --wait
 ```
 
-For a DNAT rule `--original-ip` is the external address of the edge gateway itself,
-and no read operation of the contract publishes it: neither the network nor any
-other VMware resource carries the field. The address is visible only in the rules of
-an edge that already has them (`vmware edge get-nat`) and in the `local_ip` of a VPN
-tunnel (`vmware edge get-vpn`), so for an edge without either it has to be learned
-outside the contract before the first rule can be written.
+One address of a NAT rule the platform supplies itself: into `original_ip` of a DNAT
+rule it always writes the external address of the edge gateway, whatever address is
+sent, and `translated_ip` of a SNAT rule it fills with the address of the
+translation. Leave the matching option out and `any` goes to the API — the form the
+contract takes for "the platform decides". The other address of the rule nobody
+fills in for you: `--original-ip` of a SNAT rule and `--translated-ip` of a DNAT
+rule are refused as a usage error when missing.
+
+The external address of the edge is published by `vmware network get` and
+`vmware network list` in `edge_external_ip`. On a platform older than that field it
+is visible only in the rules of an edge that already has them
+(`vmware edge get-nat`) and in the `local_ip` of a VPN tunnel
+(`vmware edge get-vpn`).
 
 `upsert-vpn-tunnel` asks for the IPsec pre-shared key interactively; in a script
 pass it in `S2CTL_VPN_SHARED_KEY` instead of `--shared-key`, so that the secret

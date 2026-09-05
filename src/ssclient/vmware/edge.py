@@ -13,6 +13,10 @@ from ssclient.vmware.ids import VmwareNatRuleId, VmwareNetworkId, VmwareVpnTunne
 EDGE_PATH = 'api/v1/vmware/networks/{network_id}/edge'
 
 _NETWORK_ID_FIELD = 'network_id'
+# Пустой адрес правила NAT publisher не принимает, а `any` — принятая контрактом форма
+# «адрес подставит платформа»: в original_ip DNAT-правила она всегда пишет внешний
+# адрес самого edge (NET-4), в translated_ip SNAT-правила — адрес трансляции.
+_ANY_ADDRESS = 'any'
 
 
 class BaseEdgeService(BaseService):
@@ -66,9 +70,9 @@ class VmwareEdgeNatService(BaseEdgeService):
         *,
         rule_type: str,
         protocol: str,
-        original_ip: str,
-        translated_ip: str,
         rule_id: Optional[VmwareNatRuleId] = None,
+        original_ip: Optional[str] = None,
+        translated_ip: Optional[str] = None,
         original_port: Optional[str] = None,
         translated_port: Optional[str] = None,
         description: Optional[str] = None,
@@ -83,9 +87,9 @@ class VmwareEdgeNatService(BaseEdgeService):
                 'type': rule_type,
                 'description': description,
                 'protocol': protocol,
-                'original_ip': original_ip,
+                'original_ip': original_ip or _ANY_ADDRESS,
                 'original_port': original_port,
-                'translated_ip': translated_ip,
+                'translated_ip': translated_ip or _ANY_ADDRESS,
                 'translated_port': translated_port,
                 'enabled': enabled,
             },

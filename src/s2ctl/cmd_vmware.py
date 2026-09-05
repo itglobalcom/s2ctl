@@ -26,6 +26,10 @@ _IMAGE_GPU_FILTERS = ('required', 'unsupported')
 _FIREWALL_ACTIONS = ('Allow', 'Deny')
 _PROTOCOLS = ('Any', 'Tcp', 'Udp', 'TcpAndUdp', 'Icmp')
 _NAT_RULE_TYPES = ('SNAT', 'DNAT')
+_ADDRESS_IS_REQUIRED = (
+    '{option} is required for a {rule_type} rule: the platform supplies the other address '
+    + 'of the rule itself, this one it takes from you.'
+)
 _VPN_ENCRYPTION_TYPES = ('Aes', 'Aes256', 'TripleDes', 'AesGcm')
 _DIFFIE_HELLMAN_GROUPS = ('DH2', 'DH5', 'DH14', 'DH15', 'DH16')
 
@@ -52,6 +56,22 @@ def _parse_server_nic(raw_nic: str) -> VmwareServerNic:
     if not raw_server_id.isdigit():
         raise click.BadParameter(_SERVER_NIC_HINT)
     return VmwareServerNic(server_id=VmwareServerId(int(raw_server_id)), ip=ip_address or None)
+
+
+def _check_rule_addresses(
+    rule_type: str, original_ip: Optional[str], translated_ip: Optional[str],
+) -> None:
+    """Адрес правила NAT, который платформа за пользователя не подставляет.
+
+    В original_ip DNAT-правила платформа всегда пишет внешний адрес самого edge (NET-4),
+    в translated_ip SNAT-правила — адрес трансляции; обязателен ровно второй адрес правила.
+    """
+    snat, dnat = _NAT_RULE_TYPES
+    requested_type = rule_type.upper()
+    if requested_type == snat and not original_ip:
+        raise click.UsageError(_ADDRESS_IS_REQUIRED.format(option='--original-ip', rule_type=snat))
+    if requested_type == dnat and not translated_ip:
+        raise click.UsageError(_ADDRESS_IS_REQUIRED.format(option='--translated-ip', rule_type=dnat))
 
 
 def _network_id_argument(func):
@@ -413,13 +433,16 @@ def get_nat(ctx, network_id: VmwareNetworkId):
 )
 @click.option(
     '--original-ip',
-    required=True,
-    help='Original IP address. For a DNAT rule this is the external address of the edge gateway, '
-    + 'which no read operation of the contract publishes: it shows up only in the rules of the '
-    + 'edge that already exist ("get-nat") and in the "local_ip" of a VPN tunnel ("get-vpn").',
+    help='Original IP address. Required for a SNAT rule. Omitted, "any" goes to the API and '
+    + 'the platform supplies the address: for a DNAT rule it always writes the external '
+    + 'address of the edge gateway itself, whatever address is sent.',
 )
 @click.option('--original-port', help='Original port.')
-@click.option('--translated-ip', required=True, help='Translated IP address.')
+@click.option(
+    '--translated-ip',
+    help='Translated IP address. Required for a DNAT rule. Omitted, "any" goes to the API and '
+    + 'the platform supplies the address of the translation of a SNAT rule.',
+)
 @click.option('--translated-port', help='Translated port.')
 @click.option('--description', help='Description of the rule.')
 @click.option(
@@ -435,15 +458,16 @@ def upsert_nat_rule(
     rule_id: Optional[VmwareNatRuleId],
     rule_type: str,
     protocol: str,
-    original_ip: str,
+    original_ip: Optional[str],
     original_port: Optional[str],
-    translated_ip: str,
+    translated_ip: Optional[str],
     translated_port: Optional[str],
     description: Optional[str],
     enabled: Optional[bool],
     wait: bool,
 ):
     """Create a NAT rule on the edge gateway of a network or change an existing one."""
+    _check_rule_addresses(rule_type, original_ip, translated_ip)
     service_resp = asyncio.run(_edge_service(ctx, network_id).nat().upsert_rule(
         rule_id=rule_id,
         rule_type=rule_type,
