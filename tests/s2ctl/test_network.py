@@ -13,6 +13,6 @@ def test_malformed_network_id_is_reported_as_bad_parameter(cli_config):
     result = runner.invoke(entry_point, ('-k', APIKEY, 'network', 'get', 'n1l3'))
 
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
-    # После перехода раздела на доменный тип мусорный id отсекается до запроса.
+    # Мусорный id отсекает доменный тип на границе click — до запроса к API.
     assert NETWORK_ID_TEMPLATE in result.output
     assert result.exc_info[0] is SystemExit

@@ -94,8 +94,8 @@ async def test_poll_interval_grows_up_to_the_limit(monkeypatch, fake_http_client
 
 @pytest.mark.parametrize('state', [TaskState.failed, TaskState.canceled])
 async def test_wait_fails_on_terminal_unsuccessful_state(state, fake_http_client):
-    # Canceled терминален так же, как Failed: до этой фазы отменённая задача
-    # опрашивалась до самого таймаута вместо ошибки.
+    # Canceled терминален так же, как Failed: отменённую задачу ждать нечего,
+    # опрос обязан кончиться ошибкой, а не таймаутом.
     fake_http_client.on('GET', _task_path('dns42'), task_response('dns42', state))
 
     with pytest.raises(errors.TaskFailedError) as exc_info:

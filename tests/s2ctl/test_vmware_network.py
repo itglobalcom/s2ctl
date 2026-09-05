@@ -233,8 +233,8 @@ def test_set_bandwidth_carries_the_required_name_of_the_current_network(cli_http
 
     assert result.exit_code == 0, result.output
     edit_request = cli_http_client.requests[-1]
-    # Дефект C1: тело без обязательного имени давало 400 на любом вызове. Имя команда
-    # не спрашивает у пользователя и не выдумывает — берёт текущее из прочитанной сети.
+    # Имя команда не спрашивает у пользователя и не выдумывает — берёт текущее
+    # из прочитанной сети.
     assert EDIT_NETWORK_REQUIRED_FIELDS <= set(edit_request.payload)
     assert edit_request == FakeRequest('PUT', NETWORK_PATH, {
         'name': NETWORK_ENTITY['name'],
