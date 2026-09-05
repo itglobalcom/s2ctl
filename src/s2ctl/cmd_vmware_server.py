@@ -277,11 +277,7 @@ def rename(ctx, server_id: VmwareServerId, name: str):
 @wait_option
 @_server_id_argument
 @click.option('--computer-name', required=True, help='New hostname of the guest OS.')
-@click.option(
-    '--force-customization',
-    is_flag=True,
-    help='Force guest customization of the server.',
-)
+@_force_customization_option
 @click.pass_context
 def set_computer_name(ctx, server_id: VmwareServerId, computer_name: str, force_customization: bool, wait: bool):
     """Change the guest OS hostname of a VMware server."""
