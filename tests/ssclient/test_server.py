@@ -170,3 +170,14 @@ async def test_delete_nic_asks_the_publisher_for_the_reference_to_the_task(fake_
     assert fake_http_client.paths('DELETE') == [expected_path]
     assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t345']
     assert task_wrap is None
+
+
+async def test_delete_tag_percent_encodes_name_in_path(fake_http_client):
+    # Тег — последний сегмент пути (`tags/{**tag}`), publisher декодирует его сам:
+    # незакодированный разделитель увёл бы удаление на чужой маршрут.
+    expected_path = 'api/v1/servers/l2s99/tags/team%2Fprod'
+    fake_http_client.on('DELETE', expected_path, None)
+
+    await ServerService(fake_http_client).tags(SERVER_ID).delete('team/prod')
+
+    assert fake_http_client.requests == [FakeRequest('DELETE', expected_path)]

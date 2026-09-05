@@ -120,6 +120,17 @@ async def test_create_with_wait_reads_network_addressed_by_task_resources(fake_h
     assert network == NETWORK_ENTITY
 
 
+async def test_delete_tag_percent_encodes_name_in_path(fake_http_client):
+    # Тег — последний сегмент пути (`tags/{**tag}`), publisher декодирует его сам:
+    # незакодированный разделитель увёл бы удаление на чужой маршрут.
+    expected_path = '{tags_path}/team%2Fprod'.format(tags_path=TAGS_PATH)
+    fake_http_client.on('DELETE', expected_path, None)
+
+    await NetworkService(fake_http_client).tags(_network_id('l1n3')).delete('team/prod')
+
+    assert fake_http_client.requests == [FakeRequest('DELETE', expected_path)]
+
+
 async def test_tags_send_the_same_paths_as_before_migration(fake_http_client):
     fake_http_client.on('POST', TAGS_PATH, {'value': 'prod'})
     fake_http_client.on('DELETE', '{path}/prod'.format(path=TAGS_PATH), None)

@@ -1,4 +1,5 @@
 from typing import ClassVar, TypedDict
+from urllib.parse import quote
 
 from ssclient.base import BaseService
 from ssclient.ports import HttpClientPort
@@ -24,5 +25,7 @@ class TagService(BaseService):
         )
 
     async def delete(self, name: str) -> None:
-        path = self._make_path(name)
+        # Publisher берёт тег из последнего сегмента пути и декодирует его сам,
+        # поэтому разделители внутри имени должны уехать percent-encoded.
+        path = self._make_path(quote(name, safe=''))
         await self._http_client.delete(path)
