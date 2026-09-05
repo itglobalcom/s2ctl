@@ -183,6 +183,14 @@ Some commands of the previous releases behave differently now:
   answered `400 VolumeBadSize` by the API and now stops as a usage error; the
   name is the second field of the same `PUT`, and left out it keeps the current
   one — that is how a vStack volume is renamed;
+- `locations` and `images` print the whole entity of the API instead of the bare
+  list of identifiers they used to print. A location carries the limits an order
+  is checked against — `system_volume_min`, `windows_system_volume_min`,
+  `additional_volume_min`, `volume_max`, the bandwidth range and the CPU and RAM
+  values available for order; an image carries the `location_id` it is offered
+  in, its type, its version and its architecture. None of that was reachable
+  through the CLI before, and a `server create` or `server price` refused with
+  `The volume is too small` left no way to find out the minimum of the location;
 - an input the command refuses itself — a record whose fields do not match its
   type, `ssh-key create` with both `--public-key` and `--file` or with neither,
   a missing API key — ends as a usage error: the message alone and the exit code
@@ -315,13 +323,12 @@ Usage: s2ctl server create [OPTIONS]
 
 Options:
   -o, --output [yaml|json|table]  format of the printed result: yaml and json
-                                  are machine-readable, for a script that
-                                  parses the output; table is for reading by a
-                                  human.  [default: yaml]
+                                  are machine-readable, for a script that parses
+                                  the output; table is for reading by a human.
+                                  [default: yaml]
   --wait                          wait for task to complete.
-  --timeout INTEGER RANGE         seconds to wait for the task, 480 by
-                                  default; makes sense only together with
-                                  --wait.  [x>=1]
+  --timeout INTEGER RANGE         seconds to wait for the task, 480 by default;
+                                  makes sense only together with --wait.  [x>=1]
   --name TEXT                     Name of new server.  [required]
   --location TEXT                 Where to create a server (see "locations"
                                   command).  [required]
@@ -330,21 +337,25 @@ Options:
   --cpu TEXT                      CPU cores count.  [required]
   --ram <INT{M|G}>                RAM size (e.g. 1024, 1024M or 1G for 1Gb of
                                   RAM).  [required]
-  --volume <(NAME:)SIZE{M|G}>     Volume size in form VolumeName:VolumeSize.
-                                  May be multiple. The first specified volume
-                                  becomes system (boot) and its name is
-                                  ignored. Therefore it can be skipped. E.g. "
-                                  --volume 10240 --volume Second:30G" will
-                                  create a server with 10Gb system (boot)
-                                  volume and 30Gb volume named "Second".
-                                  [required]
+  --volume <(NAME:)SIZE{M|G}>     Volume size in form VolumeName:VolumeSize. May
+                                  be multiple. The first specified volume
+                                  becomes system (boot) and its name is ignored.
+                                  Therefore it can be skipped. E.g. "--volume
+                                  10240 --volume Second:30G" will create a
+                                  server with 10Gb system (boot) volume and 30Gb
+                                  volume named "Second". The allowed sizes
+                                  depend on the location: see
+                                  "system_volume_min",
+                                  "windows_system_volume_min",
+                                  "additional_volume_min" and "volume_max" of
+                                  the "locations" command.  [required]
   --public-network INTEGER        Bandwidth of the public network interface in
                                   Mbps. May be multiple to create several
                                   interfaces with appropriate bandwidths.
                                   [required]
-  --ssh-key INTEGER               Identifier of a SSH key which you want to
-                                  use to access a server (see "ssh-key"
-                                  command). May be multiple.
+  --ssh-key INTEGER               Identifier of a SSH key which you want to use
+                                  to access a server (see "ssh-key" command).
+                                  May be multiple.
   -h, --help                      Show this message and exit.
 ```
 

@@ -12,22 +12,29 @@ from s2ctl.entrypoint import entry_point
 @output_option
 @click.pass_context
 def locations(ctx):
-    """List of places where our data centers are located."""
-    client = client_factory(ctx)
-    locations_resp = asyncio.run(client.locations().get())
+    """List of places where our data centers are located.
 
-    echo(list({location['id'] for location in locations_resp}))
+    Every location carries the limits a server order is checked against:
+    the minimum and the maximum volume size, the bandwidth range and the
+    CPU and RAM values available for order.
+    """
+    client = client_factory(ctx)
+
+    echo(asyncio.run(client.locations().get()))
 
 
 @entry_point.command(cls=S2CTLCommand)
 @output_option
 @click.pass_context
 def images(ctx):
-    """List of OS images which you can use for your server."""
-    client = client_factory(ctx)
-    images_resp = asyncio.run(client.images().get())
+    """List of OS images which you can use for your server.
 
-    echo(list({image['id'] for image in images_resp}))
+    An image belongs to a single location ("location_id") and is offered
+    in that location only.
+    """
+    client = client_factory(ctx)
+
+    echo(asyncio.run(client.images().get()))
 
 
 @entry_point.command(cls=S2CTLCommand)

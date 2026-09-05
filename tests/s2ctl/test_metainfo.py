@@ -1,37 +1,53 @@
-from unittest.mock import patch
+import json
 
 import pytest
 from click.testing import CliRunner
 
 from s2ctl.entrypoint import entry_point
-from ssclient.http_client import HttpClient
-from ssclient.metainfo import LocationEntity
+from ssclient.metainfo import ImageEntity, LocationEntity
 from tests.s2ctl.conftest import APIKEY
 
+# Формы ответов publisher'а целиком: `VstackLocation` и `VstackImage` контракта.
+# Команда обязана донести их до вывода без потерь — по этим полям и выбирается
+# конфигурация заказа, а другого способа их узнать у CLI нет.
+_LOCATION = LocationEntity(
+    id='ds1',
+    system_volume_min=25600,
+    additional_volume_min=1024,
+    volume_max=2048000,
+    windows_system_volume_min=51200,
+    bandwidth_min=10,
+    bandwidth_max=1000,
+    cpu_quantity_options=[1, 2, 4],
+    ram_size_options=[512, 1024, 2048],
+)
 
-def test_get_locations(cli_config):
-    with patch.object(HttpClient, 'make_request') as make_request:
-        id_ = 'test_id'
-        make_request.return_value = {
-            'locations': [LocationEntity(
-                id='test_id',
-                system_volume_min=1024,
-                additional_volume_min=1024,
-                volume_max=100,
-                windows_system_volume_min=100,
-                bandwidth_min=100,
-                bandwidth_max=100,
-                cpu_quantity_options=[1, 2],
-                ram_size_options=[512, 1024],
-            )],
-        }
-        runner = CliRunner()
-        result = runner.invoke(entry_point, ('-k', APIKEY, 'locations', '--output=json'))
-        make_request.assert_awaited()
-        args = make_request.await_args[0]
-        assert args[0] == 'GET'
-        assert 'locations' in args[1]
-        assert result.exit_code == 0
+_IMAGE = ImageEntity(
+    id='ds1i123',
+    location_id='ds1',
+    type='Ubuntu',
+    os_version='22.04',
+    architecture='X64',
+    allow_ssh_keys=True,
+)
+
+_CATALOG_CASES = (
+    ('locations', 'api/v1/locations', 'locations', _LOCATION),
+    ('images', 'api/v1/images', 'images', _IMAGE),
+)
+
+
+@pytest.mark.parametrize('command,path,envelope,entity', _CATALOG_CASES)
+def test_catalog_prints_the_entity_of_the_contract_whole(
+    cli_http_client, command, path, envelope, entity,
+):
+    cli_http_client.on('GET', path, {envelope: [entity]})
+
+    result = CliRunner().invoke(entry_point, ('-k', APIKEY, command, '--output=json'))
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('GET') == [path]
+    assert json.loads(result.output) == [entity]
 
 
 # Каталог приложений фильтруется тремя параметрами запроса, и у каждого своя опция:

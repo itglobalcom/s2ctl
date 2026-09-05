@@ -111,7 +111,9 @@ def server():
     multiple=True,
     help='Volume size in form VolumeName:VolumeSize. May be multiple. The first specified volume becomes '
     + 'system (boot) and its name is ignored. Therefore it can be skipped. E.g. "--volume 10240 --volume '
-    + 'Second:30G" will create a server with 10Gb system (boot) volume and 30Gb volume named "Second".',
+    + 'Second:30G" will create a server with 10Gb system (boot) volume and 30Gb volume named "Second". '
+    + 'The allowed sizes depend on the location: see "system_volume_min", "windows_system_volume_min", '
+    + '"additional_volume_min" and "volume_max" of the "locations" command.',
 )
 @click.option(
     '--public-network',
@@ -230,7 +232,8 @@ def rename(ctx, server_id: ServerId, name: str, wait: bool):
     required=True,
     multiple=True,
     help='Volume size (e.g. 10240, 1024M or 10G for 10Gb volume). May be multiple. '
-    + 'The first specified volume becomes system (boot).',
+    + 'The first specified volume becomes system (boot). The allowed sizes depend on the location: '
+    + 'see "system_volume_min", "additional_volume_min" and "volume_max" of the "locations" command.',
 )
 @click.option(
     '--public-network',
@@ -307,7 +310,8 @@ def delete(ctx, server_id: ServerId, wait: bool):
     '--volume-size',
     type=SizeType(),
     required=True,
-    help='Size of new volume (e.g. 10240, 1024M or 10G for 10Gb volume)',
+    help='Size of new volume (e.g. 10240, 1024M or 10G for 10Gb volume). The allowed sizes depend on the '
+    + 'location of the server: see "additional_volume_min" and "volume_max" of the "locations" command.',
 )
 @click.pass_context
 def add_volume(ctx, server_id: ServerId, volume_name: str, volume_size: int, wait: bool):
