@@ -35,7 +35,7 @@ _RECORD_OPTIONS = (
     click.option(
         '--ttl',
         type=click.Choice(entities.AllowedTTLType.list()),
-        callback=lambda _ctx, _format, value: entities.AllowedTTLType(value),  # noqa: WPS110
+        callback=lambda _ctx, _format, raw_ttl: entities.AllowedTTLType(raw_ttl),
         required=True,
         help='Count of seconds that the record stays valid.',
     ),
@@ -43,7 +43,7 @@ _RECORD_OPTIONS = (
         '--type',
         'record_type',
         type=click.Choice(entities.AllowedRecordType.list(), case_sensitive=False),
-        callback=lambda _ctx, _format, value: entities.AllowedRecordType(value.lower()),  # noqa: WPS110,E501
+        callback=lambda _ctx, _format, raw_type: entities.AllowedRecordType(raw_type.lower()),
         required=True,
         help='Type of the record.',
     ),
