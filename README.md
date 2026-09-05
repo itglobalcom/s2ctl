@@ -86,7 +86,7 @@ for instance:
 
 ```yaml
 # ~/.config/serverspace.s2ctl/config.yaml
-host: https://api.ss4test.com
+host: https://api.stand.example
 ```
 
 The key is read for every command, so a stand is usually kept in a separate
