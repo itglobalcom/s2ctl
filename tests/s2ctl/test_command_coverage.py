@@ -1,19 +1,23 @@
 """
 Проверяемая таблица «операция Public API → команда CLI» — та же, что в README.
 
-Знаменатель — маршруты (`[Route]` + `[Http*]`) контроллеров
-`Com.Cloudmng.Api.Public` publisher'а на ревизии из `task.meta.yaml`
-задачи TSK0003840; ограничения маршрутизации (`:int`, `:regex(...)`) в ключах
-сняты, ключ — метод и путь.
+Знаменатель — снимок маршрутов контракта `contract_operations.txt` рядом:
+он снят с исходников publisher'а `tools/dump_contract_operations.py`, и таблица
+сверяется с ним, а не со списком, набранным здесь руками. Появившаяся у
+publisher'а операция роняет прогон в тот момент, когда снимок поднимают на новую
+ревизию, — и до появления команды объём задачи виден в diff'е снимка.
 """
-from typing import Dict, Iterator, Tuple
+import pathlib
+import re
+from typing import Dict, FrozenSet, Iterator, Tuple
 
 import click
 
 from s2ctl.entrypoint import entry_point
 
-OPERATIONS_IN_SCOPE_COUNT = 132
-OPERATIONS_OUT_OF_SCOPE_COUNT = 16
+CONTRACT_SNAPSHOT = pathlib.Path(__file__).with_name('contract_operations.txt')
+
+_REVISION_LINE = re.compile(r'^# publisher: cloudmng @ [0-9a-f]{40}$', re.MULTILINE)
 
 # Соответствие не один-к-одному: одна команда закрывает несколько операций
 # (`task get` — все форматы id задачи), и наоборот — `PUT vmware/networks/{id}`
@@ -51,7 +55,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'POST /api/v1/gateways/l{location_id}e{gateway_id}/stop': ('gateway stop',),
     'POST /api/v1/gateways/l{location_id}e{gateway_id}/restart': ('gateway restart',),
     'POST /api/v1/gateways/l{location_id}e{gateway_id}/tags': ('gateway add-tag',),
-    'DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{tag}': ('gateway delete-tag',),
+    'DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{**tag}': ('gateway delete-tag',),
     # 1.5 — каталог VMware, сети и edge
     'GET /api/v1/vmware/locations': ('vmware locations',),
     'GET /api/v1/vmware/images': ('vmware images',),
@@ -131,7 +135,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'PUT /api/v1/networks/isolated/{network_id}': ('network edit',),
     'DELETE /api/v1/networks/isolated/{network_id}': ('network delete',),
     'POST /api/v1/networks/isolated/{network_id}/tags': ('network add-tag',),
-    'DELETE /api/v1/networks/isolated/{network_id}/tags/{tag}': ('network delete-tag',),
+    'DELETE /api/v1/networks/isolated/{network_id}/tags/{**tag}': ('network delete-tag',),
     'GET /api/v1/servers': ('server list',),
     'POST /api/v1/servers': ('server create',),
     'GET /api/v1/servers/{server_id}': ('server get',),
@@ -157,7 +161,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'DELETE /api/v1/servers/{server_id}/snapshots/{snapshot_id}': ('server delete-snapshot',),
     'POST /api/v1/servers/{server_id}/snapshots/{snapshot_id}/rollback': ('server rollback-snapshot',),
     'POST /api/v1/servers/{server_id}/tags': ('server add-tag',),
-    'DELETE /api/v1/servers/{server_id}/tags/{tag}': ('server delete-tag',),
+    'DELETE /api/v1/servers/{server_id}/tags/{**tag}': ('server delete-tag',),
 }
 
 # Раздел Kubernetes в CLI не поддерживается: его нет в опубликованном
@@ -166,7 +170,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
 OPERATIONS_OUT_OF_SCOPE = frozenset({
     'DELETE /api/v1/k8s_clusters/{cluster_id}',
     'DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}',
-    'DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{tag}',
+    'DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{**tag}',
     'GET /api/v1/k8s_clusters',
     'GET /api/v1/k8s_clusters/{cluster_id}',
     'GET /api/v1/k8s_clusters/{cluster_id}/k8s_versions',
@@ -198,6 +202,15 @@ NON_CONTRACT_COMMANDS = frozenset({
 _KUBERNETES_MARKERS = ('k8s', 'kubernetes', 'cluster', 'node-group')
 
 
+def _snapshot_operations() -> FrozenSet[str]:
+    lines = CONTRACT_SNAPSHOT.read_text(encoding='utf-8').splitlines()
+    return frozenset(
+        line.strip()
+        for line in lines
+        if line.strip() and not line.startswith('#')
+    )
+
+
 def _command_leaves(command: click.Command, path: Tuple[str, ...] = ()) -> Iterator[str]:
     if isinstance(command, click.Group):
         for name, subcommand in command.commands.items():
@@ -218,9 +231,17 @@ def _declared_commands() -> frozenset:
     )
 
 
+def test_snapshot_names_the_revision_it_was_taken_from():
+    # Снимок без ревизии publisher'а проверить не по чему: непонятно, чему он
+    # был равен и что изменилось с тех пор.
+    assert _REVISION_LINE.search(CONTRACT_SNAPSHOT.read_text(encoding='utf-8'))
+
+
 def test_table_covers_the_whole_contract_surface():
-    assert len(COMMANDS_BY_OPERATION) == OPERATIONS_IN_SCOPE_COUNT
-    assert len(OPERATIONS_OUT_OF_SCOPE) == OPERATIONS_OUT_OF_SCOPE_COUNT
+    declared = set(COMMANDS_BY_OPERATION) | OPERATIONS_OUT_OF_SCOPE
+
+    assert sorted(_snapshot_operations() - declared) == []
+    assert sorted(declared - _snapshot_operations()) == []
     assert not set(COMMANDS_BY_OPERATION) & OPERATIONS_OUT_OF_SCOPE
 
 

@@ -563,13 +563,16 @@ nothing to single out.
 the contract except Kubernetes. The table below maps every covered operation to
 the command that performs it; the 16 operations left out are listed after it.
 
-> How the operations are counted: the denominator is the set of routes declared
-> by the controllers of the Public API, with the paths given by route constants
-> expanded. A count that reads literal paths only misses three of them — the read
-> and the deletion of an affinity group and `GET /api/v1/tasks/already_completed_task`
-> — and gives 143 instead of 146; two more VMware operations
-> (`nested-hypervisor/enable` and `nested-hypervisor/disable`) have been published
-> since, which brings the surface to 148.
+> Where the denominator comes from: the file `tests/s2ctl/contract_operations.txt`
+> is a snapshot of the routes declared by the controllers of the Public API —
+> `[Route]` of a controller joined with `[Http*]` of its actions, with the paths
+> given by route constants expanded and the routing constraints (`:int`,
+> `:regex(...)`) dropped. It is taken from the sources of the publisher by
+> `tools/dump_contract_operations.py` and names the revision it was taken from,
+> so a change of the contract surface shows up as a diff of that file. A count
+> that reads literal paths only misses the three operations whose path is a
+> constant — the read and the deletion of an affinity group and
+> `GET /api/v1/tasks/already_completed_task`.
 
 The mapping is not one-to-one:
 
@@ -584,8 +587,10 @@ The mapping is not one-to-one:
   from the list of servers it has already read.
 
 The table is kept honest by `tests/s2ctl/test_command_coverage.py`: an operation
-left without a command, a command missing from the table and a command for an
-operation out of scope all fail the tests.
+of the snapshot missing from the table, a row of the table that no longer matches
+an operation of the snapshot, an operation left without a command, a command
+missing from the table and a command for an operation out of scope all fail the
+tests.
 
 ### Covered operations
 
@@ -640,7 +645,7 @@ operation out of scope all fail the tests.
 | `POST /api/v1/servers/{server_id}/power/shutdown` | `s2ctl server shutdown` |
 | `GET /api/v1/servers/{server_id}/snapshots/{snapshot_id}` | `s2ctl server get-snapshot` |
 | `DELETE /api/v1/servers/{server_id}/snapshots/{snapshot_id}` | `s2ctl server delete-snapshot` |
-| `DELETE /api/v1/servers/{server_id}/tags/{tag}` | `s2ctl server delete-tag` |
+| `DELETE /api/v1/servers/{server_id}/tags/{**tag}` | `s2ctl server delete-tag` |
 | `GET /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server get-volume` |
 | `PUT /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server edit-volume` |
 | `DELETE /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server delete-volume` |
@@ -656,7 +661,7 @@ operation out of scope all fail the tests.
 | `PUT /api/v1/networks/isolated/{network_id}` | `s2ctl network edit` |
 | `DELETE /api/v1/networks/isolated/{network_id}` | `s2ctl network delete` |
 | `POST /api/v1/networks/isolated/{network_id}/tags` | `s2ctl network add-tag` |
-| `DELETE /api/v1/networks/isolated/{network_id}/tags/{tag}` | `s2ctl network delete-tag` |
+| `DELETE /api/v1/networks/isolated/{network_id}/tags/{**tag}` | `s2ctl network delete-tag` |
 
 #### vStack affinity groups — 4
 
@@ -687,7 +692,7 @@ operation out of scope all fail the tests.
 | `POST /api/v1/gateways/l{location_id}e{gateway_id}/stop` | `s2ctl gateway stop` |
 | `POST /api/v1/gateways/l{location_id}e{gateway_id}/tags` | `s2ctl gateway add-tag` |
 | `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/nics/{nic_id}` | `s2ctl gateway delete-nic` |
-| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{tag}` | `s2ctl gateway delete-tag` |
+| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{**tag}` | `s2ctl gateway delete-tag` |
 
 #### DNS domains and records — 9
 
@@ -793,7 +798,7 @@ partial support either — none of the 16 operations below has a command.
 | `GET /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
 | `PUT /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
 | `DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
-| `DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{tag}` |
+| `DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{**tag}` |
 | `POST /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}/ingress` |
 
 ## Verification status

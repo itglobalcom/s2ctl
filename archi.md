@@ -7,11 +7,11 @@
 
 | Context ID | Owner | Repository | Code paths |
 | --- | --- | --- | --- |
-| ctx_cli_s2ctl | team/arch-owner | s2ctl | src/s2ctl, src/ssclient, tests, bundle, docker, .gitlab-ci.yml |
+| ctx_cli_s2ctl | team/arch-owner | s2ctl | src/s2ctl, src/ssclient, tests, tools, bundle, docker, .gitlab-ci.yml |
 
 Репозиторий одноконтекстный: CLI и его клиентский слой — один контекст,
-инфраструктура сборки бинаря (`bundle/`, `docker/`) и пайплайн (`.gitlab-ci.yml`)
-принадлежат ему же.
+инфраструктура сборки бинаря (`bundle/`, `docker/`), пайплайн (`.gitlab-ci.yml`)
+и обслуживающие сопровождение инструменты (`tools/`) принадлежат ему же.
 
 ## 2) Boundaries (in/out of scope)
 
@@ -56,7 +56,11 @@
   значения команда добирает сама, а не перекладывает на пользователя;
   соответствие «операция контракта → команда» —
   `tests/s2ctl/test_command_coverage.py`, Required: команда без места в таблице
-  и операция в объёме без команды роняют прогон; инварианты дерева команд —
+  и операция в объёме без команды роняют прогон, а знаменатель таблицы — снимок
+  маршрутов publisher'а `tests/s2ctl/contract_operations.txt` рядом с тестом
+  (снимается `tools/dump_contract_operations.py`, в заголовке несёт ревизию
+  publisher'а), поэтому расхождение таблицы с контрактом видно в diff'е снимка,
+  а не только глазами ревьювера; инварианты дерева команд —
   `tests/s2ctl/test_cli_tree.py`, Required: состав групп, `--output` у каждой
   команды, парность «печатает ссылку на задачу ↔ несёт `--wait`», описание
   у команды и `help` у опции. Инварианты проверяются обходом дерева, а не
