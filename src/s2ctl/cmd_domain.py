@@ -1,5 +1,6 @@
 import asyncio
-from typing import Iterable, Optional
+from types import MappingProxyType
+from typing import Any, Dict, Iterable, Mapping
 
 import click
 
@@ -9,9 +10,143 @@ from s2ctl.entrypoint import entry_point
 from ssclient.domain import record_entities as entities
 from ssclient.domain.domain import DomainService
 
+# Опция команды → поле тела записи у publisher'а: имена совпадают всюду, кроме
+# канонического имени, которое в CLI короче.
+_RECORD_FIELD_BY_OPTION: Mapping[str, str] = MappingProxyType({
+    'ip': 'ip',
+    'cname': 'canonical_name',
+    'mail_host': 'mail_host',
+    'name_server_host': 'name_server_host',
+    'text': 'text',
+    'protocol': 'protocol',
+    'service': 'service',
+    'weight': 'weight',
+    'port': 'port',
+    'target': 'target',
+    'priority': 'priority',
+})
+
+_OPTION_BY_RECORD_FIELD: Mapping[str, str] = MappingProxyType({
+    record_field: option for option, record_field in _RECORD_FIELD_BY_OPTION.items()
+})
+
+_RECORD_OPTIONS = (
+    click.option('--name', required=True, help='Name of the resource.'),
+    click.option(
+        '--ttl',
+        type=click.Choice(entities.AllowedTTLType.list()),
+        callback=lambda _ctx, _format, value: entities.AllowedTTLType(value),  # noqa: WPS110
+        required=True,
+        help='Count of seconds that the record stays valid.',
+    ),
+    click.option(
+        '--type',
+        'record_type',
+        type=click.Choice(entities.AllowedRecordType.list(), case_sensitive=False),
+        callback=lambda _ctx, _format, value: entities.AllowedRecordType(value.lower()),  # noqa: WPS110,E501
+        required=True,
+        help='Type of the record.',
+    ),
+    click.option('--ip', help='IP address of the host.'),
+    click.option('--cname', help='Canonical name of the domain.'),
+    click.option(
+        '--mail-host',
+        help='Host name of mail exchange servers accepting incoming mail for that domain.',
+    ),
+    click.option(
+        '--name-server-host',
+        help='Name server host.',
+    ),
+    click.option(
+        '--text',
+        help='Some text information (using in txt records).',
+    ),
+    click.option(
+        '--service',
+        type=str,
+        help='Symbolic name of the desired service.',
+    ),
+    click.option(
+        '--protocol',
+        type=str,
+        help='Transport protocol of the desired service (such as TCP, UDP).',
+    ),
+    click.option(
+        '--weight',
+        type=int,
+        help='Relative weight for records with the same priority. '
+        + 'Higher value means higher chance of getting picked.',
+    ),
+    click.option(
+        '--port',
+        type=int,
+        help='TCP or UDP port on which the service is to be found.',
+    ),
+    click.option(
+        '--target',
+        type=str,
+        help='Canonical hostname of the machine providing the service, ending in a dot.',
+    ),
+    click.option(
+        '--priority',
+        type=int,
+        help='Just an int value. Behavior depends on record type. '
+        + 'Usually lower value means more preferred',
+    ),
+)
+
+_RECORD_ID_OPTION = click.option(
+    '--record-id',
+    'record_id',
+    type=int,
+    required=True,
+    help='Record id.',
+)
+
+
+def _record_options(command):
+    """Опции записи: состав тела задаёт тип записи, и он общий у создания и правки."""
+    for option in reversed(_RECORD_OPTIONS):
+        command = option(command)
+    return command
+
 
 def _get_domain_serivce(ctx) -> DomainService:
     return client_factory(ctx).domains()
+
+
+def _option_flag(option: str) -> str:
+    return '--{option}'.format(option=option.replace('_', '-'))
+
+
+def _record_fields(given_options: Dict[str, Any]) -> Dict[str, entities.RecordFieldValue]:
+    """Поля тела записи из опций, которые пользователь задал.
+
+    Заданное отличается от незаданного наличием значения, а не истинностью: нулевой
+    `priority` записи MX и нулевые `weight` и `port` записи SRV — штатные значения,
+    и publisher требует их непустыми (`[EncodedRequired]`).
+    """
+    return {
+        record_field: given_options[option]
+        for option, record_field in _RECORD_FIELD_BY_OPTION.items()
+        if given_options.get(option) is not None
+    }
+
+
+def check_allowed_fields(
+    record_type: entities.AllowedRecordType,
+    record_fields: Mapping[str, entities.RecordFieldValue],
+) -> None:
+    """Отказывает, если набор полей не тот, что нужен записи этого типа."""
+    expected = entities.record_type_fields(record_type)
+    given = frozenset(record_fields)
+    if given == expected:
+        return
+    raise WrongFieldSetGetted(
+        record_type=record_type.value,
+        necessary_fields=sorted(expected - given),
+        extra_fields=sorted(given - expected),
+    )
 
 
 @entry_point.group()
@@ -88,163 +223,28 @@ def delete(ctx, domain_name: str, wait: bool):
 @output_option
 @wait_option
 @click.argument('domain-name', required=True)
-@click.option('--name', required=True, help='Name of the resource.')
-@click.option(
-    '--ttl',
-    type=click.Choice(entities.AllowedTTLType.list()),
-    callback=lambda _ctx, _format, value: entities.AllowedTTLType(value),  # noqa: WPS110
-    required=True,
-    help='Count of seconds that the record stays valid.',
-)
-@click.option(
-    '--type',
-    'record_type',
-    type=click.Choice(entities.AllowedRecordType.list(), case_sensitive=False),
-    callback=lambda _ctx, _format, value: entities.AllowedRecordType(value.lower()),  # noqa: WPS110
-    required=True,
-    help='Type of the record.',
-)
-@click.option('--ip', help='IP address of the host.')
-@click.option('--cname', help='Canonical name of the domain.')
-@click.option(
-    '--mail-host',
-    help='Host name of mail exchange servers accepting incoming mail for that domain.',
-)
-@click.option(
-    '--name-server-host',
-    help='Name server host.',
-)
-@click.option(
-    '--text',
-    help='Some text information (using in txt records).',
-)
-@click.option(
-    '--service',
-    type=str,
-    help='Symbolic name of the desired service.',
-)
-@click.option(
-    '--protocol',
-    type=str,
-    help='Transport protocol of the desired service (such as TCP, UDP).',
-)
-@click.option(
-    '--weight',
-    type=int,
-    help='Relative weight for records with the same priority. '
-    + 'Higher value means higher chance of getting picked.',
-)
-@click.option(
-    '--port',
-    type=int,
-    help='TCP or UDP port on which the service is to be found.',
-)
-@click.option(
-    '--target',
-    type=str,
-    help='Canonical hostname of the machine providing the service, ending in a dot.',
-)
-@click.option(
-    '--priority',
-    type=int,
-    help='Just an int value. Behavior depends on record type. '
-    + 'Usually lower value means more preferred',
-)
+@_record_options
 @click.pass_context
-def create_record(  # noqa: WPS231
+def create_record(
     ctx,
     domain_name: str,
     name: str,
     ttl: entities.AllowedTTLType,
     record_type: entities.AllowedRecordType,
-    ip: Optional[str],
-    cname: Optional[str],
-    mail_host: Optional[str],
-    name_server_host: Optional[str],
-    text: Optional[str],
-    protocol: Optional[str],
-    service: Optional[str],
-    weight: Optional[int],
-    port: Optional[int],
-    target: Optional[str],
-    priority: Optional[int],
     wait: bool,
+    **given_options,
 ):
     """Create new record."""
-    domain_service = _get_domain_serivce(ctx)
-    record_service = domain_service.records(domain_name=domain_name)
-    check_allowed_fields(
+    record_fields = _record_fields(given_options)
+    check_allowed_fields(record_type, record_fields)
+    record_service = _get_domain_serivce(ctx).records(domain_name=domain_name)
+    service_resp = asyncio.run(record_service.create(
+        name=name,
         record_type=record_type,
-        ip=ip,
-        cname=cname,
-        mail_host=mail_host,
-        name_server_host=name_server_host,
-        text=text,
-        protocol=protocol,
-        service=service,
-        weight=weight,
-        port=port,
-        target=target,
-        priority=priority,
-    )
-    if record_type == entities.AllowedRecordType.a:  # noqa: WPS223
-        service_resp = asyncio.run(record_service.create_a(
-            name=name,
-            ttl=ttl,
-            ip=ip,  # type: ignore
-            wait=wait,
-        ))
-    elif record_type == entities.AllowedRecordType.aaaa:
-        service_resp = asyncio.run(record_service.create_aaaa(
-            name=name,
-            ttl=ttl,
-            ip=ip,  # type: ignore
-            wait=wait,
-        ))
-    elif record_type == entities.AllowedRecordType.cname:
-        service_resp = asyncio.run(record_service.create_cname(
-            name=name,
-            ttl=ttl,
-            canonical_name=cname,  # type: ignore
-            wait=wait,
-        ))
-    elif record_type == entities.AllowedRecordType.mx:
-        service_resp = asyncio.run(record_service.create_mx(
-            name=name,
-            ttl=ttl,
-            mail_host=mail_host,  # type: ignore
-            priority=priority,  # type: ignore
-            wait=wait,
-        ))
-    elif record_type == entities.AllowedRecordType.ns:
-        service_resp = asyncio.run(record_service.create_ns(
-            name=name,
-            ttl=ttl,
-            name_server_host=name_server_host,  # type: ignore
-            wait=wait,
-        ))
-    elif record_type == entities.AllowedRecordType.txt:
-        service_resp = asyncio.run(record_service.create_txt(
-            name=name,
-            ttl=ttl,
-            text=text,  # type: ignore
-            wait=wait,
-        ))
-    elif record_type == entities.AllowedRecordType.srv:
-        service_resp = asyncio.run(record_service.create_srv(
-            name=name,
-            ttl=ttl,
-            protocol=protocol,  # type: ignore
-            service=service,  # type: ignore
-            weight=weight,  # type: ignore
-            port=port,  # type: ignore
-            target=target,  # type: ignore
-            priority=priority,  # type: ignore
-            wait=wait,
-        ))
-    else:
-        raise WrongRecordType
-
+        ttl=ttl,
+        fields=record_fields,
+        wait=wait,
+    ))
     echo(service_resp)
 
 
@@ -252,75 +252,8 @@ def create_record(  # noqa: WPS231
 @output_option
 @wait_option
 @click.argument('domain-name', required=True)
-@click.option(
-    '--record-id',
-    'record_id',
-    type=int,
-    required=True,
-    help='Record id.',
-)
-@click.option('--name', required=True, help='Name of the resource.')
-@click.option(
-    '--ttl',
-    type=click.Choice(entities.AllowedTTLType.list()),
-    callback=lambda _ctx, _format, value: entities.AllowedTTLType(value),  # noqa: WPS110
-    required=True,
-    help='Count of seconds that the record stays valid.',
-)
-@click.option(
-    '--type',
-    'record_type',
-    type=click.Choice(entities.AllowedRecordType.list(), case_sensitive=False),
-    callback=lambda _ctx, _format, value: entities.AllowedRecordType(value.lower()),  # noqa: WPS110
-    required=True,
-    help='Type of the record.',
-)
-@click.option('--ip', help='IP address of the host.')
-@click.option('--cname', help='Canonical name of the domain.')
-@click.option(
-    '--mail-host',
-    help='Host name of mail exchange servers accepting incoming mail for that domain.',
-)
-@click.option(
-    '--name-server-host',
-    help='Name server host.',
-)
-@click.option(
-    '--text',
-    help='Some text information (using in txt records).',
-)
-@click.option(
-    '--service',
-    type=str,
-    help='Symbolic name of the desired service.',
-)
-@click.option(
-    '--protocol',
-    type=str,
-    help='Transport protocol of the desired service (such as TCP, UDP).',
-)
-@click.option(
-    '--weight',
-    type=int,
-    help='Relative weight for records with the same priority. '
-    + 'Higher value means higher chance of getting picked.',
-)
-@click.option(
-    '--port',
-    type=int,
-    help='TCP or UDP port on which the service is to be found.',
-)
-@click.option(
-    '--target',
-    type=str,
-    help='Canonical hostname of the machine providing the service, ending in a dot.',
-)
-@click.option(
-    '--priority',
-    type=int,
-    help='Just an int value. Behavior depends on record type. '
-    + 'Usually lower value means more preferred',
-)
+@_RECORD_ID_OPTION
+@_record_options
 @click.pass_context
 def update_record(
     ctx,
@@ -329,52 +262,19 @@ def update_record(
     name: str,
     ttl: entities.AllowedTTLType,
     record_type: entities.AllowedRecordType,
-    ip: Optional[str],
-    cname: Optional[str],
-    mail_host: Optional[str],
-    name_server_host: Optional[str],
-    text: Optional[str],
-    protocol: Optional[str],
-    service: Optional[str],
-    weight: Optional[int],
-    port: Optional[int],
-    target: Optional[str],
-    priority: Optional[int],
     wait: bool,
+    **given_options,
 ):
-    """Create new record."""
-    domain_service = _get_domain_serivce(ctx)
-    record_service = domain_service.records(domain_name=domain_name)
-    check_allowed_fields(
-        record_type=record_type,
-        ip=ip,
-        cname=cname,
-        mail_host=mail_host,
-        name_server_host=name_server_host,
-        text=text,
-        protocol=protocol,
-        service=service,
-        weight=weight,
-        port=port,
-        target=target,
-        priority=priority,
-    )
+    """Replace the record with the given one."""
+    record_fields = _record_fields(given_options)
+    check_allowed_fields(record_type, record_fields)
+    record_service = _get_domain_serivce(ctx).records(domain_name=domain_name)
     service_resp = asyncio.run(record_service.update(
         record_id=record_id,
         name=name,
-        ttl=ttl,
         record_type=record_type,
-        ip=ip,
-        cname=cname,
-        mail_host=mail_host,
-        name_server_host=name_server_host,
-        text=text,
-        protocol=protocol,
-        service=service,
-        weight=weight,
-        port=port,
-        target=target,
-        priority=priority,
+        ttl=ttl,
+        fields=record_fields,
         wait=wait,
     ))
     echo(service_resp)
@@ -395,13 +295,7 @@ def list_record(ctx, domain_name: str):
 @domain.command(cls=S2CTLCommand)
 @output_option
 @click.argument('domain-name', required=True)
-@click.option(
-    '--record-id',
-    'record_id',
-    type=int,
-    required=True,
-    help='Record id.',
-)
+@_RECORD_ID_OPTION
 @click.pass_context
 def get_record(ctx, domain_name: str, record_id: int):
     """Get record information."""
@@ -415,13 +309,7 @@ def get_record(ctx, domain_name: str, record_id: int):
 @output_option
 @wait_option
 @click.argument('domain-name', required=True)
-@click.option(
-    '--record-id',
-    'record_id',
-    type=int,
-    required=True,
-    help='Record id.',
-)
+@_RECORD_ID_OPTION
 @click.pass_context
 def delete_record(ctx, domain_name: str, record_id: int, wait: bool):
     """Remove the record from a domain."""
@@ -433,70 +321,6 @@ def delete_record(ctx, domain_name: str, record_id: int, wait: bool):
     echo(service_resp)
 
 
-def check_allowed_fields(  # noqa: WPS213, WPS231
-    record_type: entities.AllowedRecordType,
-    ip: Optional[str],
-    cname: Optional[str],
-    mail_host: Optional[str],
-    name_server_host: Optional[str],
-    text: Optional[str],
-    protocol: Optional[str],
-    service: Optional[str],
-    weight: Optional[int],
-    port: Optional[int],
-    target: Optional[str],
-    priority: Optional[int],
-):
-    getted_fields = {'name', 'type', 'ttl'}
-    if ip is not None:
-        getted_fields.add('ip')
-    if cname is not None:
-        getted_fields.add('canonical-name')
-    if mail_host is not None:
-        getted_fields.add('mail-host')
-    if name_server_host is not None:
-        getted_fields.add('name-server-host')
-    if text is not None:
-        getted_fields.add('text')
-    if protocol is not None:
-        getted_fields.add('protocol')
-    if service is not None:
-        getted_fields.add('service')
-    if weight is not None:
-        getted_fields.add('weight')
-    if port is not None:
-        getted_fields.add('port')
-    if target is not None:
-        getted_fields.add('target')
-    if priority is not None:
-        getted_fields.add('priority')
-
-    record_entity_type = entities.get_record_entity_by_type(record_type)
-    if not record_entity_type:
-        raise WrongRecordType
-
-    # convert inner field name to external value
-    all_necessary_fields = {
-        field.replace('_', '-') for field in record_entity_type.__annotations__
-    }
-
-    if set(all_necessary_fields) == getted_fields:
-        return
-
-    necessary_fields = all_necessary_fields - getted_fields
-    extra_fields = getted_fields - all_necessary_fields
-    raise WrongFieldSetGetted(
-        record_type=record_type.value,
-        necessary_fields=necessary_fields,
-        extra_fields=extra_fields,
-    )
-
-
-class WrongRecordType(click.UsageError):
-    def __init__(self) -> None:
-        super().__init__('You can use only allowed dns record types')
-
-
 class WrongFieldSetGetted(click.UsageError):
     def __init__(
         self,
@@ -506,7 +330,13 @@ class WrongFieldSetGetted(click.UsageError):
     ) -> None:
         msg = 'Wrong set of fields for {record_type}.'.format(record_type=record_type)
         if necessary_fields:
-            msg += ' Necessary fields {nec_field}'.format(nec_field=', '.join(necessary_fields))
+            msg += ' Necessary options {nec_field}'.format(
+                nec_field=', '.join(_option_flag(_OPTION_BY_RECORD_FIELD[field])
+                                    for field in necessary_fields),
+            )
         if extra_fields:
-            msg += ' Extra fields {extra_fields}'.format(extra_fields=', '.join(extra_fields))
+            msg += ' Extra options {extra_fields}'.format(
+                extra_fields=', '.join(_option_flag(_OPTION_BY_RECORD_FIELD[field])
+                                       for field in extra_fields),
+            )
         super().__init__(msg)

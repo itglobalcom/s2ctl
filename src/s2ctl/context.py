@@ -109,7 +109,9 @@ class ContextManager(BaseContextManager):
     ) -> None:
         super().__init__(config_manager)
         self.keyring = CryptFileKeyring()
-        self.keyring.file_path = keyring_path  # type: ignore
+        # `file_path` у keyring — NonDataProperty: присваивание и есть его способ
+        # задать файл хранилища, но описать это в типах библиотека не может.
+        self.keyring.file_path = keyring_path  # pyright: ignore[reportAttributeAccessIssue]
         try:
             # Ключ проверяется расшифровкой файла прямо здесь, в конструкторе.
             self.keyring.keyring_key = keyring_key

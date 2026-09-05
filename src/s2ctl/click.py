@@ -123,7 +123,11 @@ def _command_callback_wrap(  # noqa: WPS231
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except BaseFailException:
+        except click.ClickException:
+            # Отказ, который команда объявила сама (ошибка входа, отсутствующий ключ
+            # проекта): click печатает его сообщение и отдаёт его код возврата —
+            # `2` у ошибки входа. Перехват превратил бы объявленный исход
+            # в неожиданный сбой с кодом -1.
             raise
         except (HttpClientResponseError, TaskWaitTimeoutError) as exc:
             _report_expected_failure(exc)

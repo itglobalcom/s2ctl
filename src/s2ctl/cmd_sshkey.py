@@ -44,22 +44,18 @@ def create(
     sshkey_file: Optional[IO],
 ):
     """Create new key."""
-    if not (public_key or sshkey_file):
-        click.echo('One the next options should be set: --public-key, --file', err=True)
-        return
-
     if public_key and sshkey_file:
-        click.echo("'--public-key' and '--file' can't be set at the same time")
-        return
+        raise click.UsageError("'--public-key' and '--file' can't be set at the same time")
+
+    if sshkey_file is not None:
+        public_key = sshkey_file.read()
+
+    if not public_key:
+        raise click.UsageError('One the next options should be set: --public-key, --file')
 
     sshkey_service = _get_sshkey_serivce(ctx)
     service_resp = asyncio.run(
-        sshkey_service.create(
-            name=name,
-            # случай «ни один источник ключа не задан» отсечён проверками выше,
-            # но pyright сужение по ним не выводит
-            public_key=public_key or sshkey_file.read(),  # pyright: ignore[reportOptionalMemberAccess]
-        ),
+        sshkey_service.create(name=name, public_key=public_key),
     )
     echo(service_resp)
 

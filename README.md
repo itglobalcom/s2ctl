@@ -183,6 +183,13 @@ Some commands of the previous releases behave differently now:
   answered `400 VolumeBadSize` by the API and now stops as a usage error; the
   name is the second field of the same `PUT`, and left out it keeps the current
   one — that is how a vStack volume is renamed;
+- an input the command refuses itself — a record whose fields do not match its
+  type, `ssh-key create` with both `--public-key` and `--file` or with neither,
+  a missing API key — ends as a usage error: the message alone and the exit code
+  `2`, instead of the `-1` and the repr of an exception (`WrongFieldSetGetted(...)`)
+  of the previous releases. `domain create-record` and `domain update-record`
+  name the options to add or to drop, not the fields of the request body, and
+  `ssh-key create --file` refuses an empty file instead of sending an empty key;
 - an unexpected failure is reported as a message with a non-zero exit code
   wherever it happens, including before the command itself is reached — a
   configuration file that cannot be read used to end in a traceback. Pass

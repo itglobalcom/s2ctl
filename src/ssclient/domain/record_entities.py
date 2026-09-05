@@ -1,10 +1,6 @@
-# Допустимые значения ttl и типа записи перечисляет enum, а Literal собирается из него
-# на лету: статически такой Literal не разбирается, а дублировать реестр значений строками
-# в аннотациях нельзя.
-# pyright: reportInvalidTypeForm=false
-
 from enum import Enum, unique
-from typing import Literal, Optional, Type, TypedDict, Union
+from types import MappingProxyType
+from typing import FrozenSet, List, Mapping, Type, TypedDict, Union
 
 
 @unique
@@ -24,11 +20,8 @@ class AllowedTTLType(Enum):
     one_day = '1d'
 
     @classmethod
-    def list(cls):
+    def list(cls) -> List[str]:
         return [enum_item.value for enum_item in cls]
-
-
-TTLType = Literal[AllowedTTLType.list()]
 
 
 @unique
@@ -42,22 +35,20 @@ class AllowedRecordType(Enum):
     txt = 'txt'
 
     @classmethod
-    def list(cls):
+    def list(cls) -> List[str]:
         return [enum_item.value for enum_item in cls]
-
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.value == other
-        return super().__eq__(other)
-
-
-RecordType = Literal[AllowedRecordType.list()]
 
 
 class BaseRecordEntity(TypedDict):
+    """Общая часть записи, как её отдаёт publisher.
+
+    `type` и `ttl` в теле — значения `AllowedRecordType` и `AllowedTTLType`:
+    запись приходит документом JSON, и разбирать её обратно в enum незачем.
+    """
+
     name: str
-    type: RecordType
-    ttl: TTLType
+    type: str
+    ttl: str
 
 
 class ARecordEntity(BaseRecordEntity):
@@ -105,22 +96,23 @@ AnyRecord = Union[
     TXTRecordEntity,
 ]
 
+# Значение поля записи в теле запроса: строка адреса, имени или текста —
+# либо число приоритета, веса и порта.
+RecordFieldValue = Union[str, int]
 
-def get_record_entity_by_type(  # noqa: WPS212
-    record_type: RecordType,
-) -> Optional[Type[AnyRecord]]:
-    if record_type == AllowedRecordType.a.value:
-        return ARecordEntity
-    if record_type == AllowedRecordType.aaaa.value:
-        return AAAARecordEntity
-    if record_type == AllowedRecordType.cname.value:
-        return CNAMERecordEntity
-    if record_type == AllowedRecordType.mx.value:
-        return MXRecordEntity
-    if record_type == AllowedRecordType.ns.value:
-        return NSRecordEntity
-    if record_type == AllowedRecordType.srv.value:
-        return SRVRecordEntity
-    if record_type == AllowedRecordType.txt.value:
-        return TXTRecordEntity
-    return None
+_ENTITY_BY_RECORD_TYPE: Mapping[AllowedRecordType, Type[BaseRecordEntity]] = MappingProxyType({
+    AllowedRecordType.a: ARecordEntity,
+    AllowedRecordType.aaaa: AAAARecordEntity,
+    AllowedRecordType.cname: CNAMERecordEntity,
+    AllowedRecordType.mx: MXRecordEntity,
+    AllowedRecordType.ns: NSRecordEntity,
+    AllowedRecordType.srv: SRVRecordEntity,
+    AllowedRecordType.txt: TXTRecordEntity,
+})
+
+BASE_RECORD_FIELDS: FrozenSet[str] = frozenset(BaseRecordEntity.__required_keys__)
+
+
+def record_type_fields(record_type: AllowedRecordType) -> FrozenSet[str]:
+    """Поля записи данного типа сверх общих `name`, `type` и `ttl`."""
+    return frozenset(_ENTITY_BY_RECORD_TYPE[record_type].__required_keys__) - BASE_RECORD_FIELDS

@@ -16,6 +16,7 @@ from s2ctl import (
     cmd_gateway,
     cmd_metainfo,
     cmd_server,
+    cmd_sshkey,
     cmd_vmware,
 )
 from ssclient.client import SSClient
@@ -34,6 +35,7 @@ _COMMAND_MODULES = (
     cmd_gateway,
     cmd_metainfo,
     cmd_server,
+    cmd_sshkey,
     cmd_vmware,
 )
 

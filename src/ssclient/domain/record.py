@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Mapping, Optional, Union
 
 from ssclient.base import BaseService, TaskIDWrap, with_return_task
 from ssclient.domain import record_entities as entities
@@ -6,150 +6,62 @@ from ssclient.ports import HttpClientPort
 from ssclient.task_entities import TaskResourceType, task_resource_id
 from ssclient.task_id import TaskId
 
+RecordFields = Mapping[str, entities.RecordFieldValue]
 
-def _given_fields(fields: Dict[str, Any]) -> Dict[str, Any]:
-    """Поля записи, которые пришли: пустое от нулевого отличается наличием значения.
 
-    Нулевой `priority` записи MX и нулевые `weight`/`port` записи SRV — штатные
-    значения, а publisher требует их непустыми (`[EncodedRequired]`), поэтому
-    выпасть из тела по ложности они не могут.
-    """
+def _record_payload(
+    *,
+    name: str,
+    record_type: entities.AllowedRecordType,
+    ttl: entities.AllowedTTLType,
+    fields: RecordFields,
+) -> Dict[str, Any]:
     return {
-        field: field_value
-        for field, field_value in fields.items()
-        if field_value is not None
+        'name': name,
+        'type': record_type.value,
+        'ttl': ttl.value,
+        **fields,
     }
 
 
-class RecordService(BaseService):  # noqa: WPS214
+class RecordService(BaseService):
     _path: ClassVar[str] = 'api/v1/domains/{domain_name}/records/'
 
     def __init__(self, http_client: HttpClientPort, domain_name: str) -> None:
         super().__init__(http_client, {'domain_name': domain_name})
 
-    async def create_a(
+    async def create(
         self,
         *,
         name: str,
+        record_type: entities.AllowedRecordType,
         ttl: entities.AllowedTTLType,
-        ip: str,
+        fields: RecordFields,
         wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.ARecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.a,
-            ttl=ttl,
-            ip=ip,
-            wait=wait,
-        )  # type: ignore
+    ) -> Union[TaskIDWrap, entities.AnyRecord]:
+        """Создаёт запись: состав `fields` задаёт тип записи."""
+        task_wrap: TaskIDWrap = await self._http_client.post(
+            path=self.path,
+            payload=_record_payload(name=name, record_type=record_type, ttl=ttl, fields=fields),
+        )
+        return await self._created_record(task_wrap, wait=wait)
 
-    async def create_aaaa(
+    async def update(
         self,
+        record_id: int,
         *,
         name: str,
+        record_type: entities.AllowedRecordType,
         ttl: entities.AllowedTTLType,
-        ip: str,
+        fields: RecordFields,
         wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.ARecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.aaaa,
-            ttl=ttl,
-            ip=ip,
-            wait=wait,
-        )  # type: ignore
-
-    async def create_cname(
-        self,
-        *,
-        name: str,
-        ttl: entities.AllowedTTLType,
-        canonical_name: str,
-        wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.CNAMERecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.cname,
-            ttl=ttl,
-            canonical_name=canonical_name,
-            wait=wait,
-        )  # type: ignore
-
-    async def create_mx(
-        self,
-        *,
-        name: str,
-        ttl: entities.AllowedTTLType,
-        mail_host: str,
-        priority: int,
-        wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.MXRecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.mx,
-            ttl=ttl,
-            mail_host=mail_host,
-            priority=priority,
-            wait=wait,
-        )  # type: ignore
-
-    async def create_ns(
-        self,
-        *,
-        name: str,
-        ttl: entities.AllowedTTLType,
-        name_server_host: str,
-        wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.NSRecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.ns,
-            ttl=ttl,
-            name_server_host=name_server_host,
-            wait=wait,
-        )  # type: ignore
-
-    async def create_srv(  # noqa: WPS211
-        self,
-        *,
-        name: str,
-        ttl: entities.AllowedTTLType,
-        protocol: str,
-        service: str,
-        priority: int,
-        weight: int,
-        port: int,
-        target: str,
-        wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.SRVRecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.srv,
-            ttl=ttl,
-            protocol=protocol,
-            service=service,
-            priority=priority,
-            weight=weight,
-            port=port,
-            target=target,
-            wait=wait,
-        )  # type: ignore
-
-    async def create_txt(
-        self,
-        *,
-        name: str,
-        ttl: entities.AllowedTTLType,
-        text: str,
-        wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.NSRecordEntity]:
-        return await self._craete_record(
-            name=name,
-            record_type=entities.AllowedRecordType.txt,
-            ttl=ttl,
-            text=text,
-            wait=wait,
-        )  # type: ignore
+    ) -> Union[TaskIDWrap, entities.AnyRecord]:
+        """Заменяет запись целиком: publisher принимает тело того же состава, что и создание."""
+        task_wrap: TaskIDWrap = await self._http_client.put(
+            path=self._make_path(str(record_id)),
+            payload=_record_payload(name=name, record_type=record_type, ttl=ttl, fields=fields),
+        )
+        return await self._created_record(task_wrap, wait=wait)
 
     async def get(self, record_id: int) -> entities.AnyRecord:
         path = self._make_path(str(record_id))
@@ -160,54 +72,6 @@ class RecordService(BaseService):  # noqa: WPS214
         domains_resp = await self._http_client.get(self.path)
         return domains_resp['records']
 
-    async def update(  # noqa: WPS211
-        self,
-        record_id: int,
-        *,
-        name: str,
-        ttl: entities.AllowedTTLType,
-        record_type: entities.AllowedRecordType,
-        ip: Optional[str] = None,
-        cname: Optional[str] = None,
-        mail_host: Optional[str] = None,
-        name_server_host: Optional[str] = None,
-        text: Optional[str] = None,
-        protocol: Optional[str] = None,
-        service: Optional[str] = None,
-        weight: Optional[int] = None,
-        port: Optional[int] = None,
-        target: Optional[str] = None,
-        priority: Optional[int] = None,
-        wait: bool = False,
-    ) -> Union[TaskIDWrap, entities.AnyRecord]:
-        path = self._make_path(str(record_id))
-        payload: Dict[str, Any] = {
-            'name': name,
-            'type': record_type.value,
-            'ttl': ttl.value,
-            **_given_fields({
-                'ip': ip,
-                'canonical_name': cname,
-                'mail_host': mail_host,
-                'name_server_host': name_server_host,
-                'text': text,
-                'protocol': protocol,
-                'service': service,
-                'weight': weight,
-                'port': port,
-                'target': target,
-                'priority': priority,
-            }),
-        }
-        task_wrap: TaskIDWrap = await self._http_client.put(
-            path=path,
-            payload=payload,
-        )
-        if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
-            return await self.get(int(task_resource_id(task, TaskResourceType.record)))
-        return task_wrap
-
     async def delete(self, record_id: int, wait: bool = False) -> Optional[TaskIDWrap]:
         path = with_return_task(self._make_path(str(record_id)))
         task_wrap: TaskIDWrap = await self._http_client.delete(path)
@@ -216,24 +80,10 @@ class RecordService(BaseService):  # noqa: WPS214
             return None
         return task_wrap
 
-    async def _craete_record(
-        self,
-        name: str,
-        record_type: entities.AllowedRecordType,
-        ttl: entities.AllowedTTLType,
-        wait: bool = False,
-        **other_fields,
+    async def _created_record(
+        self, task_wrap: TaskIDWrap, *, wait: bool,
     ) -> Union[TaskIDWrap, entities.AnyRecord]:
-        task_wrap: TaskIDWrap = await self._http_client.post(
-            path=self.path,
-            payload={
-                'name': name,
-                'type': record_type.value,
-                'ttl': ttl.value,
-                **other_fields,
-            },
-        )
-        if wait:
-            task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
-            return await self.get(int(task_resource_id(task, TaskResourceType.record)))
-        return task_wrap
+        if not wait:
+            return task_wrap
+        task = await self._wait_task_completion(TaskId.parse(task_wrap['task_id']))
+        return await self.get(int(task_resource_id(task, TaskResourceType.record)))

@@ -47,8 +47,12 @@ async def test_create_record_with_wait_reads_record_from_task_resources(fake_htt
     )
     fake_http_client.on('GET', RECORD_PATH, {'record': RECORD_ENTITY})
 
-    record = await RecordService(fake_http_client, 'example.com').create_a(
-        name='www', ttl=AllowedTTLType.one_h, ip='10.0.0.5', wait=True,
+    record = await RecordService(fake_http_client, 'example.com').create(
+        name='www',
+        record_type=AllowedRecordType.a,
+        ttl=AllowedTTLType.one_h,
+        fields={'ip': '10.0.0.5'},
+        wait=True,
     )
 
     assert fake_http_client.paths('GET') == ['api/v1/tasks/dns346', RECORD_PATH]
@@ -68,9 +72,9 @@ async def test_update_record_with_wait_reads_record_from_task_resources(fake_htt
     record = await RecordService(fake_http_client, 'example.com').update(
         17,
         name='www',
-        ttl=AllowedTTLType.one_h,
         record_type=AllowedRecordType.a,
-        ip='10.0.0.5',
+        ttl=AllowedTTLType.one_h,
+        fields={'ip': '10.0.0.5'},
         wait=True,
     )
 
@@ -82,21 +86,13 @@ async def test_update_record_with_wait_reads_record_from_task_resources(fake_htt
 # контракта, а не «поле не задано»: publisher требует их непустыми
 # (`[EncodedRequired]` у `RecordMxCommand.Priority`, `RecordSrvCommand.Weight`
 # и `.Port`) и на отсутствующем поле отвечает 400.
-_ZERO_VALUED_UPDATES = (
+_ZERO_VALUED_RECORDS = (
     (
-        {'record_type': AllowedRecordType.mx, 'mail_host': 'mx.example.com', 'priority': 0},
+        AllowedRecordType.mx,
         {'mail_host': 'mx.example.com', 'priority': 0},
     ),
     (
-        {
-            'record_type': AllowedRecordType.srv,
-            'protocol': 'tcp',
-            'service': 'sip',
-            'target': 'sip.example.com.',
-            'priority': 0,
-            'weight': 0,
-            'port': 0,
-        },
+        AllowedRecordType.srv,
         {
             'protocol': 'tcp',
             'service': 'sip',
@@ -109,36 +105,39 @@ _ZERO_VALUED_UPDATES = (
 )
 
 
-@pytest.mark.parametrize('update_fields,expected_fields', _ZERO_VALUED_UPDATES)
+@pytest.mark.parametrize('record_type,record_fields', _ZERO_VALUED_RECORDS)
 async def test_update_record_keeps_zero_values_in_the_request(
-    fake_http_client, update_fields, expected_fields,
+    fake_http_client, record_type, record_fields,
 ):
     fake_http_client.on('PUT', RECORD_PATH, {'task_id': 'dns348'})
 
     await RecordService(fake_http_client, 'example.com').update(
-        17, name='www', ttl=AllowedTTLType.one_h, **update_fields,
+        17,
+        name='www',
+        record_type=record_type,
+        ttl=AllowedTTLType.one_h,
+        fields=record_fields,
     )
 
     assert fake_http_client.requests[0].payload == {
         'name': 'www',
-        'type': update_fields['record_type'].value,
+        'type': record_type.value,
         'ttl': '1h',
-        **expected_fields,
+        **record_fields,
     }
 
 
-async def test_update_record_omits_the_fields_of_other_record_types(fake_http_client):
-    fake_http_client.on('PUT', RECORD_PATH, {'task_id': 'dns349'})
+async def test_create_record_sends_the_fields_of_its_type(fake_http_client):
+    fake_http_client.on('POST', RECORDS_PATH, {'task_id': 'dns349'})
 
-    await RecordService(fake_http_client, 'example.com').update(
-        17,
+    await RecordService(fake_http_client, 'example.com').create(
         name='www',
-        ttl=AllowedTTLType.one_h,
         record_type=AllowedRecordType.a,
-        ip='10.0.0.5',
+        ttl=AllowedTTLType.one_h,
+        fields={'ip': '10.0.0.5'},
     )
 
-    # Поле чужого типа записи publisher не принимает вовсе: в теле только свои.
+    # Тело записи любого типа — общая часть и поля, которые отдал слой команд.
     assert fake_http_client.requests[0].payload == {
         'name': 'www',
         'type': 'a',

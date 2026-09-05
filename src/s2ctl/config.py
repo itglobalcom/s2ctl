@@ -17,7 +17,7 @@ def generate_password(length: int = 10):
 KEYRING_FILE_NAME = 'keyring.cfg'
 
 _CONFIG_PATH = config_path.ConfigPath('s2ctl', 'serverspace', '.yaml')
-DEFAULT_CONFIG_DIR: Path = _CONFIG_PATH.saveFolderPath(mkdir=True)  # type: ignore
+DEFAULT_CONFIG_DIR = Path(_CONFIG_PATH.saveFolderPath(mkdir=True))
 DEFAULT_CONFIG_PATH: Path = DEFAULT_CONFIG_DIR / 'config.yaml'
 DEFAULT_CONFIG = types.MappingProxyType({
     'contexts': [],
