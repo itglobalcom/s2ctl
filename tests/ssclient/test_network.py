@@ -57,10 +57,10 @@ async def test_get_reads_network_by_composite_id(fake_http_client):
     assert network == NETWORK_ENTITY
 
 
-async def test_update_puts_name_and_description(fake_http_client):
-    fake_http_client.on('PUT', NETWORK_PATH, {'task_id': 'l1t345'})
+async def test_update_puts_name_and_description_and_unwraps_the_network(fake_http_client):
+    fake_http_client.on('PUT', NETWORK_PATH, {'isolated_network': NETWORK_ENTITY})
 
-    task_wrap = await NetworkService(fake_http_client).update(
+    network = await NetworkService(fake_http_client).update(
         _network_id('l1n3'), name='internal', description='office',
     )
 
@@ -68,7 +68,9 @@ async def test_update_puts_name_and_description(fake_http_client):
         'name': 'internal',
         'description': 'office',
     })]
-    assert task_wrap == {'task_id': 'l1t345'}
+    # Правка отвечает самой сетью — той же обёрткой, что и чтение: разбирать ответ
+    # одной сущности двумя способами скрипту не нужно.
+    assert network == NETWORK_ENTITY
 
 
 async def test_delete_asks_the_publisher_for_the_reference_to_the_task(fake_http_client):

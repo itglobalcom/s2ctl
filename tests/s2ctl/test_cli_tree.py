@@ -250,7 +250,6 @@ _STUB_BLIND_COMMANDS = frozenset({
     'ansible get-inventory',
     'gateway add-tag',
     'network add-tag',
-    'network edit',
     'server add-tag',
     'server price',
     'ssh-key create',

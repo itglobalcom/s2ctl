@@ -19,6 +19,9 @@ class NetworkEntity(TypedDict):
     tags: List[str]
 
 
+_NETWORK_FIELD = 'isolated_network'
+
+
 class BaseNetworkService(BaseService):
     _path: ClassVar[str] = 'api/v1/networks/isolated'
 
@@ -60,15 +63,16 @@ class BaseNetworkService(BaseService):
         *,
         name: str,
         description: str,
-    ) -> Union[TaskIDWrap, NetworkEntity]:
-        path = self._make_path(network_id.value)
-        return await self._http_client.put(
-            path=path,
+    ) -> NetworkEntity:
+        # Правку publisher применяет синхронно и отвечает самой сетью, а не ссылкой на задачу.
+        network_resp = await self._http_client.put(
+            path=self._make_path(network_id.value),
             payload={
                 'name': name,
                 'description': description,
             },
         )
+        return network_resp[_NETWORK_FIELD]
 
     async def delete(self, network_id: NetworkId, wait: bool = False) -> Optional[TaskIDWrap]:
         path = with_return_task(self._make_path(network_id.value))
@@ -80,7 +84,7 @@ class BaseNetworkService(BaseService):
 
     async def _read(self, raw_network_id: str) -> NetworkEntity:
         network_resp = await self._http_client.get(self._make_path(raw_network_id))
-        return network_resp['isolated_network']
+        return network_resp[_NETWORK_FIELD]
 
 
 class NetworkService(BaseNetworkService):
