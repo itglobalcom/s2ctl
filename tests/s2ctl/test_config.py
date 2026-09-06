@@ -127,3 +127,27 @@ def test_keyring_key_stored_by_a_previous_release_still_opens_its_keyring(tmp_pa
 
     assert result.exit_code == 0, result.output
     assert 'stand' in result.output
+
+
+def test_keyring_is_not_opened_by_a_command_that_does_not_need_it(tmp_path, cli_config, monkeypatch):
+    """Хранилище открывается только там, где действительно читается.
+
+    Открытие расшифровывает файл и стоит argon2 — доли секунды. Команда, которой
+    ключ приходит из `--apikey`, и вывод справки не должны их платить.
+    """
+    config_path = _stand_config(tmp_path)
+    opened = []
+    monkeypatch.setattr(
+        's2ctl.context.CryptFileKeyring',
+        lambda *args, **kwargs: opened.append(1) or _fail_if_used(),
+    )
+    runner = CliRunner()
+
+    assert runner.invoke(entry_point, ('-c', str(config_path), 'server', '--help')).exit_code == 0
+    assert runner.invoke(entry_point, ('-c', str(config_path), 'context', '--help')).exit_code == 0
+
+    assert not opened, 'keyring открыт там, где не нужен'
+
+
+def _fail_if_used():
+    raise AssertionError('keyring не должен создаваться для этих команд')

@@ -13,17 +13,21 @@ def context(ctx: Context):
     """Contexts are used for accessing concrete projects.
     You may have more than one context to control several projects.
     """
-    if not ctx.obj['keyring_pass_setted']:
-        click.echo(
-            "You must set S2CTL_CONTEXT_KEY (or 'keyring_key' configuration value) "
-            + 'to be able to perform operations on contexts.',
-            err=True,
-        )
-        ctx.exit(1)
 
 
 def _get_context_manager(ctx) -> ContextManager:
-    return ctx.obj['context_manager']
+    """Менеджер контекстов с уже проверенным ключом хранилища.
+
+    Команды этой группы распоряжаются самим хранилищем, поэтому ключ проверяется
+    на входе в команду: неверный или пустой ключ называется здесь, а не всплывает
+    позже у команды, которая всего лишь читает контекст. Проверка стоит именно
+    тут, а не в колбэке группы, потому что колбэк выполняется и при выводе
+    справки, а справка ключа требовать не должна. Остальным группам keyring
+    не нужен вовсе — см. ContextManager.keyring.
+    """
+    context_manager: ContextManager = ctx.obj['context_manager']
+    context_manager.keyring  # noqa: WPS428
+    return context_manager
 
 
 @context.command(cls=S2CTLCommand)

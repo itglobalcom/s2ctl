@@ -108,15 +108,35 @@ class ContextManager(BaseContextManager):
         self, config_manager: ConfigManager, keyring_key: str, keyring_path: str,
     ) -> None:
         super().__init__(config_manager)
-        self.keyring = CryptFileKeyring()
+        self._keyring_key = keyring_key
+        self._keyring_path = keyring_path
+        self._keyring: Optional[CryptFileKeyring] = None
+
+    @property
+    def keyring(self) -> CryptFileKeyring:
+        """Хранилище ключей, открываемое при первом обращении.
+
+        Открытие расшифровывает файл и стоит argon2 — доли секунды на каждый
+        вызов CLI. Большинству команд keyring не нужен вовсе: ключ приходит
+        из `--apikey`/`S2CTL_APIKEY`, а справка и разбор аргументов не трогают
+        контексты. Поэтому хранилище открывается там, где действительно
+        читается, а не в конструкторе.
+        """
+        if self._keyring is not None:
+            return self._keyring
+
+        keyring = CryptFileKeyring()
         # `file_path` у keyring — NonDataProperty: присваивание и есть его способ
         # задать файл хранилища, но описать это в типах библиотека не может.
-        self.keyring.file_path = keyring_path  # pyright: ignore[reportAttributeAccessIssue]
+        keyring.file_path = self._keyring_path  # pyright: ignore[reportAttributeAccessIssue]
         try:
-            # Ключ проверяется расшифровкой файла прямо здесь, в конструкторе.
-            self.keyring.keyring_key = keyring_key
+            # Ключ проверяется расшифровкой файла прямо здесь.
+            keyring.keyring_key = self._keyring_key
         except ValueError as exc:
-            raise KeyringUnlockError(keyring_path, exc) from exc
+            raise KeyringUnlockError(self._keyring_path, exc) from exc
+
+        self._keyring = keyring
+        return keyring
 
     def add_context(self, context_name: str, apikey: str) -> None:
         self.keyring.set_password(SERVICE_NAME, context_name, apikey)

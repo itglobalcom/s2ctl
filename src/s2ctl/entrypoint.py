@@ -86,6 +86,5 @@ def entry_point(ctx: Context, config_manager: ConfigManager, apikey: str):
         keyring_key=keyring_key,
         keyring_path=keyring_path,
     )
-    ctx.obj['keyring_pass_setted'] = bool(keyring_key)
     ctx.obj['context_manager'] = context_maanger
     ctx.obj['apikey_arg'] = apikey
