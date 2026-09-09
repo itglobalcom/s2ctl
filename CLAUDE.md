@@ -22,9 +22,9 @@ pyinstaller 6 для бинаря.
 | `src/s2ctl/` | слой команд: разбор аргументов, вызов сервиса, вывод. `cmd_<раздел>.py` — по разделу контракта |
 | `src/s2ctl/__init__.py` | реестр состава CLI: группа, не импортированная сюда, в бинарь не попадает |
 | `tests/ssclient/`, `tests/s2ctl/` | тесты клиентского слоя и команд соответственно |
-| `bundle/` | сборка единого бинаря (`build_linux.sh`, `bundle.py`) |
+| `bundle/` | сборка единого бинаря (`build_linux.sh`, `bundle.py`) и публикация релиза в GitHub (`release_github.sh`) |
 | `docker/` | образ окружения сборки: `Dockerfile.linux.py311` (glibc 2.28) |
-| `.gitlab-ci.yml` | пайплайн проекта: гейты стадии `test`, сборка бинаря на `build` и `prod` |
+| `.gitlab-ci.yml` | пайплайн проекта: гейты стадии `test`, сборка бинаря на `build` и `prod`, публикация релиза в GitHub на `prod` |
 
 ## Перед сдачей изменения
 
@@ -42,7 +42,23 @@ bash bundle/build_linux.sh
 Пайплайн лежит в самом репозитории (`.gitlab-ci.yml`, внешних `include` нет)
 и на стадии `test` гоняет те же три гейта целями `Makefile` — `make test`
 матрицей по py311, py312 и py313, `make lint`, `make pyright`. Стадия `build` собирает бинарь
-на ветке, `prod` — по тегу `vX.Y.Z`.
+на ветке, `prod` — по тегу `vX.Y.Z` и публикует его в GitHub Releases
+`itglobalcom/s2ctl`.
+
+## Релиз
+
+Мерж в `master` бинарь не выпускает. Релиз — тег `vX.Y.Z` на коммите `master`,
+annotated-сообщение тега становится описанием релиза:
+
+```sh
+git tag -a vX.Y.Z -m "<что изменилось для пользователя>" origin/master
+git push origin vX.Y.Z
+```
+
+Пайплайн тега собирает архив и job'ом `prod_release_github` публикует его
+в GitHub Releases; в проекте должна быть CI/CD-переменная `GITHUB_TOKEN`
+(protected, masked) с правом `contents:write` на `itglobalcom/s2ctl`.
+Повторный запуск job'а заменяет архив релиза, а не создаёт второй.
 
 ## Конвенции
 

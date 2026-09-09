@@ -40,6 +40,7 @@
 | Contract | Type | Direction | Owner | Compatibility |
 | --- | --- | --- | --- | --- |
 | `public-api` — REST монолита | API | in | cloudmng | consumer: CLI следует за publisher'ом и своего контракта не определяет |
+| дистрибуция бинаря — GitHub Releases `itglobalcom/s2ctl`, архив `s2ctl-vX.Y.Z-linux.tar.gz` | artifact | out | ctx_cli_s2ctl | адрес и имя архива закреплены README (Installation); релиз публикует job `prod_release_github` по тегу `vX.Y.Z`, GitHub — зеркало публикации, источник — GitLab |
 | поверхность CLI — имена команд, аргументов и форматы вывода | CLI | out | ctx_cli_s2ctl | потребителей у CLI нет (подтверждено владельцем задачи TSK0003840), поэтому имя и аргумент команды меняются вместе с приведением команды к операции контракта; каждое такое изменение перечисляется в README, раздел «Some commands of the previous releases behave differently now» |
 
 Локальный конфиг и keyring — не контракт: приватное состояние машины пользователя.
@@ -83,6 +84,10 @@
   и `prod` (тег `vX.Y.Z`) собирают Linux-бинарь тем же
   `bundle/build_linux.sh`; окружение сборки в job'е и в
   `docker/Dockerfile.linux.py311` — одни и те же шаги, правятся парой.
+  Стадия `prod` завершается публикацией: `bundle/release_github.sh` пушит тег
+  в GitHub, создаёт релиз, загружает архив и синхронизирует `master`;
+  секрет — CI/CD-переменная `GITHUB_TOKEN`. Релиз считается выпущенным, когда
+  архив доступен по адресу из README.
 - Done: гейты зелёные; новая группа команд зарегистрирована
   в `src/s2ctl/__init__.py`; у read-команды есть `--output`, у асинхронной —
   `--wait`; новая операция контракта внесена в таблицу покрытия и в README;

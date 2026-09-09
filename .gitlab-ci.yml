@@ -3,7 +3,8 @@
 # Живёт в самом репозитории: общий шаблон организации `b2c-devops/ci-template`
 # несёт только .NET-стек, а прежний `b2c/ci` архивирован — реестр его образов
 # вместе с ним. Стадии и артефакты повторяют прежний шаблон:
-# test (гейты) → build (бинарь на ветках) → prod (бинарь по тегу релиза).
+# test (гейты) → build (бинарь на ветках) → prod (бинарь по тегу релиза
+# и его публикация в GitHub Releases — оттуда бинарь скачивают по README).
 #
 # Гейты стадии test — те же команды, что и локальные гейты репозитория
 # (`archi.md`, Quality gates): make test, make lint, make pyright.
@@ -31,6 +32,9 @@ variables:
   # glibc базы (2.28) задаёт нижнюю границу совместимости бинаря, а python3.11
   # этой базы собран с --enable-shared, без чего PyInstaller не работает.
   LINUX_BUILD_IMAGE: almalinux:8
+  # Публикация релиза. Токен с правом contents:write на этот репозиторий —
+  # CI/CD-переменная проекта GITHUB_TOKEN (protected + masked), здесь не объявляется.
+  GITHUB_REPO: itglobalcom/s2ctl
 
 # Инструменты гейтов — dev-зависимости самого проекта: версии объявлены
 # в pyproject.toml и в пайплайне не дублируются.
@@ -110,6 +114,21 @@ prod_build_nix:
     paths:
       - s2ctl-$CI_COMMIT_TAG-linux.tar.gz
     expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
+      when: on_success
+    - when: never
+
+prod_release_github:
+  image: python:$PYTHON_VERSION
+  stage: prod
+  needs:
+    - prod_build_nix
+  variables:
+    # Пуш тега в GitHub из shallow-клона отвергается: нужна полная история.
+    GIT_DEPTH: 0
+  script:
+    - bash bundle/release_github.sh s2ctl-$CI_COMMIT_TAG-linux.tar.gz
   rules:
     - if: $CI_COMMIT_TAG =~ /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
       when: on_success
