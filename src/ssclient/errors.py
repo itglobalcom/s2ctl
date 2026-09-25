@@ -53,3 +53,24 @@ class TaskResourceMissingError(Exception):
         )
         self.task_id = task_id
         self.resource_type = resource_type
+
+
+class RestorePointFailedError(Exception):
+    def __init__(self, restore_point_id: int, task_id: str) -> None:
+        super().__init__(
+            "restore point '{restore_point_id}' of task '{task_id}' failed: the copy was not taken".format(
+                restore_point_id=restore_point_id, task_id=task_id,
+            ),
+        )
+        self.restore_point_id = restore_point_id
+        self.task_id = task_id
+
+
+class RestorePointMissingError(Exception):
+    def __init__(self, task_id: str) -> None:
+        super().__init__(
+            "task '{task_id}' completed, but the server has no new manual restore point".format(
+                task_id=task_id,
+            ),
+        )
+        self.task_id = task_id

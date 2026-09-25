@@ -1,6 +1,7 @@
 from typing import List, Optional, TypedDict
 
 from ssclient.base import BaseService, with_filters
+from ssclient.server.backup_entities import BackupStoragesEntity
 
 
 class LocationEntity(TypedDict):
@@ -63,3 +64,11 @@ class ApplicationsService(BaseService):
         })
         applications_resp = await self._http_client.get(path)
         return applications_resp['applications']
+
+
+class BackupStoragesService(BaseService):
+    _path = 'api/v1/backup/storages'
+
+    async def list(self, location_id: str, image_id: Optional[str] = None) -> BackupStoragesEntity:
+        path = with_filters(self.path, {'location_id': location_id, 'image_id': image_id})
+        return await self._http_client.get(path)

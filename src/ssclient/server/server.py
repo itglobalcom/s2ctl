@@ -1,7 +1,8 @@
 from dataclasses import asdict, dataclass
 from typing import Iterable, List, Optional, TypedDict, Union
 
-from ssclient.base import BaseService, TaskIDWrap, with_return_task
+from ssclient.base import BaseService, Payload, TaskIDWrap, with_return_task
+from ssclient.server.backup import BackupScheduleEntity, BackupService
 from ssclient.server.nic import NicService
 from ssclient.server.power import ServerPowerService
 from ssclient.server.price import ServerPriceService
@@ -68,21 +69,22 @@ class BaseServerService(BaseService):  # noqa: WPS214
         volumes: Iterable[VolumeCreationData],
         networks: Iterable[int],
         ssh_key_ids: List[int],
+        backup: Optional[BackupScheduleEntity] = None,
         wait: bool = False,
     ) -> Union[TaskIDWrap, ServerEntity]:
-        task_wrap: TaskIDWrap = await self._http_client.post(
-            path=self.path,
-            payload={
-                'name': name,
-                'location_id': location_id,
-                'image_id': image_id,
-                'cpu': cpu,
-                'ram_mb': ram_mb,
-                'volumes': [asdict(disk) for disk in volumes],
-                'networks': [{'bandwidth_mbps': bandwidth} for bandwidth in networks],
-                'ssh_key_ids': ssh_key_ids,
-            },
-        )
+        payload: Payload = {
+            'name': name,
+            'location_id': location_id,
+            'image_id': image_id,
+            'cpu': cpu,
+            'ram_mb': ram_mb,
+            'volumes': [asdict(disk) for disk in volumes],
+            'networks': [{'bandwidth_mbps': bandwidth} for bandwidth in networks],
+            'ssh_key_ids': ssh_key_ids,
+        }
+        if backup is not None:
+            payload['backup'] = backup
+        task_wrap: TaskIDWrap = await self._http_client.post(path=self.path, payload=payload)
         if wait:
             task = await self._wait_task_completion(self._task_id(task_wrap))
             return await self._read(task_resource_id(task, TaskResourceType.server))
@@ -184,6 +186,9 @@ class ServerService(BaseServerService):
 
     def snapshots(self, server_id: ServerId) -> SnapshotService:
         return SnapshotService(self._http_client, server_id)
+
+    def backup(self, server_id: ServerId) -> BackupService:
+        return BackupService(self._http_client, server_id)
 
     def nics(self, server_id: ServerId) -> NicService:
         return NicService(self._http_client, server_id)
