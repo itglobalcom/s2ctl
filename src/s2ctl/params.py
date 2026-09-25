@@ -6,7 +6,7 @@ import click
 from ssclient.affinity_group_id import AFFINITY_GROUP_ID_TEMPLATE, AffinityGroupId
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
 from ssclient.network.network_id import NETWORK_ID_TEMPLATE, NetworkId
-from ssclient.server.backup_entities import BackupScheduleEntity
+from ssclient.server.backup_entities import BackupScheduleEntity, Weekday
 from ssclient.server.server_id import SERVER_ID_TEMPLATE, ServerId
 from ssclient.task_id import TaskId, supported_formats_hint
 
@@ -27,7 +27,8 @@ RULES_FILE_HELP = (
 
 SCHEDULE_FILE_HELP = (
     'Path to the file with the whole backup schedule in JSON: "hour" and "minute" of the copy '
-    + 'and the "daily", "weekly" and "monthly" rules, a rule left out is off. The file may be '
+    + 'and the "daily", "weekly" and "monthly" rules, a rule left out is off; "weekday" of the '
+    + 'weekly rule is a day name from "monday" to "sunday". The file may be '
     + 'the output of "server get-backup --output json" as it is, the schedule is taken out of '
     + 'its "schedule". Pass "-" to read the schedule from stdin. The storages and the limits of '
     + 'the rules are printed by "server list-backup-storage" and "backup-storages".'
@@ -43,6 +44,9 @@ _TASK_ID_HINT = 'supported task id formats: {hint}'.format(hint=supported_format
 _RULES_FIELD = 'rules'
 _SCHEDULE_FIELD = 'schedule'
 _BACKUP_STATE_FIELD = 'enabled'
+_WEEKLY_FIELD = 'weekly'
+_WEEKDAY_FIELD = 'weekday'
+_WEEKDAYS = tuple(weekday.value for weekday in Weekday)
 
 _ParsedId = TypeVar('_ParsedId')
 
@@ -121,6 +125,11 @@ def parse_backup_schedule(
         schedule = schedule.get(_SCHEDULE_FIELD)
     if not isinstance(schedule, dict):
         raise click.BadParameter('file must contain a JSON object of the backup schedule')
+    weekly = schedule.get(_WEEKLY_FIELD)
+    if isinstance(weekly, dict) and weekly.get(_WEEKDAY_FIELD) not in _WEEKDAYS:
+        raise click.BadParameter('"weekday" of the weekly rule must be one of: {days}'.format(
+            days=', '.join(_WEEKDAYS),
+        ))
     return cast(BackupScheduleEntity, schedule)
 
 

@@ -7,8 +7,21 @@ class BackupRuleEntity(TypedDict):
     backup_storage_id: int
 
 
+@unique
+class Weekday(Enum):
+    """День недели еженедельного правила; закрытый словарь контракта."""
+
+    monday = 'monday'
+    tuesday = 'tuesday'
+    wednesday = 'wednesday'
+    thursday = 'thursday'
+    friday = 'friday'
+    saturday = 'saturday'
+    sunday = 'sunday'
+
+
 class BackupWeeklyRuleEntity(BackupRuleEntity):
-    weekday: int
+    weekday: str
 
 
 class BackupMonthlyRuleEntity(BackupRuleEntity):

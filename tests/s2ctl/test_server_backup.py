@@ -24,7 +24,7 @@ SCHEDULE = {
     'hour': 3,
     'minute': 30,
     'daily': {'keep': 7, 'backup_storage_id': 5},
-    'weekly': {'keep': 4, 'backup_storage_id': 5, 'weekday': 1},
+    'weekly': {'keep': 4, 'backup_storage_id': 5, 'weekday': 'monday'},
 }
 
 
@@ -140,6 +140,21 @@ def test_schedule_file_without_a_schedule_is_a_usage_error(
 
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
     assert '--schedule-file' in result.output
+    assert cli_http_client.requests == []
+
+
+@pytest.mark.parametrize('weekday', (1, 'mon', 'Monday'))
+def test_schedule_file_with_unknown_weekday_is_a_usage_error(
+    cli_http_client, schedule_file, weekday,
+):
+    weekly = dict(SCHEDULE['weekly'], weekday=weekday)
+
+    result = _invoke(
+        'enable-backup', SERVER_ID, '--schedule-file', schedule_file(dict(SCHEDULE, weekly=weekly)),
+    )
+
+    assert result.exit_code == _USAGE_ERROR_EXIT_CODE
+    assert 'monday' in result.output
     assert cli_http_client.requests == []
 
 

@@ -427,6 +427,19 @@ by `backup-storages` for a server to order:
 >s2ctl server disable-backup l1s12345 --wait
 ```
 
+A schedule file with all three rules, `weekday` of the weekly rule is a day
+name from `monday` to `sunday`:
+
+```json
+{
+  "hour": 3,
+  "minute": 30,
+  "daily": {"keep": 7, "backup_storage_id": 5},
+  "weekly": {"keep": 4, "backup_storage_id": 5, "weekday": "sunday"},
+  "monthly": {"keep": 2, "backup_storage_id": 6, "day_of_month": "last"}
+}
+```
+
 `--schedule-file` takes the output of `get-backup` as it is and sends its
 `schedule`; the same file enables the service right in the order of a server:
 `server create --backup-schedule-file schedule.json`. `set-backup-schedule`

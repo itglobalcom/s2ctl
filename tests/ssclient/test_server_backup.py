@@ -16,6 +16,7 @@ SCHEDULE = {
     'hour': 3,
     'minute': 30,
     'daily': {'keep': 7, 'backup_storage_id': 5},
+    'weekly': {'keep': 4, 'backup_storage_id': 5, 'weekday': 'sunday'},
     'monthly': {'keep': 2, 'backup_storage_id': 6, 'day_of_month': 'last'},
 }
 

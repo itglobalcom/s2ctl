@@ -44,7 +44,7 @@ _ORDER = {
     'networks': [{'bandwidth_mbps': 100}],
     'ssh_key_ids': [],
 }
-_BACKUP = {'hour': 3, 'minute': 0, 'weekly': {'keep': 4, 'backup_storage_id': 5, 'weekday': 7}}
+_BACKUP = {'hour': 3, 'minute': 0, 'weekly': {'keep': 4, 'backup_storage_id': 5, 'weekday': 'sunday'}}
 
 
 @pytest.mark.parametrize(('backup', 'expected_payload'), [
