@@ -34,6 +34,41 @@ async def test_create_with_wait_returns_server_addressed_by_task_resources(fake_
     assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t345', 'api/v1/servers/l2s99']
 
 
+_ORDER = {
+    'name': 'srv',
+    'location_id': 'l2',
+    'image_id': 'img',
+    'cpu': 1,
+    'ram_mb': 1024,
+    'volumes': [{'name': 'boot', 'size_mb': 10240}],
+    'networks': [{'bandwidth_mbps': 100}],
+    'ssh_key_ids': [],
+}
+_BACKUP = {'hour': 3, 'minute': 0, 'weekly': {'keep': 4, 'backup_storage_id': 5, 'weekday': 7}}
+
+
+@pytest.mark.parametrize(('backup', 'expected_payload'), [
+    (None, _ORDER),
+    (_BACKUP, dict(_ORDER, backup=_BACKUP)),
+])
+async def test_create_sends_the_backup_block_only_when_given(fake_http_client, backup, expected_payload):
+    fake_http_client.on('POST', 'api/v1/servers', {'task_id': 'l2t345'})
+
+    await ServerService(fake_http_client).create(
+        name='srv',
+        location_id='l2',
+        image_id='img',
+        cpu=1,
+        ram_mb=1024,
+        volumes=[VolumeCreationData('boot', 10240)],
+        networks=[100],
+        ssh_key_ids=[],
+        backup=backup,
+    )
+
+    assert fake_http_client.requests == [FakeRequest('POST', 'api/v1/servers', expected_payload)]
+
+
 async def test_set_configuration_puts_whole_configuration_and_reads_known_server(fake_http_client):
     fake_http_client.on('PUT', 'api/v1/servers/l2s99', {'task_id': 'l2t345'})
     fake_http_client.on('GET', 'api/v1/tasks/l2t345', task_response('l2t345', TaskState.completed))

@@ -1,6 +1,6 @@
 import pytest
 
-from ssclient.metainfo import ApplicationsService, ImagesService, LocationsService
+from ssclient.metainfo import ApplicationsService, BackupStoragesService, ImagesService, LocationsService
 
 APPLICATIONS_PATH = 'api/v1/applications'
 
@@ -95,3 +95,44 @@ async def test_applications_catalog_is_filtered_by_the_query_of_the_contract(
     await ApplicationsService(fake_http_client).list(**filters)
 
     assert fake_http_client.paths('GET') == [expected_path]
+
+
+BACKUP_STORAGES_PATH = 'api/v1/backup/storages'
+
+# Хранилище без `name` и `description`: publisher не отдаёт поля со значением `null`.
+BACKUP_STORAGES = {
+    'storages': [{
+        'id': 5,
+        'sort_order': 1,
+        'price_per_gb': 1.5,
+        'location_id': 'ds1',
+        'restore_location_ids': ['ds1', 'ds2'],
+    }],
+    'limits': {
+        'schedule_window_from_hour': 0,
+        'schedule_window_to_hour': 6,
+        'daily': {'max_keep': 14, 'default_keep': 7},
+        'weekly': {'max_keep': 0, 'default_keep': 0},
+        'monthly': {'max_keep': 0, 'default_keep': 0},
+    },
+}
+
+_BACKUP_STORAGES_CASES = (
+    ({'location_id': 'ds1'}, '{path}?location_id=ds1'.format(path=BACKUP_STORAGES_PATH)),
+    (
+        {'location_id': 'ds1', 'image_id': 'ds1i123'},
+        '{path}?location_id=ds1&image_id=ds1i123'.format(path=BACKUP_STORAGES_PATH),
+    ),
+)
+
+
+@pytest.mark.parametrize('filters,expected_path', _BACKUP_STORAGES_CASES)
+async def test_backup_storages_for_order_are_read_by_location_and_image(
+    fake_http_client, filters, expected_path,
+):
+    fake_http_client.on('GET', expected_path, BACKUP_STORAGES)
+
+    storages = await BackupStoragesService(fake_http_client).list(**filters)
+
+    assert fake_http_client.paths('GET') == [expected_path]
+    assert storages == BACKUP_STORAGES
