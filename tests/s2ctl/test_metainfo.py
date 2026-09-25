@@ -97,3 +97,35 @@ def test_applications_passes_its_filters_to_the_query_of_the_contract(
 
     assert result.exit_code == 0, result.output
     assert cli_http_client.paths('GET') == [expected_path]
+
+
+# Витрина хранилищ для заказа спрашивается по локации заказа, образ — необязательный фильтр.
+_BACKUP_STORAGES_QUERIES = (
+    (('--location', 'am2'), 'location_id=am2'),
+    (('--location', 'am2', '--image', 'am2i5'), 'location_id=am2&image_id=am2i5'),
+)
+
+
+@pytest.mark.parametrize('command_args,expected_query', _BACKUP_STORAGES_QUERIES)
+def test_backup_storages_passes_the_server_to_order_to_the_query_of_the_contract(
+    cli_http_client, command_args, expected_query,
+):
+    expected_path = 'api/v1/backup/storages?{query}'.format(query=expected_query)
+    storefront = {'storages': [], 'limits': {'schedule_window_from_hour': 0}}
+    cli_http_client.on('GET', expected_path, storefront)
+
+    result = CliRunner().invoke(
+        entry_point, ('-k', APIKEY, 'backup-storages', '--output=json') + command_args,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert cli_http_client.paths('GET') == [expected_path]
+    assert json.loads(result.output) == storefront
+
+
+def test_backup_storages_refuses_to_run_without_the_location(cli_http_client):
+    result = CliRunner().invoke(entry_point, ('-k', APIKEY, 'backup-storages'))
+
+    assert result.exit_code == 2
+    assert '--location' in result.output
+    assert cli_http_client.requests == []

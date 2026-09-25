@@ -42,6 +42,7 @@ _SERVER_ID_HINT = 'server id format: {template}'.format(template=SERVER_ID_TEMPL
 _TASK_ID_HINT = 'supported task id formats: {hint}'.format(hint=supported_formats_hint())
 _RULES_FIELD = 'rules'
 _SCHEDULE_FIELD = 'schedule'
+_BACKUP_STATE_FIELD = 'enabled'
 
 _ParsedId = TypeVar('_ParsedId')
 
@@ -116,8 +117,9 @@ def parse_backup_schedule(
     except ValueError as exc:
         raise click.BadParameter('file content is not valid JSON') from exc
 
-    if isinstance(schedule, dict) and _SCHEDULE_FIELD in schedule:
-        schedule = schedule[_SCHEDULE_FIELD]
+    if isinstance(schedule, dict) and _BACKUP_STATE_FIELD in schedule:
+        # Вывод `server get-backup`: у сервера без услуги расписания в нём нет.
+        schedule = schedule.get(_SCHEDULE_FIELD)
     if not isinstance(schedule, dict):
         raise click.BadParameter('file must contain a JSON object of the backup schedule')
     return cast(BackupScheduleEntity, schedule)

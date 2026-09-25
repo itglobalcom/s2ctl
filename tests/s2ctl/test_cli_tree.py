@@ -1,4 +1,5 @@
 import json
+import pathlib
 import sys
 import types
 from itertools import chain
@@ -19,6 +20,7 @@ EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
     'affinity-group',
     'ansible',
     'applications',
+    'backup-storages',
     'context',
     'domain',
     'gateway',
@@ -65,21 +67,28 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'add-tag',
     'add-volume',
     'create',
+    'create-restore-point',
     'create-snapshot',
     'delete',
     'delete-nic',
+    'delete-restore-point',
     'delete-snapshot',
     'delete-tag',
     'delete-volume',
+    'disable-backup',
     'edit',
     'edit-nic',
     'edit-volume',
+    'enable-backup',
     'get',
+    'get-backup',
     'get-nic',
     'get-snapshot',
     'get-volume',
     'list',
+    'list-backup-storage',
     'list-nic',
+    'list-restore-point',
     'list-snapshot',
     'list-volume',
     'power-off',
@@ -88,7 +97,10 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'reboot',
     'rename',
     'reset',
+    'restore-backup',
+    'restore-backup-nearby',
     'rollback-snapshot',
+    'set-backup-schedule',
     'set-configuration',
     'shutdown',
 })
@@ -248,9 +260,12 @@ _EXTRA_ARGS = types.MappingProxyType({
 # инвентарь из уже прочитанных серверов, и собирать его заглушке не из чего.
 _STUB_BLIND_COMMANDS = frozenset({
     'ansible get-inventory',
+    'backup-storages',
     'gateway add-tag',
     'network add-tag',
     'server add-tag',
+    'server get-backup',
+    'server list-backup-storage',
     'server price',
     'ssh-key create',
 })
@@ -305,27 +320,34 @@ def _leaf_commands(command=entry_point, path=()):
         yield ' '.join(path), command
 
 
-def _argument_value(param, rules_path: str) -> str:
+# Файл, который команда читает целиком: набор правил — массивом, расписание бэкапа — объектом.
+_FILE_BY_PARSER = types.MappingProxyType({
+    params.parse_rules: ('rules.json', '[]'),
+    params.parse_backup_schedule: ('schedule.json', '{"hour": 1, "minute": 0}'),
+})
+
+
+def _argument_value(param, files_dir: pathlib.Path) -> str:
     if param.callback in _ID_BY_PARSER:
         return _ID_BY_PARSER[param.callback]
     if isinstance(param.type, click.Choice):
         return param.type.choices[0]
     if isinstance(param.type, click.File):
-        return rules_path
+        return str(files_dir / _FILE_BY_PARSER[param.callback][0])
     return '1'
 
 
-def _required_args(command, rules_path: str):
+def _required_args(command, files_dir: pathlib.Path):
     options, arguments = [], []
     for param in command.params:
         if not param.required:
             continue
         if isinstance(param, click.Argument):
-            arguments.append(_argument_value(param, rules_path))
+            arguments.append(_argument_value(param, files_dir))
         elif getattr(param, 'is_bool_flag', False) or param.is_flag:
             options.append(param.opts[0])
         else:
-            options.extend([param.opts[0], _argument_value(param, rules_path)])
+            options.extend([param.opts[0], _argument_value(param, files_dir)])
     return tuple(options + arguments)
 
 
@@ -395,9 +417,9 @@ def stub_api(cli_config, monkeypatch, tmp_path):
     # Ключ IPsec команда спрашивает интерактивно, если он не пришёл переменной окружения.
     monkeypatch.setenv('S2CTL_VPN_SHARED_KEY', 'secret')
 
-    rules_path = tmp_path / 'rules.json'
-    rules_path.write_text('[]')
-    return str(rules_path)
+    for file_name, file_content in _FILE_BY_PARSER.values():
+        (tmp_path / file_name).write_text(file_content)
+    return tmp_path
 
 
 def test_every_command_prints_through_the_shared_output_option():
