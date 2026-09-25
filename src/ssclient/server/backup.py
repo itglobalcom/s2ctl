@@ -111,7 +111,7 @@ class BackupService(BaseService):
 def _new_manual_point(
     restore_points: List[RestorePointEntity], known_ids: AbstractSet[int], task_id: TaskId,
 ) -> RestorePointEntity:
-    """Точка ручной копии: задача её id не публикует, поэтому точка — новая в списке сервера."""
+    """Задача id точки не публикует; точка ручной копии — новая `is_manual` в списке сервера после задачи."""
     new_points = [
         point for point in restore_points
         if _point_id(point) not in known_ids and point['is_manual']
