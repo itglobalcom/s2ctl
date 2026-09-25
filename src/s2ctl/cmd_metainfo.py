@@ -54,3 +54,19 @@ def applications(
     ))
 
     echo(applications_resp)
+
+
+@entry_point.command('backup-storages', cls=S2CTLCommand)
+@output_option
+@click.option('--location', required=True, help='Location of the server to order (see "locations" command).')
+@click.option('--image', help='OS image of the server to order (see "images" command).')
+@click.pass_context
+def backup_storages(ctx, location: str, image: Optional[str]):
+    """List of backup storages which you can choose for a new server.
+
+    The limits of the backup schedule come along; the schedule itself is passed
+    to "server create" with --backup-schedule-file.
+    """
+    storages_service = client_factory(ctx).backup_storages()
+
+    echo(asyncio.run(storages_service.list(location_id=location, image_id=image)))

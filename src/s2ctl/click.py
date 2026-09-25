@@ -14,7 +14,12 @@ from s2ctl.formatters import (
     YAMLFormatter,
     general_fields_sort,
 )
-from ssclient.errors import HttpClientResponseError, TaskWaitTimeoutError
+from ssclient.errors import (
+    HttpClientResponseError,
+    RestorePointFailedError,
+    RestorePointMissingError,
+    TaskWaitTimeoutError,
+)
 from ssclient.task_wait import DEFAULT_TASK_TIMEOUT, TASK_TIMEOUT_SECS
 
 # Признак отладки живёт в контексте вызова, а не в `ctx.obj`: перехват верхнего
@@ -42,6 +47,13 @@ _TIMEOUT_HELP = (
 _TIMEOUT_MESSAGE = (
     '{reason}; the task is not canceled and goes on: '
     + 'check it with "s2ctl task get {task_id}" or wait longer with --timeout.'
+)
+
+_EXPECTED_FAILURES = (
+    HttpClientResponseError,
+    TaskWaitTimeoutError,
+    RestorePointFailedError,
+    RestorePointMissingError,
 )
 
 
@@ -129,7 +141,7 @@ def _command_callback_wrap(  # noqa: WPS231
             # `2` у ошибки входа. Перехват превратил бы объявленный исход
             # в неожиданный сбой с кодом -1.
             raise
-        except (HttpClientResponseError, TaskWaitTimeoutError) as exc:
+        except _EXPECTED_FAILURES as exc:
             _report_expected_failure(exc)
         except Exception as exc:
             if DEBUG_MODE.get():
@@ -144,12 +156,16 @@ def _command_callback_wrap(  # noqa: WPS231
 
 
 def _report_expected_failure(
-    exc: Union[HttpClientResponseError, TaskWaitTimeoutError],
+    exc: Union[
+        HttpClientResponseError, TaskWaitTimeoutError, RestorePointFailedError, RestorePointMissingError,
+    ],
 ) -> None:
-    """Ожидаемый исход операции: отказ API либо истёкшее ожидание задачи."""
+    """Ожидаемый исход операции: отказ API, истёкшее ожидание задачи либо ручная копия без точки."""
     if isinstance(exc, TaskWaitTimeoutError):
         return _report_task_wait_timeout(exc)
-    return _check_http_response_error(exc)
+    if isinstance(exc, HttpClientResponseError):
+        return _check_http_response_error(exc)
+    return echo(str(exc), err=True)
 
 
 def _report_task_wait_timeout(exc: TaskWaitTimeoutError) -> None:

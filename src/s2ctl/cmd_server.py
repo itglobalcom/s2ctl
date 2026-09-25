@@ -9,12 +9,17 @@ from s2ctl.click import S2CTLCommand, echo, output_option, wait_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
 from s2ctl.formatters import general_fields_sort
-from s2ctl.params import parse_network_id, parse_server_id
+from s2ctl.params import parse_network_id, parse_server_id, schedule_file_option
 from ssclient.network.network_id import NetworkId
+from ssclient.server.backup_entities import BackupScheduleEntity
 from ssclient.server.server import ServerService, VolumeCreationData
 from ssclient.server.server_id import SERVER_ID_TEMPLATE, ServerId
 
 SERVER_ID_ARG = 'server-id'
+
+_SCHEDULE_FILE_FLAG = '--schedule-file'
+_SCHEDULE_DEST = 'schedule'
+_RESTORE_POINT_ID_HELP = 'Restore point identifier (see "list-restore-point").'
 
 _GROUP_HELP = (
     'Manage virtual servers inside your project.'
@@ -132,6 +137,7 @@ def server():
     multiple=True,
     help='Identifier of a SSH key which you want to use to access a server (see "ssh-key" command). May be multiple.',
 )
+@schedule_file_option('--backup-schedule-file', 'backup', required=False)
 @click.pass_context
 def create(
     ctx,
@@ -143,9 +149,10 @@ def create(
     volumes: Sequence[VolumeCreationData],
     public_networks: Sequence[int],
     ssh_key_ids: List[int],
+    backup: Optional[BackupScheduleEntity],
     wait: bool,
 ):
-    """Create new virtual server."""
+    """Create new virtual server, with the backup service enabled when a backup schedule is given."""
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
         server_service.create(
@@ -157,6 +164,7 @@ def create(
             volumes=volumes,
             networks=public_networks,
             ssh_key_ids=ssh_key_ids,
+            backup=backup,
             wait=wait,
         ),
     )
@@ -632,6 +640,148 @@ def delete_snapshot(ctx, server_id: ServerId, snapshot_id: int, wait: bool):
     service_resp = asyncio.run(
         snapshot_service.delete(snapshot_id=snapshot_id, wait=wait),
     )
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.pass_context
+def list_backup_storage(ctx, server_id: ServerId):
+    """Display the backup storages available to a server and the limits of its backup schedule."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.storages())
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.pass_context
+def get_backup(ctx, server_id: ServerId):
+    """Get the state of the backup service of a server and its schedule."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.get())
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@schedule_file_option(_SCHEDULE_FILE_FLAG, _SCHEDULE_DEST, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.pass_context
+def enable_backup(ctx, server_id: ServerId, schedule: BackupScheduleEntity, wait: bool):
+    """Enable the backup service of a server with the given schedule."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.enable(schedule, wait=wait))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@schedule_file_option(_SCHEDULE_FILE_FLAG, _SCHEDULE_DEST, required=True)
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.pass_context
+def set_backup_schedule(ctx, server_id: ServerId, schedule: BackupScheduleEntity, wait: bool):
+    """Replace the whole backup schedule of a server with the given one."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.update(schedule, wait=wait))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.pass_context
+def disable_backup(ctx, server_id: ServerId, wait: bool):
+    """Disable the backup service of a server; its restore points are deleted with it."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.disable(wait=wait))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.pass_context
+def list_restore_point(ctx, server_id: ServerId):
+    """Display all backup restore points of a server."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.list_restore_points())
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.option('--name', help='Name of the restore point.')
+@click.pass_context
+def create_restore_point(ctx, server_id: ServerId, name: Optional[str], wait: bool):
+    """
+    Take a backup copy of a server manually.
+
+    With --wait the command prints the new restore point and fails with a non-zero exit
+    code when the platform could not take the copy: the task completes either way,
+    the outcome of the copy is the state of the restore point.
+    """
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.create_restore_point(name=name, wait=wait))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.option('--restore-point-id', type=int, required=True, help=_RESTORE_POINT_ID_HELP)
+@click.pass_context
+def restore_backup(ctx, server_id: ServerId, restore_point_id: int, wait: bool):
+    """Restore a server from its backup restore point, over the server itself."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.restore(restore_point_id, wait=wait))
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.option('--restore-point-id', type=int, required=True, help=_RESTORE_POINT_ID_HELP)
+@click.option(
+    '--location',
+    help='Where to create the new server (see "restore_location_ids" of "list-backup-storage"). '
+    + 'Omitted, the location of the server.',
+)
+@click.pass_context
+def restore_backup_nearby(
+    ctx, server_id: ServerId, restore_point_id: int, location: Optional[str], wait: bool,
+):
+    """
+    Restore a backup restore point of a server into a new server, keeping the server as it is.
+
+    The new server shows up in "list"; the task does not name it.
+    """
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(
+        backup_service.restore_nearby(restore_point_id, location_id=location, wait=wait),
+    )
+    echo(service_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.option('--restore-point-id', type=int, required=True, help=_RESTORE_POINT_ID_HELP)
+@click.pass_context
+def delete_restore_point(ctx, server_id: ServerId, restore_point_id: int, wait: bool):
+    """Remove a backup restore point of a server."""
+    backup_service = _get_server_serivce(ctx).backup(server_id=server_id)
+    service_resp = asyncio.run(backup_service.delete_restore_point(restore_point_id, wait=wait))
     echo(service_resp)
 
 

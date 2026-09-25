@@ -1,11 +1,12 @@
 import json
-from typing import IO, Any, List, Optional, Sequence, Tuple, TypeVar
+from typing import IO, Any, List, Optional, Sequence, Tuple, TypeVar, cast
 
 import click
 
 from ssclient.affinity_group_id import AFFINITY_GROUP_ID_TEMPLATE, AffinityGroupId
 from ssclient.gateway.gateway_id import GATEWAY_ID_TEMPLATE, GatewayId
 from ssclient.network.network_id import NETWORK_ID_TEMPLATE, NetworkId
+from ssclient.server.backup_entities import BackupScheduleEntity
 from ssclient.server.server_id import SERVER_ID_TEMPLATE, ServerId
 from ssclient.task_id import TaskId, supported_formats_hint
 
@@ -24,6 +25,14 @@ RULES_FILE_HELP = (
     + '"Allow", "In", "ICMP" and "SNAT" — and applies such a rule without a word.'
 )
 
+SCHEDULE_FILE_HELP = (
+    'Path to the file with the whole backup schedule in JSON: "hour" and "minute" of the copy '
+    + 'and the "daily", "weekly" and "monthly" rules, a rule left out is off. The file may be '
+    + 'the output of "server get-backup --output json" as it is, the schedule is taken out of '
+    + 'its "schedule". Pass "-" to read the schedule from stdin. The storages and the limits of '
+    + 'the rules are printed by "server list-backup-storage" and "backup-storages".'
+)
+
 _NETWORK_ID_HINT = 'network id format: {template}'.format(template=NETWORK_ID_TEMPLATE)
 _GATEWAY_ID_HINT = 'gateway id format: {template}'.format(template=GATEWAY_ID_TEMPLATE)
 _GROUP_ID_HINT = 'affinity group id format: {template}'.format(
@@ -32,6 +41,7 @@ _GROUP_ID_HINT = 'affinity group id format: {template}'.format(
 _SERVER_ID_HINT = 'server id format: {template}'.format(template=SERVER_ID_TEMPLATE)
 _TASK_ID_HINT = 'supported task id formats: {hint}'.format(hint=supported_formats_hint())
 _RULES_FIELD = 'rules'
+_SCHEDULE_FIELD = 'schedule'
 
 _ParsedId = TypeVar('_ParsedId')
 
@@ -94,6 +104,34 @@ def rules_file_option(func):
         callback=parse_rules,
         help=RULES_FILE_HELP,
     )(func)
+
+
+def parse_backup_schedule(
+    _ctx, _click_param, schedule_file: Optional[IO],
+) -> Optional[BackupScheduleEntity]:
+    if schedule_file is None:
+        return None
+    try:
+        schedule = json.loads(schedule_file.read())
+    except ValueError as exc:
+        raise click.BadParameter('file content is not valid JSON') from exc
+
+    if isinstance(schedule, dict) and _SCHEDULE_FIELD in schedule:
+        schedule = schedule[_SCHEDULE_FIELD]
+    if not isinstance(schedule, dict):
+        raise click.BadParameter('file must contain a JSON object of the backup schedule')
+    return cast(BackupScheduleEntity, schedule)
+
+
+def schedule_file_option(flag: str, dest: str, *, required: bool):
+    return click.option(
+        flag,
+        dest,
+        type=click.File('r'),
+        required=required,
+        callback=parse_backup_schedule,
+        help=SCHEDULE_FILE_HELP,
+    )
 
 
 def _parsed(parsed_id: Optional[_ParsedId], hint: str) -> _ParsedId:
