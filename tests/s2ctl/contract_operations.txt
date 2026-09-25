@@ -1,5 +1,5 @@
 # Снимок операций контракта public-api: метод и путь маршрута.
-# publisher: cloudmng @ eebd18b1c0eab68e955e3612a39114cf4f408a0d
+# publisher: cloudmng @ ef1f9c52541eaf204cdb5bc806fe23026c415759
 # снят: python tools/dump_contract_operations.py <cloudmng>
 # Ограничения маршрутизации (:int, :regex(...)) сняты.
 DELETE /api/v1/affinity-groups/{affinity_group_id}
@@ -14,6 +14,8 @@ DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{**tag}
 DELETE /api/v1/networks/isolated/{network_id}
 DELETE /api/v1/networks/isolated/{network_id}/tags/{**tag}
 DELETE /api/v1/servers/{server_id}
+DELETE /api/v1/servers/{server_id}/backup
+DELETE /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}
 DELETE /api/v1/servers/{server_id}/nics/{nic_id}
 DELETE /api/v1/servers/{server_id}/snapshots/{snapshot_id}
 DELETE /api/v1/servers/{server_id}/tags/{**tag}
@@ -29,6 +31,7 @@ DELETE /api/v1/vmware/servers/{server_id}/volumes/{volume_id}
 GET /api/v1/affinity-groups
 GET /api/v1/affinity-groups/{affinity_group_id}
 GET /api/v1/applications
+GET /api/v1/backup/storages
 GET /api/v1/domains
 GET /api/v1/domains/{domain_name}
 GET /api/v1/domains/{domain_name}/records
@@ -50,6 +53,9 @@ GET /api/v1/networks/isolated/{network_id}
 GET /api/v1/project
 GET /api/v1/servers
 GET /api/v1/servers/{server_id}
+GET /api/v1/servers/{server_id}/backup
+GET /api/v1/servers/{server_id}/backup/restore-points
+GET /api/v1/servers/{server_id}/backup/storages
 GET /api/v1/servers/{server_id}/nics
 GET /api/v1/servers/{server_id}/nics/{nic_id}
 GET /api/v1/servers/{server_id}/snapshots
@@ -96,6 +102,10 @@ POST /api/v1/networks/isolated
 POST /api/v1/networks/isolated/{network_id}/tags
 POST /api/v1/servers
 POST /api/v1/servers/price
+POST /api/v1/servers/{server_id}/backup
+POST /api/v1/servers/{server_id}/backup/restore-points
+POST /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}/restore
+POST /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}/restore-nearby
 POST /api/v1/servers/{server_id}/nics
 POST /api/v1/servers/{server_id}/power/off
 POST /api/v1/servers/{server_id}/power/on
@@ -138,6 +148,7 @@ PUT /api/v1/k8s_clusters/{cluster_id}
 PUT /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}
 PUT /api/v1/networks/isolated/{network_id}
 PUT /api/v1/servers/{server_id}
+PUT /api/v1/servers/{server_id}/backup
 PUT /api/v1/servers/{server_id}/name
 PUT /api/v1/servers/{server_id}/nics/{nic_id}
 PUT /api/v1/servers/{server_id}/volumes/{volume_id}

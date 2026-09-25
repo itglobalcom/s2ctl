@@ -371,8 +371,8 @@ Options:
 | --- | --- |
 | `context` | contexts — API keys of your projects, kept on this machine |
 | `project` | the project the current context points to |
-| `locations`, `images`, `applications` | catalogues of the vStack service |
-| `server` | vStack servers with their volumes, network interfaces, snapshots and tags |
+| `locations`, `images`, `applications`, `backup-storages` | catalogues of the vStack service |
+| `server` | vStack servers with their volumes, network interfaces, snapshots, backups and tags |
 | `network` | vStack isolated networks |
 | `gateway` | vStack edge gateways connecting isolated networks to the Internet |
 | `affinity-group` | vStack affinity and anti-affinity groups of servers |
@@ -406,6 +406,38 @@ Commands:
   network     Manage VMware networks.
   server      Manage VMware servers.
 ```
+
+### Backups of vStack servers
+
+The backup service of a server copies it on a schedule into backup storages.
+The schedule is one file in JSON — the hour and the minute of the copy and up
+to three rules, daily, weekly and monthly, each with the number
+of copies to keep and the storage to keep them in. The storages and the limits of
+the rules are printed by `server list-backup-storage` for an existing server and
+by `backup-storages` for a server to order:
+
+```
+>s2ctl server list-backup-storage l1s12345
+>s2ctl server enable-backup l1s12345 --schedule-file schedule.json --wait
+>s2ctl server get-backup l1s12345 --output json > backup.json
+>s2ctl server set-backup-schedule l1s12345 --schedule-file backup.json --wait
+>s2ctl server create-restore-point l1s12345 --name before-upgrade --wait
+>s2ctl server list-restore-point l1s12345
+>s2ctl server restore-backup-nearby l1s12345 --restore-point-id 41 --location am2 --wait
+>s2ctl server disable-backup l1s12345 --wait
+```
+
+`--schedule-file` takes the output of `get-backup` as it is and sends its
+`schedule`; the same file enables the service right in the order of a server:
+`server create --backup-schedule-file schedule.json`. `set-backup-schedule`
+replaces the whole schedule, a rule left out of the file is turned off.
+`disable-backup` deletes the restore points of the server together with the
+service.
+
+`restore-backup` restores the server itself from a restore point,
+`restore-backup-nearby` creates a new server from it in the given location —
+the location of the server when `--location` is left out. The task does not name
+the new server: it shows up in `server list`.
 
 ### Edge gateways of isolated networks
 
@@ -587,6 +619,14 @@ without it. When the time is up, the command reports an error, but the task
 itself is not canceled: the platform goes on applying the change, and the task
 can be followed by its identifier with `s2ctl task get`.
 
+A manual copy is finished when its task is, but the outcome of the copy is the
+state of the restore point, not of the task: a copy the platform could not take
+leaves a restore point in state `failed` behind a completed task. So
+`server create-restore-point --wait` prints the new restore point and, when the
+copy failed, reports an error with a non-zero exit code. `set-backup-schedule`
+that keeps the storages of the rules is applied at once and answers with the task
+`already_completed_task`, which `--wait` and `task get` read as completed.
+
 Four VMware commands print the whole set of resources of the server instead of
 the single resource they created: `vmware server add-volume` prints all volumes
 of the server, `vmware server connect-client-network`,
@@ -597,7 +637,7 @@ nothing to single out.
 
 ## Public API coverage
 
-`s2ctl` covers **132 of the 148 operations** of the Public API — every section of
+`s2ctl` covers **143 of the 159 operations** of the Public API — every section of
 the contract except Kubernetes. The table below maps every covered operation to
 the command that performs it; the 16 operations left out are listed after it.
 
@@ -632,11 +672,12 @@ tests.
 
 ### Covered operations
 
-#### Project, catalogues and SSH keys — 8
+#### Project, catalogues and SSH keys — 9
 
 | Operation | Command |
 | --- | --- |
 | `GET /api/v1/applications` | `s2ctl applications` |
+| `GET /api/v1/backup/storages` | `s2ctl backup-storages` |
 | `GET /api/v1/images` | `s2ctl images` |
 | `GET /api/v1/locations` | `s2ctl locations` |
 | `GET /api/v1/project` | `s2ctl project show` |
@@ -688,6 +729,21 @@ tests.
 | `PUT /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server edit-volume` |
 | `DELETE /api/v1/servers/{server_id}/volumes/{volume_id}` | `s2ctl server delete-volume` |
 | `POST /api/v1/servers/{server_id}/snapshots/{snapshot_id}/rollback` | `s2ctl server rollback-snapshot` |
+
+#### vStack server backups — 10
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/servers/{server_id}/backup` | `s2ctl server get-backup` |
+| `POST /api/v1/servers/{server_id}/backup` | `s2ctl server enable-backup` |
+| `PUT /api/v1/servers/{server_id}/backup` | `s2ctl server set-backup-schedule` |
+| `DELETE /api/v1/servers/{server_id}/backup` | `s2ctl server disable-backup` |
+| `GET /api/v1/servers/{server_id}/backup/storages` | `s2ctl server list-backup-storage` |
+| `GET /api/v1/servers/{server_id}/backup/restore-points` | `s2ctl server list-restore-point` |
+| `POST /api/v1/servers/{server_id}/backup/restore-points` | `s2ctl server create-restore-point` |
+| `DELETE /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}` | `s2ctl server delete-restore-point` |
+| `POST /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}/restore` | `s2ctl server restore-backup` |
+| `POST /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}/restore-nearby` | `s2ctl server restore-backup-nearby` |
 
 #### vStack isolated networks — 7
 

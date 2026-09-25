@@ -162,6 +162,24 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'POST /api/v1/servers/{server_id}/snapshots/{snapshot_id}/rollback': ('server rollback-snapshot',),
     'POST /api/v1/servers/{server_id}/tags': ('server add-tag',),
     'DELETE /api/v1/servers/{server_id}/tags/{**tag}': ('server delete-tag',),
+    # бэкап vStack-сервера и витрина хранилищ для заказа
+    'GET /api/v1/backup/storages': ('backup-storages',),
+    'GET /api/v1/servers/{server_id}/backup/storages': ('server list-backup-storage',),
+    'GET /api/v1/servers/{server_id}/backup': ('server get-backup',),
+    'POST /api/v1/servers/{server_id}/backup': ('server enable-backup',),
+    'PUT /api/v1/servers/{server_id}/backup': ('server set-backup-schedule',),
+    'DELETE /api/v1/servers/{server_id}/backup': ('server disable-backup',),
+    'GET /api/v1/servers/{server_id}/backup/restore-points': ('server list-restore-point',),
+    'POST /api/v1/servers/{server_id}/backup/restore-points': ('server create-restore-point',),
+    'POST /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}/restore': (
+        'server restore-backup',
+    ),
+    'POST /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}/restore-nearby': (
+        'server restore-backup-nearby',
+    ),
+    'DELETE /api/v1/servers/{server_id}/backup/restore-points/{restore_point_id}': (
+        'server delete-restore-point',
+    ),
 }
 
 # Раздел Kubernetes в CLI не поддерживается: его нет в опубликованном
