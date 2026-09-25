@@ -118,7 +118,6 @@ def parse_backup_schedule(
         raise click.BadParameter('file content is not valid JSON') from exc
 
     if isinstance(schedule, dict) and _BACKUP_STATE_FIELD in schedule:
-        # Вывод `server get-backup`: у сервера без услуги расписания в нём нет.
         schedule = schedule.get(_SCHEDULE_FIELD)
     if not isinstance(schedule, dict):
         raise click.BadParameter('file must contain a JSON object of the backup schedule')
