@@ -51,6 +51,9 @@ GET /api/v1/locations
 GET /api/v1/networks/isolated
 GET /api/v1/networks/isolated/{network_id}
 GET /api/v1/project
+GET /api/v1/project/consumption
+GET /api/v1/project/consumption/daily
+GET /api/v1/project/consumption/resources
 GET /api/v1/servers
 GET /api/v1/servers/{server_id}
 GET /api/v1/servers/{server_id}/backup

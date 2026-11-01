@@ -1,3 +1,4 @@
+import datetime
 import json
 from typing import IO, Any, List, Optional, Sequence, Tuple, TypeVar, cast
 
@@ -47,6 +48,16 @@ _BACKUP_STATE_FIELD = 'enabled'
 _WEEKLY_FIELD = 'weekly'
 _WEEKDAY_FIELD = 'weekday'
 _WEEKDAYS = tuple(weekday.value for weekday in Weekday)
+
+_PERIOD_DATE = click.DateTime(formats=('%Y-%m-%d',))
+_PERIOD_FROM_HELP = (
+    'First day of the period, YYYY-MM-DD in the time zone of the partner, inclusive. '
+    + 'Defaults to the first day of the current month.'
+)
+_PERIOD_TO_HELP = (
+    'Last day of the period, YYYY-MM-DD in the time zone of the partner, inclusive. '
+    + 'Defaults to today.'
+)
 
 _ParsedId = TypeVar('_ParsedId')
 
@@ -142,6 +153,22 @@ def schedule_file_option(flag: str, dest: str, *, required: bool):
         callback=parse_backup_schedule,
         help=SCHEDULE_FILE_HELP,
     )
+
+
+def parse_date(_ctx, _click_param, day: Optional[datetime.datetime]) -> Optional[datetime.date]:
+    if day is None:
+        return None
+    return day.date()
+
+
+def period_options(func):
+    period_to = click.option(
+        '--to', 'period_to', type=_PERIOD_DATE, callback=parse_date, help=_PERIOD_TO_HELP,
+    )
+    period_from = click.option(
+        '--from', 'period_from', type=_PERIOD_DATE, callback=parse_date, help=_PERIOD_FROM_HELP,
+    )
+    return period_from(period_to(func))
 
 
 def _parsed(parsed_id: Optional[_ParsedId], hint: str) -> _ParsedId:

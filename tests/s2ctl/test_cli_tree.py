@@ -35,6 +35,13 @@ EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
     'vmware',
 })
 
+EXPECTED_PROJECT_COMMANDS = frozenset({
+    'consumption',
+    'consumption-daily',
+    'consumption-resources',
+    'show',
+})
+
 EXPECTED_AFFINITY_GROUP_COMMANDS = frozenset({
     'create',
     'delete',
@@ -212,6 +219,10 @@ def test_vmware_edge_group_commands_registered():
 
 def test_affinity_group_commands_registered():
     assert set(entry_point.commands['affinity-group'].commands) == EXPECTED_AFFINITY_GROUP_COMMANDS
+
+
+def test_project_group_commands_registered():
+    assert set(entry_point.commands['project'].commands) == EXPECTED_PROJECT_COMMANDS
 
 
 def test_help_lists_every_top_level_command():

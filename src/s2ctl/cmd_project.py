@@ -1,10 +1,13 @@
 import asyncio
+import datetime
+from typing import Optional
 
 import click
 
 from s2ctl.click import S2CTLCommand, echo, output_option
 from s2ctl.client import client_factory
 from s2ctl.entrypoint import entry_point
+from s2ctl.params import period_options
 from ssclient.project import ProjectService
 
 
@@ -25,3 +28,55 @@ def show(ctx):
     """Display project information whose API key is bound to the current context."""
     proj_service = _get_proj_serivce(ctx)
     echo(asyncio.run(proj_service.get()))
+
+
+@project.command(cls=S2CTLCommand)
+@output_option
+@period_options
+@click.pass_context
+def consumption(
+    ctx, period_from: Optional[datetime.date], period_to: Optional[datetime.date],
+):
+    """Display the spending of the project over a period broken down by service.
+
+    "is_final" is false while the period reaches today: the day is still being charged.
+    """
+    proj_service = _get_proj_serivce(ctx)
+    consumption_resp = proj_service.consumption(period_from, period_to)
+    echo(asyncio.run(consumption_resp))
+
+
+@project.command('consumption-resources', cls=S2CTLCommand)
+@output_option
+@period_options
+@click.option(
+    '--service',
+    help='Show only the resources of the service, the value of "service" in the output (vstack, vmware, …).',
+)
+@click.pass_context
+def consumption_resources(
+    ctx,
+    period_from: Optional[datetime.date],
+    period_to: Optional[datetime.date],
+    service: Optional[str],
+):
+    """Display the spending of the project over a period broken down by root resource.
+
+    "id" is present when the resource is addressable by the API, "name" when it is known.
+    """
+    proj_service = _get_proj_serivce(ctx)
+    consumption_resp = proj_service.consumption_resources(period_from, period_to, service)
+    echo(asyncio.run(consumption_resp))
+
+
+@project.command('consumption-daily', cls=S2CTLCommand)
+@output_option
+@period_options
+@click.pass_context
+def consumption_daily(
+    ctx, period_from: Optional[datetime.date], period_to: Optional[datetime.date],
+):
+    """Display the spending of the project over a period day by day, days without charges included."""
+    proj_service = _get_proj_serivce(ctx)
+    consumption_resp = proj_service.consumption_daily(period_from, period_to)
+    echo(asyncio.run(consumption_resp))
