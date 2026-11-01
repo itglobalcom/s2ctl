@@ -37,7 +37,7 @@ def show(ctx):
 def consumption(
     ctx, period_from: Optional[datetime.date], period_to: Optional[datetime.date],
 ):
-    """Display the spending of the project over a period broken down by service.
+    """Spending of the project by service over a period.
 
     "is_final" is false while the period reaches today: the day is still being charged.
     """
@@ -60,7 +60,7 @@ def consumption_resources(
     period_to: Optional[datetime.date],
     service: Optional[str],
 ):
-    """Display the spending of the project over a period broken down by root resource.
+    """Spending of the project by root resource over a period.
 
     "id" is present when the resource is addressable by the API, "name" when it is known.
     """
@@ -76,7 +76,7 @@ def consumption_resources(
 def consumption_daily(
     ctx, period_from: Optional[datetime.date], period_to: Optional[datetime.date],
 ):
-    """Display the spending of the project over a period day by day, days without charges included."""
+    """Spending of the project day by day over a period, days without charges included."""
     proj_service = _get_proj_serivce(ctx)
     consumption_resp = proj_service.consumption_daily(period_from, period_to)
     echo(asyncio.run(consumption_resp))
