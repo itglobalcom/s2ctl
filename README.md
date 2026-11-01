@@ -370,7 +370,7 @@ Options:
 | Group | What it manages |
 | --- | --- |
 | `context` | contexts — API keys of your projects, kept on this machine |
-| `project` | the project the current context points to |
+| `project` | the project the current context points to and its spending |
 | `locations`, `images`, `applications`, `backup-storages` | catalogues of the vStack service |
 | `server` | vStack servers with their volumes, network interfaces, snapshots, backups and tags |
 | `network` | vStack isolated networks |
@@ -406,6 +406,40 @@ Commands:
   network     Manage VMware networks.
   server      Manage VMware servers.
 ```
+
+### Spending of the project
+
+Three commands read what the project has been charged over a period: by service,
+by root resource and day by day. The period is `--from` and `--to`, both dates
+`YYYY-MM-DD` in the time zone of the partner and both inclusive; without them it
+runs from the first day of the current month to today. `--service` of
+`consumption-resources` keeps the resources of one service only, its value is
+the `service` printed by the commands:
+
+```
+>s2ctl project consumption-resources --from 2026-10-01 --to 2026-10-31 --service vstack
+from: '2026-10-01'
+to: '2026-10-31'
+time_zone: Europe/Moscow
+currency: RUB
+is_final: true
+total: 1250.5
+resources:
+- service: vstack
+  type: vstack_server
+  id: l1s12345
+  name: web-1
+  total: 1150.5
+- service: vstack
+  type: vstack_edge
+  name: edge-1
+  total: 100
+```
+
+`is_final` is `false` while the period reaches today: the current day is still
+being charged. `id` is printed when the resource can be addressed by the API —
+`l1s12345` above is the identifier `server get` takes — and `name` when the
+name is known; a resource without them has none, it does not get an empty value.
 
 ### Backups of vStack servers
 
@@ -650,7 +684,7 @@ nothing to single out.
 
 ## Public API coverage
 
-`s2ctl` covers **143 of the 159 operations** of the Public API — every section of
+`s2ctl` covers **146 of the 162 operations** of the Public API — every section of
 the contract except Kubernetes. The table below maps every covered operation to
 the command that performs it; the 16 operations left out are listed after it.
 
@@ -685,7 +719,7 @@ tests.
 
 ### Covered operations
 
-#### Project, catalogues and SSH keys — 9
+#### Project, catalogues and SSH keys — 12
 
 | Operation | Command |
 | --- | --- |
@@ -694,6 +728,9 @@ tests.
 | `GET /api/v1/images` | `s2ctl images` |
 | `GET /api/v1/locations` | `s2ctl locations` |
 | `GET /api/v1/project` | `s2ctl project show` |
+| `GET /api/v1/project/consumption` | `s2ctl project consumption` |
+| `GET /api/v1/project/consumption/resources` | `s2ctl project consumption-resources` |
+| `GET /api/v1/project/consumption/daily` | `s2ctl project consumption-daily` |
 | `GET /api/v1/ssh-keys` | `s2ctl ssh-key list` |
 | `POST /api/v1/ssh-keys` | `s2ctl ssh-key create` |
 | `GET /api/v1/ssh-keys/{ssh_key_id}` | `s2ctl ssh-key get` |
@@ -942,7 +979,7 @@ Not exercised against the live platform:
   is not available to it;
 - what was added after that run: `server shutdown` and `server reset`, `--wait`
   of the seven deletions that return a task, `--volume-name` of
-  `server edit-volume`, and the query filters of `affinity-group list` and
-  `applications`. All of them are covered by tests against the shape of the
+  `server edit-volume`, the query filters of `affinity-group list` and
+  `applications`, and the three `project consumption` commands. All of them are covered by tests against the shape of the
   request of the contract, none by a call to the live platform;
 - operations whose resources the project did not have at the time of the run.
