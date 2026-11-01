@@ -17,6 +17,8 @@ from s2ctl.entrypoint import entry_point
 
 CONTRACT_SNAPSHOT = pathlib.Path(__file__).with_name('contract_operations.txt')
 
+README = pathlib.Path(__file__).parents[2] / 'README.md'
+
 _REVISION_LINE = re.compile(r'^# publisher: cloudmng @ [0-9a-f]{40}$', re.MULTILINE)
 
 # Соответствие не один-к-одному: одна команда закрывает несколько операций
@@ -222,6 +224,12 @@ NON_CONTRACT_COMMANDS = frozenset({
 
 _KUBERNETES_MARKERS = ('k8s', 'kubernetes', 'cluster', 'node-group')
 
+_README_ROW = re.compile(r'^\| `(?P<operation>[A-Z]+ /[^`]+)` \| (?P<commands>.+) \|$', re.MULTILINE)
+
+_README_COMMAND = re.compile(r'`s2ctl (?P<command>[^`]+)`')
+
+_README_COUNT = re.compile(r'covers \*\*(?P<covered>\d+) of the (?P<total>\d+) operations\*\*')
+
 
 def _snapshot_operations() -> FrozenSet[str]:
     lines = CONTRACT_SNAPSHOT.read_text(encoding='utf-8').splitlines()
@@ -238,6 +246,15 @@ def _command_leaves(command: click.Command, path: Tuple[str, ...] = ()) -> Itera
             yield from _command_leaves(subcommand, path + (name,))
     else:
         yield ' '.join(path)
+
+
+def _readme_commands_by_operation() -> Dict[str, FrozenSet[str]]:
+    readme = README.read_text(encoding='utf-8')
+    covered = readme.split('### Covered operations', 1)[1].split('### Not covered', 1)[0]
+    return {
+        row['operation']: frozenset(_README_COMMAND.findall(row['commands']))
+        for row in _README_ROW.finditer(covered)
+    }
 
 
 def _cli_commands() -> frozenset:
@@ -290,3 +307,20 @@ def test_kubernetes_section_has_no_commands():
     ]
 
     assert kubernetes_commands == []
+
+
+def test_readme_table_is_the_table_of_the_test():
+    declared = {
+        operation: frozenset(commands)
+        for operation, commands in COMMANDS_BY_OPERATION.items()
+    }
+
+    assert _readme_commands_by_operation() == declared
+
+
+def test_readme_count_matches_the_snapshot():
+    count = _README_COUNT.search(README.read_text(encoding='utf-8'))
+
+    assert count is not None
+    assert int(count['covered']) == len(COMMANDS_BY_OPERATION)
+    assert int(count['total']) == len(_snapshot_operations())
