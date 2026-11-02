@@ -1,5 +1,5 @@
 # Снимок операций контракта public-api: метод и путь маршрута.
-# publisher: cloudmng @ ef1f9c52541eaf204cdb5bc806fe23026c415759
+# publisher: cloudmng @ f962aa916ba0828c9042235abef5038f9b63c435
 # снят: python tools/dump_contract_operations.py <cloudmng>
 # Ограничения маршрутизации (:int, :regex(...)) сняты.
 DELETE /api/v1/affinity-groups/{affinity_group_id}
@@ -28,6 +28,8 @@ DELETE /api/v1/vmware/servers/{server_id}
 DELETE /api/v1/vmware/servers/{server_id}/nics/{nic_id}
 DELETE /api/v1/vmware/servers/{server_id}/snapshot
 DELETE /api/v1/vmware/servers/{server_id}/volumes/{volume_id}
+GET /.well-known/oauth-protected-resource
+GET /.well-known/oauth-protected-resource/{**resourcePath}
 GET /api/v1/affinity-groups
 GET /api/v1/affinity-groups/{affinity_group_id}
 GET /api/v1/applications
@@ -54,6 +56,7 @@ GET /api/v1/project
 GET /api/v1/project/consumption
 GET /api/v1/project/consumption/daily
 GET /api/v1/project/consumption/resources
+GET /api/v1/project/services
 GET /api/v1/servers
 GET /api/v1/servers/{server_id}
 GET /api/v1/servers/{server_id}/backup
@@ -87,6 +90,7 @@ GET /api/v1/vmware/servers/{server_id}/nics
 GET /api/v1/vmware/servers/{server_id}/snapshot
 GET /api/v1/vmware/servers/{server_id}/volumes
 GET /api/v1/vmware/servers/{server_id}/volumes/{volume_id}
+GET /oauth/validate
 PATCH /api/v1/servers/{server_id}
 POST /api/v1/affinity-groups
 POST /api/v1/domains

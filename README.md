@@ -684,9 +684,10 @@ nothing to single out.
 
 ## Public API coverage
 
-`s2ctl` covers **146 of the 162 operations** of the Public API — every section of
-the contract except Kubernetes. The table below maps every covered operation to
-the command that performs it; the 16 operations left out are listed after it.
+`s2ctl` covers **146 of the 166 operations** of the Public API — every section of
+the contract except Kubernetes, the OAuth authorization routes and the list of
+project services. The table below maps every covered operation to the command
+that performs it; the 20 operations left out are listed after it.
 
 > Where the denominator comes from: the file `tests/s2ctl/contract_operations.txt`
 > is a snapshot of the routes declared by the controllers of the Public API —
@@ -944,6 +945,19 @@ partial support either — none of the 16 operations below has a command.
 | `DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}` |
 | `DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{**tag}` |
 | `POST /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}/ingress` |
+
+### Not covered: authorization and project services
+
+The OAuth routes are the authorization infrastructure of the Public API, not
+operations of a client on its project, so they have no command. A command for
+the list of project services comes with a separate task.
+
+| Operation |
+| --- |
+| `GET /.well-known/oauth-protected-resource` |
+| `GET /.well-known/oauth-protected-resource/{**resourcePath}` |
+| `GET /oauth/validate` |
+| `GET /api/v1/project/services` |
 
 ## Verification status
 

@@ -209,6 +209,21 @@ OPERATIONS_OUT_OF_SCOPE = frozenset({
     'PUT /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}',
 })
 
+# Маршруты авторизации OAuth — инфраструктура входа, а не операция клиента
+# над проектом: команды у них нет.
+AUTHORIZATION_OPERATIONS = frozenset({
+    'GET /.well-known/oauth-protected-resource',
+    'GET /.well-known/oauth-protected-resource/{**resourcePath}',
+    'GET /oauth/validate',
+})
+
+# Операции контракта, команда для которых заводится отдельной задачей.
+OPERATIONS_DEFERRED = frozenset({
+    'GET /api/v1/project/services',
+})
+
+OPERATIONS_WITHOUT_COMMAND = OPERATIONS_OUT_OF_SCOPE | AUTHORIZATION_OPERATIONS | OPERATIONS_DEFERRED
+
 # Команды, которые на операции контракта не мапятся: локальное состояние
 # (контексты и ключи проектов в keyring), установка автодополнения и сборка
 # ansible-инвентаря из уже прочитанных серверов.
@@ -276,11 +291,11 @@ def test_snapshot_names_the_revision_it_was_taken_from():
 
 
 def test_table_covers_the_whole_contract_surface():
-    declared = set(COMMANDS_BY_OPERATION) | OPERATIONS_OUT_OF_SCOPE
+    declared = set(COMMANDS_BY_OPERATION) | OPERATIONS_WITHOUT_COMMAND
 
     assert sorted(_snapshot_operations() - declared) == []
     assert sorted(declared - _snapshot_operations()) == []
-    assert not set(COMMANDS_BY_OPERATION) & OPERATIONS_OUT_OF_SCOPE
+    assert not set(COMMANDS_BY_OPERATION) & OPERATIONS_WITHOUT_COMMAND
 
 
 def test_every_operation_in_scope_is_reachable_by_command():
