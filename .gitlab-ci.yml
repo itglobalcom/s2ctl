@@ -62,6 +62,10 @@ flake8:
 pyright:
   extends: .poetry_env
   stage: test
+  variables:
+    # pyright ставит node через nodeenv; без версии nodeenv берёт последнюю
+    # сборку с nodejs.org и падает на номерах вида 27.0.0-alpha
+    PYRIGHT_PYTHON_NODE_VERSION: "22.12.0"
   script:
     - make pyright
 
