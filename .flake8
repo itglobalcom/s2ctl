@@ -20,7 +20,9 @@ ignore =
 # число членов задано словарём контракта, а не сложностью кода.
 # WPS202 в `ssclient/server/backup_entities.py`: по `TypedDict` на каждый объект раздела бэкапа
 # контракта; в `ssclient/errors.py` — по классу на каждый исход клиентского слоя.
-# WPS214 в `ssclient/server/backup.py`: число методов задано составом операций раздела бэкапа контракта.
+# WPS202 в `ssclient/llm/entities.py`: по `TypedDict` на каждый объект раздела LLM контракта.
+# WPS214 в `ssclient/server/backup.py` и `ssclient/llm/access_key.py`: число методов задано составом
+# операций раздела контракта.
 # `tools/dump_contract_operations.py` — построчный разбор исходников publisher'а
 # регулярными выражениями: число членов модуля (WPS202) и локальных переменных (WPS210),
 # сложность строки (WPS221), повтор литерала (WPS226), сборка регулярного выражения
@@ -33,6 +35,7 @@ per-file-ignores =
     src/s2ctl/cmd_ansible.py: WPS463
     src/s2ctl/cmd_domain.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/s2ctl/cmd_gateway.py: WPS202, WPS204, WPS216, WPS226, WPS463
+    src/s2ctl/cmd_llm.py: WPS202, WPS204, WPS211, WPS216, WPS226
     src/s2ctl/cmd_metainfo.py: WPS216
     src/s2ctl/cmd_network.py: WPS202, WPS211, WPS216, WPS226
     src/s2ctl/params.py: WPS202
@@ -42,6 +45,8 @@ per-file-ignores =
     src/s2ctl/cmd_vmware_server.py: WPS202, WPS204, WPS211, WPS216, WPS226, WPS463
     src/ssclient/domain/record_entities.py: WPS202
     src/ssclient/errors.py: WPS202
+    src/ssclient/llm/access_key.py: WPS214
+    src/ssclient/llm/entities.py: WPS202
     src/ssclient/server/backup.py: WPS214
     src/ssclient/server/backup_entities.py: WPS202
     tools/dump_contract_operations.py: WPS202, WPS210, WPS221, WPS226, WPS336, WPS342, WPS407, WPS529

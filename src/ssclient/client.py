@@ -1,6 +1,7 @@
 from ssclient.affinity_group import AffinityGroupService
 from ssclient.domain.domain import DomainService
 from ssclient.gateway.gateway import GatewayService
+from ssclient.llm.llm import LlmService
 from ssclient.metainfo import ApplicationsService, BackupStoragesService, ImagesService, LocationsService
 from ssclient.network.network import NetworkService
 from ssclient.ports import HttpClientPort
@@ -53,3 +54,6 @@ class SSClient(object):  # noqa: WPS214
 
     def vmware(self) -> VmwareService:
         return VmwareService(self._http_client)
+
+    def llm(self) -> LlmService:
+        return LlmService(self._http_client)
