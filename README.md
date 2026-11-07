@@ -377,6 +377,7 @@ Options:
 | `gateway` | vStack edge gateways connecting isolated networks to the Internet |
 | `affinity-group` | vStack affinity and anti-affinity groups of servers |
 | `vmware` | VMware Cloud: catalogues and the `network`, `edge` and `server` subgroups |
+| `llm` | LLM service: connection, groups and access keys, catalogue of models, package, spending and the log of requests |
 | `domain` | DNS domains and their records |
 | `ssh-key` | SSH keys injected into new Linux servers |
 | `task` | state of a long-running operation |
@@ -586,6 +587,55 @@ previous value, and the bandwidth has to be written with
 `vmware network set-bandwidth`, which sends it through
 `PUT /api/v1/vmware/networks/{network_id}`.
 
+### LLM service
+
+The `llm` group follows the LLM section of the Public API: the connection of the
+service, groups of access keys with the models available to them, the access
+keys themselves, the catalogue of models, the current package of credits with the
+plans on offer, the spending over a period and the log of requests. Ids of groups,
+keys and models are plain integers; a key is addressed by the id of its group and
+its own id:
+
+```
+>s2ctl llm connect --group-name main --first-key-name ci --wait
+>s2ctl llm model list --output json
+>s2ctl llm group set-models 12 --model 3 --model 5 --wait
+>s2ctl llm key issue 12 --name backend --wait
+>s2ctl llm key secret 12 345
+>s2ctl llm usage --from 2026-10-01 --to 2026-10-31 --group-by model
+```
+
+Before the service is connected, `llm connection` prints the state
+`not_connected`, the lists of groups, keys and models are empty, and every change
+except `llm connect` is refused with `ServiceNotConnected`. A group and a key that
+are being created are listed with the `task_id` of their task and without an id.
+
+`llm key secret` reveals the secret of a key once: a repeated call is refused with
+`AccessKeySecretAlreadyRevealed`, so save it as soon as it is printed. A key moved
+from the previous version of the service has no secret stored.
+
+`llm group set-models` and the two `set-tags` commands replace the whole set:
+the models or tags left out are revoked, and a call with none clears the set. Tags
+are applied at once, without a task, so these two commands print nothing and take
+no `--wait`. `llm group disable` cannot be undone: a disabled group stays in the
+lists in state `disabled`. `llm key delete` always answers with a task.
+
+`llm usage` requires both `--from` and `--to`, inclusive, at most 366 days apart;
+`--group-by` splits the totals into rows by `day`, `model`, `group` or
+`access_key`, and `--group`, `--key` and `--model` narrow the spending down.
+
+An application of the vStack catalogue is installed on a new server by
+`server create --application`; its parameters are given by
+`--application-parameter APPLICATION:NAME=VALUE`, and `--application-llm-key`
+issues a platform LLM key to an application whose `llm_key_enabled` is set in the
+`applications` catalogue:
+
+```
+>s2ctl server create --name bot --location am2 --image ubuntu-22-04 --cpu 2 --ram 4G \
+    --volume 40G --public-network 100 --application n8n \
+    --application-parameter n8n:domain=bot.example.com --application-llm-key n8n --wait
+```
+
 ### Rule sets
 
 Firewall and NAT of a vStack gateway are replaced as a whole set, not rule by
@@ -684,7 +734,7 @@ nothing to single out.
 
 ## Public API coverage
 
-`s2ctl` covers **146 of the 166 operations** of the Public API — every section of
+`s2ctl` covers **169 of the 189 operations** of the Public API — every section of
 the contract except Kubernetes, the OAuth authorization routes and the list of
 project services. The table below maps every covered operation to the command
 that performs it; the 20 operations left out are listed after it.
@@ -702,7 +752,7 @@ that performs it; the 20 operations left out are listed after it.
 
 The mapping is not one-to-one:
 
-- `task get` reads a task of any service, so a single command covers all four
+- `task get` reads a task of any service, so a single command covers all five
   shapes of a task identifier;
 - `PUT /api/v1/vmware/networks/{network_id}` changes both the name and the
   bandwidth of a network, so it is split into `vmware network rename` and
@@ -737,12 +787,13 @@ tests.
 | `GET /api/v1/ssh-keys/{ssh_key_id}` | `s2ctl ssh-key get` |
 | `DELETE /api/v1/ssh-keys/{ssh_key_id}` | `s2ctl ssh-key delete` |
 
-#### Tasks — 4
+#### Tasks — 5
 
 | Operation | Command |
 | --- | --- |
 | `GET /api/v1/tasks/already_completed_task` | `s2ctl task get` |
 | `GET /api/v1/tasks/dns{task_id}` | `s2ctl task get` |
+| `GET /api/v1/tasks/llm{task_id}` | `s2ctl task get` |
 | `GET /api/v1/tasks/vmw{task_id}` | `s2ctl task get` |
 | `GET /api/v1/tasks/{task_id}` | `s2ctl task get` |
 
@@ -921,6 +972,33 @@ tests.
 | `PUT /api/v1/vmware/servers/{server_id}/volumes/{volume_id}` | `s2ctl vmware server edit-volume` |
 | `DELETE /api/v1/vmware/servers/{server_id}/volumes/{volume_id}` | `s2ctl vmware server delete-volume` |
 
+#### LLM — 22
+
+| Operation | Command |
+| --- | --- |
+| `GET /api/v1/llm/connection` | `s2ctl llm connection` |
+| `POST /api/v1/llm/connection` | `s2ctl llm connect` |
+| `GET /api/v1/llm/groups` | `s2ctl llm group list` |
+| `POST /api/v1/llm/groups` | `s2ctl llm group create` |
+| `GET /api/v1/llm/groups/{group_id}` | `s2ctl llm group get` |
+| `PUT /api/v1/llm/groups/{group_id}/models` | `s2ctl llm group set-models` |
+| `PUT /api/v1/llm/groups/{group_id}/tags` | `s2ctl llm group set-tags` |
+| `POST /api/v1/llm/groups/{group_id}/disable` | `s2ctl llm group disable` |
+| `GET /api/v1/llm/access-keys` | `s2ctl llm key list` |
+| `POST /api/v1/llm/groups/{group_id}/access-keys` | `s2ctl llm key issue` |
+| `GET /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}` | `s2ctl llm key get` |
+| `DELETE /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}` | `s2ctl llm key delete` |
+| `POST /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/secret` | `s2ctl llm key secret` |
+| `POST /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/lock` | `s2ctl llm key lock` |
+| `POST /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/unlock` | `s2ctl llm key unlock` |
+| `PUT /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/tags` | `s2ctl llm key set-tags` |
+| `GET /api/v1/llm/models` | `s2ctl llm model list` |
+| `GET /api/v1/llm/models/{model_id}` | `s2ctl llm model get` |
+| `GET /api/v1/llm/package` | `s2ctl llm package get` |
+| `GET /api/v1/llm/package-plans` | `s2ctl llm package plans` |
+| `GET /api/v1/llm/usage` | `s2ctl llm usage` |
+| `GET /api/v1/llm/requests` | `s2ctl llm requests` |
+
 ### Not covered: Kubernetes
 
 Kubernetes clusters are not managed by `s2ctl`. The section is absent from the
@@ -994,6 +1072,7 @@ Not exercised against the live platform:
 - what was added after that run: `server shutdown` and `server reset`, `--wait`
   of the seven deletions that return a task, `--volume-name` of
   `server edit-volume`, the query filters of `affinity-group list` and
-  `applications`, and the three `project consumption` commands. All of them are covered by tests against the shape of the
+  `applications`, the three `project consumption` commands, the `llm` group and
+  the applications of `server create`. All of them are covered by tests against the shape of the
   request of the contract, none by a call to the live platform;
 - operations whose resources the project did not have at the time of the run.
