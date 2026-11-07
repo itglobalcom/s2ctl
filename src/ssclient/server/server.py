@@ -1,5 +1,5 @@
-from dataclasses import asdict, dataclass
-from typing import Iterable, List, Optional, TypedDict, Union
+from dataclasses import asdict, dataclass, field
+from typing import Iterable, List, Mapping, Optional, Sequence, TypedDict, Union
 
 from ssclient.base import BaseService, Payload, TaskIDWrap, with_return_task
 from ssclient.server.backup import BackupScheduleEntity, BackupService
@@ -53,6 +53,24 @@ class VolumeCreationData(object):
     size_mb: int
 
 
+@dataclass(frozen=True)
+class ServerApplication(object):
+    """Приложение каталога, устанавливаемое на заказываемый сервер."""
+
+    application_id: str
+    parameter_values: Mapping[str, str] = field(default_factory=dict)
+    issue_llm_key: bool = False
+
+    def payload(self) -> Payload:
+        application_payload: Payload = {
+            'id': self.application_id,
+            'issue_llm_key': self.issue_llm_key,
+        }
+        if self.parameter_values:
+            application_payload['parameters'] = dict(self.parameter_values)
+        return application_payload
+
+
 # WPS214: число методов задано составом операций раздела контракта,
 # а не сложностью класса.
 class BaseServerService(BaseService):  # noqa: WPS214
@@ -70,6 +88,7 @@ class BaseServerService(BaseService):  # noqa: WPS214
         networks: Iterable[int],
         ssh_key_ids: List[int],
         backup: Optional[BackupScheduleEntity] = None,
+        applications: Sequence[ServerApplication] = (),
         wait: bool = False,
     ) -> Union[TaskIDWrap, ServerEntity]:
         payload: Payload = {
@@ -84,6 +103,8 @@ class BaseServerService(BaseService):  # noqa: WPS214
         }
         if backup is not None:
             payload['backup'] = backup
+        if applications:
+            payload['applications'] = [application.payload() for application in applications]
         task_wrap: TaskIDWrap = await self._http_client.post(path=self.path, payload=payload)
         if wait:
             task = await self._wait_task_completion(self._task_id(task_wrap))

@@ -1,6 +1,6 @@
 import asyncio
 import string
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 import click
 from click.core import Context
@@ -12,7 +12,7 @@ from s2ctl.formatters import general_fields_sort
 from s2ctl.params import parse_network_id, parse_server_id, schedule_file_option
 from ssclient.network.network_id import NetworkId
 from ssclient.server.backup_entities import BackupScheduleEntity
-from ssclient.server.server import ServerService, VolumeCreationData
+from ssclient.server.server import ServerApplication, ServerService, VolumeCreationData
 from ssclient.server.server_id import SERVER_ID_TEMPLATE, ServerId
 
 SERVER_ID_ARG = 'server-id'
@@ -20,6 +20,11 @@ SERVER_ID_ARG = 'server-id'
 _SCHEDULE_FILE_FLAG = '--schedule-file'
 _SCHEDULE_DEST = 'schedule'
 _RESTORE_POINT_ID_HELP = 'Restore point identifier (see "list-restore-point").'
+_APPLICATION_PARAMETER_HINT = (
+    'application parameter format: APPLICATION:NAME=VALUE, e.g. "wordpress:admin_email=me@example.com"'
+)
+
+ApplicationParameter = Tuple[str, str, str]
 
 _GROUP_HELP = (
     'Manage virtual servers inside your project.'
@@ -87,6 +92,52 @@ class SizeType(click.types.ParamType[int]):
         return size
 
 
+def _parse_application_parameters(
+    _ctx, _click_param, raw_parameters: Sequence[str],
+) -> Tuple[ApplicationParameter, ...]:
+    return tuple(_parse_application_parameter(raw_parameter) for raw_parameter in raw_parameters)
+
+
+def _parse_application_parameter(raw_parameter: str) -> ApplicationParameter:
+    application_id, _, assignment = raw_parameter.partition(':')
+    name, separator, parameter_value = assignment.partition('=')
+    if not application_id or not name or not separator:
+        raise click.BadParameter(_APPLICATION_PARAMETER_HINT)
+    return application_id, name, parameter_value
+
+
+def _server_applications(
+    application_ids: Sequence[str],
+    application_parameters: Sequence[ApplicationParameter],
+    llm_key_applications: Sequence[str],
+) -> Tuple[ServerApplication, ...]:
+    """Приложения заказа: параметры и выдача ключа LLM — только у приложений из `--application`."""
+    ordered_ids = tuple(dict.fromkeys(application_ids))
+    if len(ordered_ids) != len(application_ids):
+        raise click.UsageError('--application names the same application more than once')
+    _check_ordered(ordered_ids, {parameter[0] for parameter in application_parameters} | set(llm_key_applications))
+    return tuple(
+        ServerApplication(
+            application_id=application_id,
+            parameter_values={
+                name: parameter_value
+                for owner_id, name, parameter_value in application_parameters
+                if owner_id == application_id
+            },
+            issue_llm_key=application_id in llm_key_applications,
+        )
+        for application_id in ordered_ids
+    )
+
+
+def _check_ordered(ordered_ids: Sequence[str], referenced_ids: Set[str]) -> None:
+    not_ordered = sorted(referenced_ids - set(ordered_ids))
+    if not_ordered:
+        raise click.UsageError(
+            'applications not given by --application: {names}'.format(names=', '.join(not_ordered)),
+        )
+
+
 def _get_server_serivce(ctx: Context) -> ServerService:
     return client_factory(ctx).servers()
 
@@ -138,6 +189,28 @@ def server():
     help='Identifier of a SSH key which you want to use to access a server (see "ssh-key" command). May be multiple.',
 )
 @schedule_file_option('--backup-schedule-file', 'backup', required=False)
+@click.option(
+    '--application',
+    'application_ids',
+    multiple=True,
+    help='Application to install on the server, by its id as printed by "applications". May be multiple.',
+)
+@click.option(
+    '--application-parameter',
+    'application_parameters',
+    multiple=True,
+    callback=_parse_application_parameters,
+    help='Value of a parameter of an application given by --application, in the form '
+    + 'APPLICATION:NAME=VALUE. May be multiple. The parameters of an application and whether '
+    + 'each of them is required are printed by "applications".',
+)
+@click.option(
+    '--application-llm-key',
+    'llm_key_applications',
+    multiple=True,
+    help='Application given by --application to issue a platform LLM key to; allowed for an '
+    + 'application with "llm_key_enabled" in "applications". May be multiple.',
+)
 @click.pass_context
 def create(
     ctx,
@@ -150,9 +223,13 @@ def create(
     public_networks: Sequence[int],
     ssh_key_ids: List[int],
     backup: Optional[BackupScheduleEntity],
+    application_ids: Sequence[str],
+    application_parameters: Sequence[ApplicationParameter],
+    llm_key_applications: Sequence[str],
     wait: bool,
 ):
     """Create new virtual server, with the backup service enabled when a backup schedule is given."""
+    applications = _server_applications(application_ids, application_parameters, llm_key_applications)
     server_service = _get_server_serivce(ctx)
     service_resp = asyncio.run(
         server_service.create(
@@ -165,6 +242,7 @@ def create(
             networks=public_networks,
             ssh_key_ids=ssh_key_ids,
             backup=backup,
+            applications=applications,
             wait=wait,
         ),
     )
