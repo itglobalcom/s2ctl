@@ -21,6 +21,7 @@ TASK_ID_FORMATS: Tuple[TaskIdFormat, ...] = (
     TaskIdFormat('vstack', 'l<location>t<id>', re.compile(r'^l\d*t\d+$')),
     TaskIdFormat('dns', 'dns<id>', re.compile(r'^dns\d+$')),
     TaskIdFormat('vmware', 'vmw<id>', re.compile(r'^vmw\d+$')),
+    TaskIdFormat('llm', 'llm<id>', re.compile(r'^llm\d+$')),
     TaskIdFormat(
         'vstack',
         'already_completed_task',

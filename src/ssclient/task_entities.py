@@ -29,6 +29,8 @@ class TaskResourceType(Enum):
     record = 'record'
     ptr = 'ptr'
     cluster = 'cluster'
+    llm_group = 'llm_group'
+    llm_access_key = 'llm_access_key'
 
 
 class TaskResourceEntity(TypedDict):
