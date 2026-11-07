@@ -12,6 +12,7 @@ SUPPORTED_IDS = (
     ('lt345', False),
     ('dns42', False),
     ('vmw7', False),
+    ('llm12', False),
     ('already_completed_task', True),
 )
 
@@ -24,6 +25,9 @@ UNSUPPORTED_IDS = (
     'l2t',
     'dns',
     'vmw1x',
+    'llm',
+    'llm1x',
+    'llml2t3',
     'already_completed_task2',
     'garbage',
     '',

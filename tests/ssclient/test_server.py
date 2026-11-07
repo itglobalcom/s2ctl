@@ -2,7 +2,7 @@ import pytest
 
 from ssclient.network.network_id import NetworkId
 from ssclient.server.nic import NicService
-from ssclient.server.server import ServerService, VolumeCreationData
+from ssclient.server.server import ServerApplication, ServerService, VolumeCreationData
 from ssclient.server.server_id import ServerId
 from ssclient.task_entities import TaskState
 from tests.conftest import FakeHttpClient, FakeRequest, task_response
@@ -64,6 +64,39 @@ async def test_create_sends_the_backup_block_only_when_given(fake_http_client, b
         networks=[100],
         ssh_key_ids=[],
         backup=backup,
+    )
+
+    assert fake_http_client.requests == [FakeRequest('POST', 'api/v1/servers', expected_payload)]
+
+
+# Приложения уходят массивом в порядке заказа; `parameters` — только у приложения,
+# которому их задали, а пустой набор приложений не отправляется вовсе.
+@pytest.mark.parametrize(('applications', 'expected_payload'), [
+    ((), _ORDER),
+    (
+        (
+            ServerApplication('wordpress', {'admin_email': 'me@example.com'}),
+            ServerApplication('bot', issue_llm_key=True),
+        ),
+        dict(_ORDER, applications=[
+            {'id': 'wordpress', 'issue_llm_key': False, 'parameters': {'admin_email': 'me@example.com'}},
+            {'id': 'bot', 'issue_llm_key': True},
+        ]),
+    ),
+])
+async def test_create_sends_the_applications_only_when_given(fake_http_client, applications, expected_payload):
+    fake_http_client.on('POST', 'api/v1/servers', {'task_id': 'l2t345'})
+
+    await ServerService(fake_http_client).create(
+        name='srv',
+        location_id='l2',
+        image_id='img',
+        cpu=1,
+        ram_mb=1024,
+        volumes=[VolumeCreationData('boot', 10240)],
+        networks=[100],
+        ssh_key_ids=[],
+        applications=applications,
     )
 
     assert fake_http_client.requests == [FakeRequest('POST', 'api/v1/servers', expected_payload)]

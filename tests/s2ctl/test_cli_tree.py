@@ -1,3 +1,4 @@
+import datetime
 import json
 import pathlib
 import sys
@@ -26,6 +27,7 @@ EXPECTED_TOP_LEVEL_COMMANDS = frozenset({
     'gateway',
     'images',
     'install-autocomplete',
+    'llm',
     'locations',
     'network',
     'project',
@@ -112,6 +114,24 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'shutdown',
 })
 
+
+EXPECTED_LLM_COMMANDS = frozenset({
+    'connect',
+    'connection',
+    'group',
+    'key',
+    'model',
+    'package',
+    'requests',
+    'usage',
+})
+
+EXPECTED_LLM_SUBGROUP_COMMANDS = types.MappingProxyType({
+    'group': frozenset({'create', 'disable', 'get', 'list', 'set-models', 'set-tags'}),
+    'key': frozenset({'delete', 'get', 'issue', 'list', 'lock', 'secret', 'set-tags', 'unlock'}),
+    'model': frozenset({'get', 'list'}),
+    'package': frozenset({'get', 'plans'}),
+})
 
 EXPECTED_VMWARE_COMMANDS = frozenset({
     'edge',
@@ -225,6 +245,17 @@ def test_project_group_commands_registered():
     assert set(entry_point.commands['project'].commands) == EXPECTED_PROJECT_COMMANDS
 
 
+def test_llm_group_commands_registered():
+    assert set(entry_point.commands['llm'].commands) == EXPECTED_LLM_COMMANDS
+
+
+@pytest.mark.parametrize('subgroup,expected_commands', EXPECTED_LLM_SUBGROUP_COMMANDS.items())
+def test_llm_subgroup_commands_registered(subgroup, expected_commands):
+    llm_group = entry_point.commands['llm']
+
+    assert set(llm_group.commands[subgroup].commands) == expected_commands
+
+
 def test_help_lists_every_top_level_command():
     runner = CliRunner()
 
@@ -268,10 +299,12 @@ _EXTRA_ARGS = types.MappingProxyType({
 # ответ этих операций — тело самой сущности, а заглушка отвечает ссылкой на задачу
 # на любую мутацию, поэтому ссылку от сущности здесь не отличить;
 # `ansible get-inventory` операции контракта не соответствует вовсе — он собирает
-# инвентарь из уже прочитанных серверов, и собирать его заглушке не из чего.
+# инвентарь из уже прочитанных серверов, и собирать его заглушке не из чего;
+# `llm key secret` печатает тело ответа целиком, и ссылку заглушки он печатает как секрет.
 _STUB_BLIND_COMMANDS = frozenset({
     'ansible get-inventory',
     'gateway add-tag',
+    'llm key secret',
     'network add-tag',
     'server add-tag',
     'server price',
@@ -337,6 +370,10 @@ _FILE_BY_PARSER = types.MappingProxyType({
 })
 
 
+# Дата обязательного параметра-даты: строку команда разбирает форматом самого параметра.
+_DATE_OF_ANY_FORMAT = datetime.date(2026, 1, 1)
+
+
 def _argument_value(param, files_dir: pathlib.Path) -> str:
     if param.callback in _ID_BY_PARSER:
         return _ID_BY_PARSER[param.callback]
@@ -344,6 +381,8 @@ def _argument_value(param, files_dir: pathlib.Path) -> str:
         return param.type.choices[0]
     if isinstance(param.type, click.File):
         return str(files_dir / _FILE_BY_PARSER[param.callback][0])
+    if isinstance(param.type, click.DateTime):
+        return _DATE_OF_ANY_FORMAT.strftime(param.type.formats[0])
     return '1'
 
 

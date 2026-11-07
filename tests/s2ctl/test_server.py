@@ -225,3 +225,65 @@ def test_malformed_server_id_is_reported_as_bad_parameter(cli_config):
     # Разбор id падает до запроса: пользователь видит формат id, а не отказ API.
     assert SERVER_ID_TEMPLATE in result.output
     assert result.exc_info[0] is SystemExit
+
+
+_CREATE_ARGS = (
+    'create',
+    '--name', 'bot',
+    '--location', 'am2',
+    '--image', 'img',
+    '--cpu', '2',
+    '--ram', '4G',
+    '--volume', '10G',
+    '--public-network', '100',
+)
+
+
+def test_create_sends_the_applications_in_the_order_of_application_options(cli_http_client):
+    cli_http_client.on('POST', SERVERS_PATH, {'task_id': 'l1t9'})
+
+    result = _invoke(
+        *_CREATE_ARGS,
+        '--application', 'wordpress',
+        '--application', 'bot',
+        '--application-parameter', 'wordpress:admin_email=me@example.com',
+        '--application-parameter', 'bot:token=a=b',
+        '--application-llm-key', 'bot',
+    )
+
+    assert result.exit_code == 0, result.output
+    # Значение режется по первому `=`: остальные `=` — часть значения параметра.
+    assert cli_http_client.requests[0].payload['applications'] == [
+        {'id': 'wordpress', 'issue_llm_key': False, 'parameters': {'admin_email': 'me@example.com'}},
+        {'id': 'bot', 'issue_llm_key': True, 'parameters': {'token': 'a=b'}},
+    ]
+
+
+def test_create_without_applications_sends_no_applications(cli_http_client):
+    cli_http_client.on('POST', SERVERS_PATH, {'task_id': 'l1t9'})
+
+    result = _invoke(*_CREATE_ARGS)
+
+    assert result.exit_code == 0, result.output
+    assert 'applications' not in cli_http_client.requests[0].payload
+
+
+# Неверный набор приложений отсекается до запроса: параметр или ключ LLM без приложения
+# в заказе publisher отверг бы, а повтор приложения неоднозначен по параметрам.
+_REFUSED_APPLICATIONS = (
+    (('--application', 'bot', '--application', 'bot'), '--application'),
+    (('--application', 'bot', '--application-parameter', 'wordpress:admin_email=x'), 'wordpress'),
+    (('--application', 'bot', '--application-llm-key', 'wordpress'), 'wordpress'),
+    (('--application', 'bot', '--application-parameter', 'bot:token'), 'APPLICATION:NAME=VALUE'),
+    (('--application', 'bot', '--application-parameter', 'bot:=x'), 'APPLICATION:NAME=VALUE'),
+    (('--application', 'bot', '--application-parameter', ':token=x'), 'APPLICATION:NAME=VALUE'),
+)
+
+
+@pytest.mark.parametrize('application_args,reported', _REFUSED_APPLICATIONS)
+def test_create_refuses_applications_out_of_the_order(cli_http_client, application_args, reported):
+    result = _invoke(*_CREATE_ARGS, *application_args)
+
+    assert result.exit_code == _USAGE_ERROR_EXIT_CODE
+    assert reported in result.output
+    assert cli_http_client.requests == []

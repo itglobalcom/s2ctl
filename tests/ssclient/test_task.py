@@ -24,7 +24,7 @@ GROWING_POLL_INTERVALS = [1, 2, 4, 8, 15, 15]
 LONGEST_MEASURED_OPERATION_SECS = 296
 MEASURED_OPERATION_MARGIN = 1.5
 
-TASK_IDS_OF_EVERY_FORMAT = ('l2t345', 'lt345', 'dns42', 'vmw7')
+TASK_IDS_OF_EVERY_FORMAT = ('l2t345', 'lt345', 'dns42', 'vmw7', 'llm12')
 
 
 class _TaskWaiter(BaseService):
