@@ -1,5 +1,5 @@
 # Снимок операций контракта public-api: метод и путь маршрута.
-# publisher: cloudmng @ f962aa916ba0828c9042235abef5038f9b63c435
+# publisher: cloudmng @ b4756abe463c79e42d04a5a777f150f56578d63b
 # снят: python tools/dump_contract_operations.py <cloudmng>
 # Ограничения маршрутизации (:int, :regex(...)) сняты.
 DELETE /api/v1/affinity-groups/{affinity_group_id}
@@ -11,6 +11,7 @@ DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{**tag}
 DELETE /api/v1/k8s_clusters/{cluster_id}
 DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}
 DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{**tag}
+DELETE /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}
 DELETE /api/v1/networks/isolated/{network_id}
 DELETE /api/v1/networks/isolated/{network_id}/tags/{**tag}
 DELETE /api/v1/servers/{server_id}
@@ -49,6 +50,17 @@ GET /api/v1/k8s_clusters/{cluster_id}/k8s_versions
 GET /api/v1/k8s_clusters/{cluster_id}/node_groups
 GET /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}
 GET /api/v1/k8s_versions
+GET /api/v1/llm/access-keys
+GET /api/v1/llm/connection
+GET /api/v1/llm/groups
+GET /api/v1/llm/groups/{group_id}
+GET /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}
+GET /api/v1/llm/models
+GET /api/v1/llm/models/{model_id}
+GET /api/v1/llm/package
+GET /api/v1/llm/package-plans
+GET /api/v1/llm/requests
+GET /api/v1/llm/usage
 GET /api/v1/locations
 GET /api/v1/networks/isolated
 GET /api/v1/networks/isolated/{network_id}
@@ -73,6 +85,7 @@ GET /api/v1/ssh-keys/{ssh_key_id}
 GET /api/v1/tasks/already_completed_task
 GET /api/v1/tasks/dns{task_id}
 GET /api/v1/tasks/k8s_{task_id}
+GET /api/v1/tasks/llm{task_id}
 GET /api/v1/tasks/vmw{task_id}
 GET /api/v1/tasks/{task_id}
 GET /api/v1/vmware/gpu-models
@@ -105,6 +118,13 @@ POST /api/v1/k8s_clusters
 POST /api/v1/k8s_clusters/{cluster_id}/node_groups
 POST /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}/ingress
 POST /api/v1/k8s_clusters/{cluster_id}/tags
+POST /api/v1/llm/connection
+POST /api/v1/llm/groups
+POST /api/v1/llm/groups/{group_id}/access-keys
+POST /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/lock
+POST /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/secret
+POST /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/unlock
+POST /api/v1/llm/groups/{group_id}/disable
 POST /api/v1/networks/isolated
 POST /api/v1/networks/isolated/{network_id}/tags
 POST /api/v1/servers
@@ -153,6 +173,9 @@ PUT /api/v1/gateways/l{location_id}e{gateway_id}/firewall
 PUT /api/v1/gateways/l{location_id}e{gateway_id}/nat
 PUT /api/v1/k8s_clusters/{cluster_id}
 PUT /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}
+PUT /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/tags
+PUT /api/v1/llm/groups/{group_id}/models
+PUT /api/v1/llm/groups/{group_id}/tags
 PUT /api/v1/networks/isolated/{network_id}
 PUT /api/v1/servers/{server_id}
 PUT /api/v1/servers/{server_id}/backup
