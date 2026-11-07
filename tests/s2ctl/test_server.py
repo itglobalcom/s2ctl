@@ -247,15 +247,15 @@ def test_create_sends_the_applications_in_the_order_of_application_options(cli_h
         '--application', 'wordpress',
         '--application', 'bot',
         '--application-parameter', 'wordpress:admin_email=me@example.com',
-        '--application-parameter', 'bot:token=a=b',
+        '--application-parameter', 'bot:webhook=https://h:8443/?a=b',
         '--application-llm-key', 'bot',
     )
 
     assert result.exit_code == 0, result.output
-    # Значение режется по первому `=`: остальные `=` — часть значения параметра.
+    # Приложение режется по первому `:`, имя — по первому `=`: остальные `:` и `=` — часть значения.
     assert cli_http_client.requests[0].payload['applications'] == [
         {'id': 'wordpress', 'issue_llm_key': False, 'parameters': {'admin_email': 'me@example.com'}},
-        {'id': 'bot', 'issue_llm_key': True, 'parameters': {'token': 'a=b'}},
+        {'id': 'bot', 'issue_llm_key': True, 'parameters': {'webhook': 'https://h:8443/?a=b'}},
     ]
 
 
