@@ -44,6 +44,8 @@ GROUP = {
     'created_at': '2026-11-01T10:00:00Z',
 }
 
+GROUP_SUSPENDED = dict(GROUP, id=6, state='suspended_by_project_quota')
+
 GROUP_DETAILS = dict(
     GROUP,
     deployment_state='deployed',
@@ -67,6 +69,8 @@ ACCESS_KEY = {
     'created_at': '2026-11-01T10:00:00Z',
 }
 
+ACCESS_KEY_SUSPENDED = dict(ACCESS_KEY, id=18, state='suspended_by_project_quota')
+
 MODEL = {
     'id': 3,
     'tech_title': 'qwen3',
@@ -87,27 +91,77 @@ MODEL_CATALOG = {'models': [MODEL]}
 
 MODEL_DETAILS = dict(MODEL, default_provider='local', prices=[], providers=[])
 
+# Текущий пакет в режиме денег: цена, скидка и валюта есть; выбор при исчерпании и лимит
+# у пакета и повтором на верхнем уровне.
 CURRENT_PACKAGE = {
+    'package': {
+        'id': 7,
+        'tech_title': 'start',
+        'volume_credits': 1000,
+        'discount_percent': 5,
+        'price': 950,
+        'period_from': '2026-11-01T00:00:00Z',
+        'period_to': '2026-12-01T00:00:00Z',
+        'auto_renew': True,
+        'exhausted_package_mode': 'continue_pay_as_you_go',
+        'pay_as_you_go_limit_credits': 300,
+        'state': 'active',
+    },
     'usage': {
         'period_from': '2026-11-01',
         'period_to': '2026-12-01',
         'total_credits': 0,
+        'package_volume_credits': 1000,
         'in_package_credits': 0,
         'over_package_credits': 0,
     },
+    'price_per_credit': 1,
     'currency': 'RUB',
     'packages_disabled': False,
-    'exhausted_package_mode': 'stop',
+    'exhausted_package_mode': 'continue_pay_as_you_go',
+    'pay_as_you_go_limit_credits': 300,
+}
+
+# Режим кредитов: денег нет ни у пакета, ни у ответа; без пакета выбор — по умолчанию,
+# лимита нет; LLM остановлен квотой проекта.
+CURRENT_PACKAGE_IN_CREDITS = {
+    'usage': {
+        'period_from': '2026-11-01',
+        'period_to': '2026-12-01',
+        'total_credits': 700,
+        'in_package_credits': 0,
+        'over_package_credits': 700,
+    },
+    'packages_disabled': False,
+    'exhausted_package_mode': 'continue_pay_as_you_go',
+    'stop': {'stopped_at': '2026-11-07T10:00:00Z', 'reason': 'project_quota_exhausted', 'state': 'stopped'},
 }
 
 PACKAGE_PLAN = {
     'id': 1,
+    'source': 'catalog',
     'tech_title': 'start',
     'description': '',
     'volume_credits': 1000,
     'discount_percent': 5,
     'price': 950,
     'currency': 'RUB',
+    'current_month': {
+        'period_from': '2026-11-08T00:00:00Z', 'period_to': '2026-12-01T00:00:00Z', 'volume_credits': 750, 'price': 712.5,
+    },
+}
+
+# Индивидуальный план в режиме кредитов: id тот же, что у каталожного, план различает источник;
+# ни цены, ни скидки, ни валюты, в том числе у текущего месяца.
+PACKAGE_PLAN_IN_CREDITS = {
+    'id': 1,
+    'source': 'individual',
+    'tech_title': 'team',
+    'description': '',
+    'volume_credits': 5000,
+    'current_month': {
+        'period_from': '2026-11-08T00:00:00Z', 'period_to': '2026-12-01T00:00:00Z', 'volume_credits': 3750,
+    },
 }
 
 USAGE_TOTALS = {
@@ -139,13 +193,14 @@ _READ_CASES = (
     (lambda llm: llm.connection().get(), 'GET', CONNECTION_PATH, {'connection': CONNECTION}, CONNECTION),
     (
         lambda llm: llm.groups().list(),
-        'GET', GROUPS_PATH, {'groups': [GROUP_IN_CREATION, GROUP]}, [GROUP_IN_CREATION, GROUP],
+        'GET', GROUPS_PATH, {'groups': [GROUP_IN_CREATION, GROUP, GROUP_SUSPENDED]}, [GROUP_IN_CREATION, GROUP, GROUP_SUSPENDED],
     ),
     (lambda llm: llm.groups().get(GROUP_ID), 'GET', GROUP_PATH, {'group': GROUP_DETAILS}, GROUP_DETAILS),
     (
         lambda llm: llm.access_keys().list(),
         'GET', ACCESS_KEYS_PATH,
-        {'access_keys': [ACCESS_KEY_IN_ISSUE, ACCESS_KEY]}, [ACCESS_KEY_IN_ISSUE, ACCESS_KEY],
+        {'access_keys': [ACCESS_KEY_IN_ISSUE, ACCESS_KEY, ACCESS_KEY_SUSPENDED]},
+        [ACCESS_KEY_IN_ISSUE, ACCESS_KEY, ACCESS_KEY_SUSPENDED],
     ),
     (
         lambda llm: llm.access_keys().list(GROUP_ID),
@@ -169,8 +224,14 @@ _READ_CASES = (
         'GET', '{llm}/package'.format(llm=LLM_PATH), {'package': CURRENT_PACKAGE}, CURRENT_PACKAGE,
     ),
     (
+        lambda llm: llm.package().get(),
+        'GET', '{llm}/package'.format(llm=LLM_PATH),
+        {'package': CURRENT_PACKAGE_IN_CREDITS}, CURRENT_PACKAGE_IN_CREDITS,
+    ),
+    (
         lambda llm: llm.package().plans(),
-        'GET', '{llm}/package-plans'.format(llm=LLM_PATH), {'package_plans': [PACKAGE_PLAN]}, [PACKAGE_PLAN],
+        'GET', '{llm}/package-plans'.format(llm=LLM_PATH),
+        {'package_plans': [PACKAGE_PLAN, PACKAGE_PLAN_IN_CREDITS]}, [PACKAGE_PLAN, PACKAGE_PLAN_IN_CREDITS],
     ),
     (
         lambda llm: llm.usage().requests(),
