@@ -175,12 +175,14 @@ class LlmPackageEntity(TypedDict):
     id: int
     tech_title: str
     volume_credits: int
-    discount_percent: float
-    price: float
     period_from: str
     period_to: str
     auto_renew: bool
+    exhausted_package_mode: str
     state: str
+    discount_percent: NotRequired[float]
+    price: NotRequired[float]
+    pay_as_you_go_limit_credits: NotRequired[int]
     full_month_volume_credits: NotRequired[int]
     full_month_price: NotRequired[float]
 
@@ -202,13 +204,11 @@ class LlmPackageStopEntity(TypedDict):
 
 class LlmCurrentPackageEntity(TypedDict):
     usage: LlmPackageUsageEntity
-    currency: str
     packages_disabled: bool
-    exhausted_package_mode: str
     package: NotRequired[LlmPackageEntity]
     price_per_credit: NotRequired[float]
+    currency: NotRequired[str]
     tax_label: NotRequired[str]
-    pay_as_you_go_limit_credits: NotRequired[int]
     stop: NotRequired[LlmPackageStopEntity]
 
 
@@ -216,17 +216,18 @@ class LlmPackagePlanMonthTermsEntity(TypedDict):
     period_from: str
     period_to: str
     volume_credits: int
-    price: float
+    price: NotRequired[float]
 
 
 class LlmPackagePlanEntity(TypedDict):
     id: int
+    source: str
     tech_title: str
     description: str
     volume_credits: int
-    discount_percent: float
-    price: float
-    currency: str
+    discount_percent: NotRequired[float]
+    price: NotRequired[float]
+    currency: NotRequired[str]
     tax_label: NotRequired[str]
     current_month: NotRequired[LlmPackagePlanMonthTermsEntity]
 
