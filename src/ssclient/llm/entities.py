@@ -205,10 +205,12 @@ class LlmPackageStopEntity(TypedDict):
 class LlmCurrentPackageEntity(TypedDict):
     usage: LlmPackageUsageEntity
     packages_disabled: bool
+    exhausted_package_mode: str
     package: NotRequired[LlmPackageEntity]
     price_per_credit: NotRequired[float]
     currency: NotRequired[str]
     tax_label: NotRequired[str]
+    pay_as_you_go_limit_credits: NotRequired[int]
     stop: NotRequired[LlmPackageStopEntity]
 
 
