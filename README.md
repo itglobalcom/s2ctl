@@ -487,6 +487,28 @@ service.
 the location of the server when `--location` is left out. The task does not name
 the new server: it shows up in `server list`.
 
+### Cloning of vStack servers
+
+`server clone` creates a new server, a clone of a stopped server, in the same
+project and location. The clone gets the configuration, volumes, networks, login,
+password and active licenses of the source, new MAC and IP addresses and the host
+name from its own name; snapshots, the backup schedule, applications and tags are
+not carried over. When done, the clone is started and billed as a regular server.
+With `--wait` the command prints the clone:
+
+```
+>s2ctl server power-off l1s12345 --wait
+>s2ctl server clone l1s12345 --name web-2 --wait
+```
+
+Cloning is available when the location and the OS of the server support it;
+otherwise the API refuses it. The name of a clone of a Windows server is its host
+name and is no longer than 15 characters.
+
+> **Warning:** do not stop a clone of a Windows server until its OS has applied
+> the new settings at the first start, otherwise the clone keeps the addresses and
+> the host name of the source.
+
 ### Edge gateways of isolated networks
 
 An edge gateway gives isolated vStack networks a way to the Internet. It is
@@ -734,7 +756,7 @@ nothing to single out.
 
 ## Public API coverage
 
-`s2ctl` covers **169 of the 189 operations** of the Public API — every section of
+`s2ctl` covers **170 of the 190 operations** of the Public API — every section of
 the contract except Kubernetes, the OAuth authorization routes and the list of
 project services. The table below maps every covered operation to the command
 that performs it; the 20 operations left out are listed after it.
@@ -797,7 +819,7 @@ tests.
 | `GET /api/v1/tasks/vmw{task_id}` | `s2ctl task get` |
 | `GET /api/v1/tasks/{task_id}` | `s2ctl task get` |
 
-#### vStack servers — 30
+#### vStack servers — 31
 
 | Operation | Command |
 | --- | --- |
@@ -809,6 +831,7 @@ tests.
 | `PATCH /api/v1/servers/{server_id}` | `s2ctl server edit` |
 | `DELETE /api/v1/servers/{server_id}` | `s2ctl server delete` |
 | `PUT /api/v1/servers/{server_id}/name` | `s2ctl server rename` |
+| `POST /api/v1/servers/{server_id}/clone` | `s2ctl server clone` |
 | `GET /api/v1/servers/{server_id}/nics` | `s2ctl server list-nic` |
 | `POST /api/v1/servers/{server_id}/nics` | `s2ctl server add-nic` |
 | `GET /api/v1/servers/{server_id}/snapshots` | `s2ctl server list-snapshot` |
@@ -1072,7 +1095,8 @@ Not exercised against the live platform:
 - what was added after that run: `server shutdown` and `server reset`, `--wait`
   of the seven deletions that return a task, `--volume-name` of
   `server edit-volume`, the query filters of `affinity-group list` and
-  `applications`, the three `project consumption` commands, the `llm` group and
-  the applications of `server create`. All of them are covered by tests against the shape of the
-  request of the contract, none by a call to the live platform;
+  `applications`, the three `project consumption` commands, the `llm` group,
+  the applications of `server create` and `server clone`. All of them are covered
+  by tests against the shape of the request of the contract, none by a call to the
+  live platform;
 - operations whose resources the project did not have at the time of the run.

@@ -170,6 +170,7 @@ COMMANDS_BY_OPERATION: Dict[str, Tuple[str, ...]] = {
     'GET /api/v1/servers/{server_id}': ('server get',),
     'PATCH /api/v1/servers/{server_id}': ('server edit',),
     'DELETE /api/v1/servers/{server_id}': ('server delete',),
+    'POST /api/v1/servers/{server_id}/clone': ('server clone',),
     'GET /api/v1/servers/{server_id}/nics': ('server list-nic',),
     'POST /api/v1/servers/{server_id}/nics': ('server add-nic',),
     'GET /api/v1/servers/{server_id}/nics/{nic_id}': ('server get-nic',),
