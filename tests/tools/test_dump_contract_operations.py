@@ -24,6 +24,8 @@ public class ServersController : ControllerBase
         ErrorCodes.Vstack.CloneSourceIsNotTurnedOff,
         // [ в комментарии не открывает атрибут
         ErrorCodes.Vstack.CloneSourceIsClone)]
+    [Obsolete(
+        "скобка [ в строке не открывает атрибут")]
     public async Task<IActionResult> Clone([FromRoute(Name = "server_id")] string serverId)
     {
         return Ok();
@@ -68,5 +70,5 @@ def test_multiline_http_attribute_with_unresolved_constant_fails_the_dump(tmp_pa
 def test_attribute_left_open_fails_the_dump(tmp_path):
     publisher = _publisher(tmp_path, '[Route("api/v1/servers")]\n[PossibleErrorCodes(\n    ErrorCodes.Vstack.X\n')
 
-    with pytest.raises(UnterminatedAttribute):
+    with pytest.raises(UnterminatedAttribute, match=r'^\[PossibleErrorCodes\( ErrorCodes\.Vstack\.X$'):
         dump_operations(publisher)

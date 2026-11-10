@@ -172,6 +172,7 @@ async def test_clone_with_wait_refuses_task_that_names_the_source(fake_http_clie
     assert (exc_info.value.task_id, exc_info.value.resource_type, exc_info.value.resource_id) == (
         'l2t348', 'server', 'l2s99',
     )
+    assert str(exc_info.value) == "task 'l2t348' names the source server 'l2s99' instead of the new one"
     # Источник за клон не выдаётся: сервер после задачи не читается вовсе.
     assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t348']
 
