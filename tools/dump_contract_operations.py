@@ -45,6 +45,7 @@ _HTTP_ATTRIBUTE = re.compile(
 # либо `regex(...)` с одним уровнем вложенных скобок, либо ограничение с
 # необязательными аргументами.
 _CONSTRAINT = re.compile(r':(?:regex\((?:[^()]|\([^()]*\))*\)|\w+(?:\([^()]*\))?)')
+_BRACKETS = {'[': 1, ']': -1}
 
 
 def _strip_comment(line: str) -> str:
@@ -63,6 +64,40 @@ class UnresolvedRouteLiteral(Exception):
 
 class AmbiguousOperation(Exception):
     """Разные маршруты publisher'а дали одну строку снимка."""
+
+
+class UnterminatedAttribute(Exception):
+    """Атрибут, открытый `[`, не закрыт до конца файла."""
+
+
+def _bracket_depth(text: str) -> int:
+    depth = 0
+    quoted = False
+    for symbol in text:
+        if symbol == '"':
+            quoted = not quoted
+        elif not quoted:
+            depth += _BRACKETS.get(symbol, 0)
+    return depth
+
+
+def _logical_lines(lines: List[str]) -> Iterator[str]:
+    """Строки без комментариев, атрибут на нескольких строках — одной строкой."""
+    stripped_lines = (_strip_comment(line.strip()) for line in lines)
+    for stripped in stripped_lines:
+        if stripped.startswith('['):
+            stripped = _join_attribute(stripped, stripped_lines)
+        yield stripped
+
+
+def _join_attribute(head: str, rest: Iterator[str]) -> str:
+    attribute = head
+    while _bracket_depth(attribute) > 0:
+        line = next(rest, None)
+        if line is None:
+            raise UnterminatedAttribute(attribute)
+        attribute = '{0} {1}'.format(attribute, line).strip()
+    return attribute
 
 
 def _iter_sources(directory: pathlib.Path) -> Iterator[pathlib.Path]:
@@ -137,8 +172,7 @@ def _operations_of_source(  # noqa: WPS210, WPS231
 ) -> Iterator[Tuple[str, str]]:
     attributes: List[str] = []
     current_route = ''
-    for line in _read(source):
-        stripped = _strip_comment(line.strip())
+    for stripped in _logical_lines(_read(source)):
         attribute = _ATTRIBUTE_LINE.match(stripped)
         if attribute:
             attributes.append(attribute.group('body'))
