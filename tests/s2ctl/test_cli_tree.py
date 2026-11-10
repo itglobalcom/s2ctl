@@ -75,6 +75,7 @@ EXPECTED_SERVER_COMMANDS = frozenset({
     'add-nic',
     'add-tag',
     'add-volume',
+    'clone',
     'create',
     'create-restore-point',
     'create-snapshot',
