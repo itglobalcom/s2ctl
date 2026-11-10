@@ -4,7 +4,7 @@ from urllib.parse import urlencode, urljoin
 
 from ssclient import errors
 from ssclient.ports import HttpClientPort
-from ssclient.task_entities import TaskEntity, TaskState, completed_task
+from ssclient.task_entities import TaskEntity, TaskResourceType, TaskState, completed_task, task_resource_id
 from ssclient.task_id import TaskId
 from ssclient.task_wait import task_timeout_secs
 
@@ -42,6 +42,14 @@ def with_filters(path: str, filters: Mapping[str, Any]) -> str:
     if not query:
         return path
     return '{path}?{query}'.format(path=path, query=urlencode(query))
+
+
+def task_new_resource_id(task: TaskEntity, resource_type: TaskResourceType, source_id: str) -> str:
+    """Id ресурса, который задача создала из ресурса-источника того же типа."""
+    resource_id = task_resource_id(task, resource_type)
+    if resource_id == source_id:
+        raise errors.TaskResourceIsSourceError(task['id'], resource_type.value, resource_id)
+    return resource_id
 
 
 class BaseService(object):

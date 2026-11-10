@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, field
 from typing import Iterable, List, Mapping, Optional, Sequence, TypedDict, Union
 
-from ssclient.base import BaseService, Payload, TaskIDWrap, with_return_task
+from ssclient.base import BaseService, Payload, TaskIDWrap, task_new_resource_id, with_return_task
 from ssclient.server.backup import BackupScheduleEntity, BackupService
 from ssclient.server.nic import NicService
 from ssclient.server.power import ServerPowerService
@@ -180,6 +180,22 @@ class BaseServerService(BaseService):  # noqa: WPS214
         if wait:
             await self._wait_task_completion(self._task_id(task_wrap))
             return await self.get(server_id)
+        return task_wrap
+
+    async def clone(
+        self, server_id: ServerId, *, name: str, wait: bool = False,
+    ) -> Union[TaskIDWrap, ServerEntity]:
+        path = '{server_path}/clone'.format(server_path=self._make_path(server_id.value))
+
+        task_wrap: TaskIDWrap = await self._http_client.post(
+            path=path,
+            payload={
+                'name': name,
+            },
+        )
+        if wait:
+            task = await self._wait_task_completion(self._task_id(task_wrap))
+            return await self._read(task_new_resource_id(task, TaskResourceType.server, server_id.value))
         return task_wrap
 
     async def delete(self, server_id: ServerId, wait: bool = False) -> Optional[TaskIDWrap]:

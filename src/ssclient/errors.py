@@ -74,3 +74,15 @@ class RestorePointMissingError(Exception):
             ),
         )
         self.task_id = task_id
+
+
+class TaskResourceIsSourceError(Exception):
+    def __init__(self, task_id: str, resource_type: str, resource_id: str) -> None:
+        super().__init__(
+            "task '{task_id}' names the source {resource_type} '{resource_id}' instead of the new one".format(
+                task_id=task_id, resource_type=resource_type, resource_id=resource_id,
+            ),
+        )
+        self.task_id = task_id
+        self.resource_type = resource_type
+        self.resource_id = resource_id

@@ -307,6 +307,29 @@ def rename(ctx, server_id: ServerId, name: str, wait: bool):
 
 @server.command(cls=S2CTLCommand)
 @output_option
+@wait_option
+@click.argument(SERVER_ID_ARG, required=True, callback=parse_server_id)
+@click.option(
+    '--name',
+    required=True,
+    help='Name of the clone; for a clone of a Windows server, no longer than 15 characters.',
+)
+@click.pass_context
+def clone(ctx, server_id: ServerId, name: str, wait: bool):
+    """Create a new server, a clone of a stopped server, in the same project and location.
+
+    Do not stop a clone of a Windows server until its OS has applied the new settings
+    at the first start: otherwise the clone keeps the addresses and host name of the source.
+    """
+    server_service = _get_server_serivce(ctx)
+    service_resp = asyncio.run(
+        server_service.clone(server_id=server_id, name=name, wait=wait),
+    )
+    echo(service_resp, sorter=sort_server_resp)
+
+
+@server.command(cls=S2CTLCommand)
+@output_option
 @click.option('--location', required=True, help='Where the server is priced (see "locations" command).')
 @click.option('--image', required=True, help='OS image which you want to use for the server.')
 @click.option('--cpu', type=int, required=True, help='CPU cores count.')
