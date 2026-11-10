@@ -1,5 +1,6 @@
 import pytest
 
+from ssclient import errors
 from ssclient.network.network_id import NetworkId
 from ssclient.server.nic import NicService
 from ssclient.server.server import ServerApplication, ServerService, VolumeCreationData
@@ -130,6 +131,49 @@ async def test_rename_puts_name_subresource_and_returns_task_without_wait(fake_h
         FakeRequest('PUT', 'api/v1/servers/l2s99/name', {'name': 'new-name'}),
     ]
     assert task_wrap == {'task_id': 'l2t346'}
+
+
+async def test_clone_posts_name_to_clone_subresource_and_returns_task_without_wait(fake_http_client):
+    fake_http_client.on('POST', 'api/v1/servers/l2s99/clone', {'task_id': 'l2t348'})
+
+    task_wrap = await ServerService(fake_http_client).clone(SERVER_ID, name='web-2')
+
+    assert fake_http_client.requests == [
+        FakeRequest('POST', 'api/v1/servers/l2s99/clone', {'name': 'web-2'}),
+    ]
+    assert task_wrap == {'task_id': 'l2t348'}
+
+
+async def test_clone_with_wait_reads_the_clone_named_by_task_resources(fake_http_client):
+    fake_http_client.on('POST', 'api/v1/servers/l2s99/clone', {'task_id': 'l2t348'})
+    fake_http_client.on(
+        'GET', 'api/v1/tasks/l2t348',
+        task_response('l2t348', TaskState.completed, resources=[('server', 'l2s100')]),
+    )
+    fake_http_client.on('GET', 'api/v1/servers/l2s100', {'server': {'id': 'l2s100', 'name': 'web-2'}})
+
+    clone = await ServerService(fake_http_client).clone(SERVER_ID, name='web-2', wait=True)
+
+    # id сервера — вход операции, но читается клон из resources[], а не источник.
+    assert clone == {'id': 'l2s100', 'name': 'web-2'}
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t348', 'api/v1/servers/l2s100']
+
+
+async def test_clone_with_wait_refuses_task_that_names_the_source(fake_http_client):
+    fake_http_client.on('POST', 'api/v1/servers/l2s99/clone', {'task_id': 'l2t348'})
+    fake_http_client.on(
+        'GET', 'api/v1/tasks/l2t348',
+        task_response('l2t348', TaskState.completed, resources=[('server', 'l2s99')]),
+    )
+
+    with pytest.raises(errors.TaskResourceIsSourceError) as exc_info:
+        await ServerService(fake_http_client).clone(SERVER_ID, name='web-2', wait=True)
+
+    assert (exc_info.value.task_id, exc_info.value.resource_type, exc_info.value.resource_id) == (
+        'l2t348', 'server', 'l2s99',
+    )
+    # Источник за клон не выдаётся: сервер после задачи не читается вовсе.
+    assert fake_http_client.paths('GET') == ['api/v1/tasks/l2t348']
 
 
 async def test_set_configuration_and_update_stay_different_operations(fake_http_client):

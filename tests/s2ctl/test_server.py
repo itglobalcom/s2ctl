@@ -51,6 +51,10 @@ _CONTRACT_FIELD_CASES = (
         FakeRequest('PUT', '{server_path}/name'.format(server_path=SERVER_PATH), {'name': 'web'}),
     ),
     (
+        ('clone', SERVER_ID, '--name', 'web'),
+        FakeRequest('POST', '{server_path}/clone'.format(server_path=SERVER_PATH), {'name': 'web'}),
+    ),
+    (
         ('edit-nic', SERVER_ID, '--nic-id', str(NIC_ID), '--bandwidth', '100'),
         FakeRequest('PUT', NIC_PATH, {'bandwidth_mbps': 100}),
     ),
@@ -218,8 +222,12 @@ def test_power_commands_have_no_hard_flag(cli_config, command_name):
     assert '--hard' in result.output
 
 
-def test_malformed_server_id_is_reported_as_bad_parameter(cli_config):
-    result = _invoke('get', 's1l2')
+@pytest.mark.parametrize('command_args', (
+    ('get', 's1l2'),
+    ('clone', 's1l2', '--name', 'web'),
+))
+def test_malformed_server_id_is_reported_as_bad_parameter(cli_config, command_args):
+    result = _invoke(*command_args)
 
     assert result.exit_code == _USAGE_ERROR_EXIT_CODE
     # Разбор id падает до запроса: пользователь видит формат id, а не отказ API.
