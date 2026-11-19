@@ -897,21 +897,21 @@ tests.
 | --- | --- |
 | `GET /api/v1/gateways` | `s2ctl gateway list` |
 | `POST /api/v1/gateways` | `s2ctl gateway create` |
-| `GET /api/v1/gateways/l{location_id}e{gateway_id}` | `s2ctl gateway get` |
-| `PUT /api/v1/gateways/l{location_id}e{gateway_id}` | `s2ctl gateway rename` |
-| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}` | `s2ctl gateway delete` |
-| `PUT /api/v1/gateways/l{location_id}e{gateway_id}/bandwidth` | `s2ctl gateway set-bandwidth` |
-| `GET /api/v1/gateways/l{location_id}e{gateway_id}/firewall` | `s2ctl gateway get-firewall` |
-| `PUT /api/v1/gateways/l{location_id}e{gateway_id}/firewall` | `s2ctl gateway replace-firewall` |
-| `GET /api/v1/gateways/l{location_id}e{gateway_id}/nat` | `s2ctl gateway get-nat` |
-| `PUT /api/v1/gateways/l{location_id}e{gateway_id}/nat` | `s2ctl gateway replace-nat` |
-| `POST /api/v1/gateways/l{location_id}e{gateway_id}/nics` | `s2ctl gateway add-nic` |
-| `POST /api/v1/gateways/l{location_id}e{gateway_id}/restart` | `s2ctl gateway restart` |
-| `POST /api/v1/gateways/l{location_id}e{gateway_id}/start` | `s2ctl gateway start` |
-| `POST /api/v1/gateways/l{location_id}e{gateway_id}/stop` | `s2ctl gateway stop` |
-| `POST /api/v1/gateways/l{location_id}e{gateway_id}/tags` | `s2ctl gateway add-tag` |
-| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/nics/{nic_id}` | `s2ctl gateway delete-nic` |
-| `DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{**tag}` | `s2ctl gateway delete-tag` |
+| `GET /api/v1/gateways/{gateway_id}` | `s2ctl gateway get` |
+| `PUT /api/v1/gateways/{gateway_id}` | `s2ctl gateway rename` |
+| `DELETE /api/v1/gateways/{gateway_id}` | `s2ctl gateway delete` |
+| `PUT /api/v1/gateways/{gateway_id}/bandwidth` | `s2ctl gateway set-bandwidth` |
+| `GET /api/v1/gateways/{gateway_id}/firewall` | `s2ctl gateway get-firewall` |
+| `PUT /api/v1/gateways/{gateway_id}/firewall` | `s2ctl gateway replace-firewall` |
+| `GET /api/v1/gateways/{gateway_id}/nat` | `s2ctl gateway get-nat` |
+| `PUT /api/v1/gateways/{gateway_id}/nat` | `s2ctl gateway replace-nat` |
+| `POST /api/v1/gateways/{gateway_id}/nics` | `s2ctl gateway add-nic` |
+| `POST /api/v1/gateways/{gateway_id}/restart` | `s2ctl gateway restart` |
+| `POST /api/v1/gateways/{gateway_id}/start` | `s2ctl gateway start` |
+| `POST /api/v1/gateways/{gateway_id}/stop` | `s2ctl gateway stop` |
+| `POST /api/v1/gateways/{gateway_id}/tags` | `s2ctl gateway add-tag` |
+| `DELETE /api/v1/gateways/{gateway_id}/nics/{nic_id}` | `s2ctl gateway delete-nic` |
+| `DELETE /api/v1/gateways/{gateway_id}/tags/{**tag}` | `s2ctl gateway delete-tag` |
 
 #### DNS domains and records — 9
 

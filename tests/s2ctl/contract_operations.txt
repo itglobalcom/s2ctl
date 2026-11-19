@@ -1,13 +1,13 @@
 # Снимок операций контракта public-api: метод и путь маршрута.
-# publisher: cloudmng @ 95878f6fdc039f53cd5e9b5e7293df5b47429b3a
+# publisher: cloudmng @ 626cfece924c59e0ae360eb9075851f8a4c6fef4
 # снят: python tools/dump_contract_operations.py <cloudmng>
 # Ограничения маршрутизации (:int, :regex(...)) сняты.
 DELETE /api/v1/affinity-groups/{affinity_group_id}
 DELETE /api/v1/domains/{domain_name}
 DELETE /api/v1/domains/{domain_name}/records/{record_id}
-DELETE /api/v1/gateways/l{location_id}e{gateway_id}
-DELETE /api/v1/gateways/l{location_id}e{gateway_id}/nics/{nic_id}
-DELETE /api/v1/gateways/l{location_id}e{gateway_id}/tags/{**tag}
+DELETE /api/v1/gateways/{gateway_id}
+DELETE /api/v1/gateways/{gateway_id}/nics/{nic_id}
+DELETE /api/v1/gateways/{gateway_id}/tags/{**tag}
 DELETE /api/v1/k8s_clusters/{cluster_id}
 DELETE /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}
 DELETE /api/v1/k8s_clusters/{cluster_id}/tags/{**tag}
@@ -40,9 +40,9 @@ GET /api/v1/domains/{domain_name}
 GET /api/v1/domains/{domain_name}/records
 GET /api/v1/domains/{domain_name}/records/{record_id}
 GET /api/v1/gateways
-GET /api/v1/gateways/l{location_id}e{gateway_id}
-GET /api/v1/gateways/l{location_id}e{gateway_id}/firewall
-GET /api/v1/gateways/l{location_id}e{gateway_id}/nat
+GET /api/v1/gateways/{gateway_id}
+GET /api/v1/gateways/{gateway_id}/firewall
+GET /api/v1/gateways/{gateway_id}/nat
 GET /api/v1/images
 GET /api/v1/k8s_clusters
 GET /api/v1/k8s_clusters/{cluster_id}
@@ -109,11 +109,11 @@ POST /api/v1/affinity-groups
 POST /api/v1/domains
 POST /api/v1/domains/{domain_name}/records
 POST /api/v1/gateways
-POST /api/v1/gateways/l{location_id}e{gateway_id}/nics
-POST /api/v1/gateways/l{location_id}e{gateway_id}/restart
-POST /api/v1/gateways/l{location_id}e{gateway_id}/start
-POST /api/v1/gateways/l{location_id}e{gateway_id}/stop
-POST /api/v1/gateways/l{location_id}e{gateway_id}/tags
+POST /api/v1/gateways/{gateway_id}/nics
+POST /api/v1/gateways/{gateway_id}/restart
+POST /api/v1/gateways/{gateway_id}/start
+POST /api/v1/gateways/{gateway_id}/stop
+POST /api/v1/gateways/{gateway_id}/tags
 POST /api/v1/k8s_clusters
 POST /api/v1/k8s_clusters/{cluster_id}/node_groups
 POST /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}/ingress
@@ -168,10 +168,10 @@ POST /api/v1/vmware/servers/{server_id}/snapshot
 POST /api/v1/vmware/servers/{server_id}/snapshot/restore
 POST /api/v1/vmware/servers/{server_id}/volumes
 PUT /api/v1/domains/{domain_name}/records/{record_id}
-PUT /api/v1/gateways/l{location_id}e{gateway_id}
-PUT /api/v1/gateways/l{location_id}e{gateway_id}/bandwidth
-PUT /api/v1/gateways/l{location_id}e{gateway_id}/firewall
-PUT /api/v1/gateways/l{location_id}e{gateway_id}/nat
+PUT /api/v1/gateways/{gateway_id}
+PUT /api/v1/gateways/{gateway_id}/bandwidth
+PUT /api/v1/gateways/{gateway_id}/firewall
+PUT /api/v1/gateways/{gateway_id}/nat
 PUT /api/v1/k8s_clusters/{cluster_id}
 PUT /api/v1/k8s_clusters/{cluster_id}/node_groups/{group_id}
 PUT /api/v1/llm/groups/{group_id}/access-keys/{access_key_id}/tags

@@ -2,7 +2,7 @@ import pytest
 
 from ssclient.gateway.gateway_id import GatewayId
 
-# Маршрут publisher'а — `l{location_id}e{gateway_id}`: обе части обязательны, порядок
+# Id шлюза в маршрутах publisher'а — `l{location_id}e{gateway_id}`: обе части обязательны, порядок
 # закреплён, поэтому перепутанные местами части (`e1l2`) — такой же мусор, как
 # произвольная строка. Разбор обязан отвергнуть их до запроса, а не собрать путь,
 # по которому publisher ответит 404.
